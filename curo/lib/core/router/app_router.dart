@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/onboarding_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/otp_screen.dart';
+import '../../features/home/screens/home_screen.dart';
 
 abstract final class AppRoutes {
   static const splash = '/';
@@ -40,9 +40,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.home,
-      builder: (_, _) => const Scaffold(
-        body: Center(child: Text('Home – coming soon')),
-      ),
+      builder: (_, _) => const HomeScreen(),
     ),
   ],
 );
