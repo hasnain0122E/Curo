@@ -3,7 +3,9 @@
     "allow": [
       "Bash(flutter analyze *)",
       "Bash(flutter doctor *)",
-      "Bash(flutter emulators *)"
+      "Bash(flutter emulators *)",
+      "Read(//c/Users/hp/AppData/Local/Pub/Cache/hosted/**)",
+      "Bash(flutter pub *)"
     ]
   }
 }
