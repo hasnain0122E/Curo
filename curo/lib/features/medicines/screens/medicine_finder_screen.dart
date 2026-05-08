@@ -32,6 +32,7 @@ class _MedicineFinderScreenState
     if (i == 0) context.go(AppRoutes.home);
     if (i == 1) context.go(AppRoutes.labs);
     if (i == 2) context.go(AppRoutes.reports);
+    if (i == 4) context.go(AppRoutes.profile);
   }
 
   @override
@@ -46,12 +47,14 @@ class _MedicineFinderScreenState
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              size: 18, color: AppColors.textPrimary),
-          onPressed: () =>
-              Navigator.of(context).canPop() ? context.pop() : null,
-        ),
+        automaticallyImplyLeading: false,
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                    size: 18, color: AppColors.textPrimary),
+                onPressed: () => context.pop(),
+              )
+            : null,
         title: Text('Medicine Finder', style: AppTextStyles.h3),
         actions: [
           IconButton(
@@ -406,7 +409,7 @@ class _FindPharmaciesButton extends StatelessWidget {
     return CuroButton(
       label: 'Find Nearby Pharmacies',
       icon: Icons.local_pharmacy_rounded,
-      onPressed: () {},
+      onPressed: () => context.go(AppRoutes.labs),
     );
   }
 }

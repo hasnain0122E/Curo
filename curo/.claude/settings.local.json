@@ -5,7 +5,30 @@
       "Bash(flutter doctor *)",
       "Bash(flutter emulators *)",
       "Read(//c/Users/hp/AppData/Local/Pub/Cache/hosted/**)",
-      "Bash(flutter pub *)"
+      "Bash(flutter pub *)",
+      "Bash(sed -n '280,295p' lib/features/home/screens/home_screen.dart)",
+      "Bash(sed -n '405,415p' lib/features/medicines/screens/medicine_finder_screen.dart)",
+      "Bash(sed -n '60,75p' lib/features/reports/screens/health_locker_screen.dart)",
+      "Bash(sed -n '650,660p' lib/features/reports/screens/report_upload_screen.dart)",
+      "Bash(sed -n '488,545p' lib/features/home/screens/home_screen.dart)",
+      "Bash(sed -n '185,240p' lib/features/reports/screens/health_locker_screen.dart)",
+      "Bash(sed -n '317,330p' lib/features/profile/screens/profile_screen.dart)",
+      "Bash(sed -n '63,70p' lib/features/reports/screens/health_locker_screen.dart)",
+      "Bash(sed -n '652,658p' lib/features/reports/screens/report_upload_screen.dart)",
+      "Bash(flutter devices *)",
+      "Bash(flutter run *)",
+      "Bash(Remove-Item -Recurse -Force \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\ndk\\\\28.2.13676358\" -ErrorAction SilentlyContinue)",
+      "Bash(Write-Host \"NDK folder removed, retrying build...\")",
+      "Bash(Get-Content \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\E--SMIU-SE-7B-MAD-CURO---MAD---AI-PROJECT-CURO---Low-Cost-HealthCare-Near-You-curo\\\\19bc5631-892d-40f6-8c22-19699fc15f33\\\\tasks\\\\bw7hgo0jg.output\")",
+      "Bash(Select-Object -Last 25)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Stop-Process *)",
+      "PowerShell(& \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\cmdline-tools\\\\latest\\\\bin\\\\sdkmanager.bat\" --version 2>&1)",
+      "PowerShell(where.exe java 2>&1; $env:JAVA_HOME)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; & \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\cmdline-tools\\\\latest\\\\bin\\\\sdkmanager.bat\" --version 2>&1)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; echo \"y`ny`ny`ny`ny`ny`ny`ny`n\" | & \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\cmdline-tools\\\\latest\\\\bin\\\\sdkmanager.bat\" --licenses 2>&1)",
+      "PowerShell(flutter doctor *)",
+      "Bash(flutter --version)"
     ]
   }
 }

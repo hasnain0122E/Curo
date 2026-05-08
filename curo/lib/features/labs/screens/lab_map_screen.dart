@@ -133,6 +133,7 @@ class _LabMapScreenState extends ConsumerState<LabMapScreen> {
     if (i == 0) context.go(AppRoutes.home);
     if (i == 2) context.go(AppRoutes.reports);
     if (i == 3) context.go(AppRoutes.medicines);
+    if (i == 4) context.go(AppRoutes.profile);
   }
 
   @override
@@ -487,7 +488,7 @@ class _LabListCard extends StatelessWidget {
             CuroButton(
               label: 'Book',
               width: 72,
-              onPressed: () {},
+              onPressed: () => context.push(AppRoutes.labDetail, extra: lab),
             ),
           ],
         ),

@@ -41,7 +41,9 @@ class ReportUploadScreen extends ConsumerWidget {
               onTap: (i) {
                 if (i == 0) context.go(AppRoutes.home);
                 if (i == 1) context.go(AppRoutes.labs);
+                if (i == 2) context.go(AppRoutes.reports);
                 if (i == 3) context.go(AppRoutes.medicines);
+                if (i == 4) context.go(AppRoutes.profile);
               },
             ),
     );

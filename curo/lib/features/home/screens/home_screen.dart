@@ -67,6 +67,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           if (i == 1) context.go(AppRoutes.labs);
           if (i == 2) context.go(AppRoutes.reports);
           if (i == 3) context.go(AppRoutes.medicines);
+          if (i == 4) context.go(AppRoutes.profile);
         },
       ),
     );
@@ -84,19 +85,22 @@ class _HomeHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Avatar
-        Container(
-          width: 46,
-          height: 46,
-          decoration: const BoxDecoration(
-            color: AppColors.primary,
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text(
-              'AA',
-              style: AppTextStyles.labelLarge.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+        GestureDetector(
+          onTap: () => context.go(AppRoutes.profile),
+          child: Container(
+            width: 46,
+            height: 46,
+            decoration: const BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                'AA',
+                style: AppTextStyles.labelLarge.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
@@ -156,37 +160,40 @@ class _MedipointsBadge extends StatelessWidget {
 class _NotificationBell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.border),
-          ),
-          child: const Icon(
-            Icons.notifications_outlined,
-            size: 22,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        Positioned(
-          top: 9,
-          right: 9,
-          child: Container(
-            width: 9,
-            height: 9,
+    return GestureDetector(
+      onTap: () => context.push(AppRoutes.notifications),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
-              color: AppColors.danger,
+              color: AppColors.surface,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.surface, width: 1.5),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: const Icon(
+              Icons.notifications_outlined,
+              size: 22,
+              color: AppColors.textPrimary,
             ),
           ),
-        ),
-      ],
+          Positioned(
+            top: 9,
+            right: 9,
+            child: Container(
+              width: 9,
+              height: 9,
+              decoration: BoxDecoration(
+                color: AppColors.danger,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.surface, width: 1.5),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -276,7 +283,7 @@ class _HealthRiskCard extends ConsumerWidget {
 
           // View Details
           GestureDetector(
-            onTap: () {},
+            onTap: () => context.go(AppRoutes.reports),
             child: Text(
               'View\nDetails',
               textAlign: TextAlign.center,
@@ -355,17 +362,29 @@ class _QuickActionsGrid extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: _QuickActionCard(icon: _actions[0].$1, label: _actions[0].$2)),
+            Expanded(child: _QuickActionCard(
+              icon: _actions[0].$1, label: _actions[0].$2,
+              onTap: () => context.go(AppRoutes.labs),
+            )),
             const SizedBox(width: AppSpacing.s12),
-            Expanded(child: _QuickActionCard(icon: _actions[1].$1, label: _actions[1].$2)),
+            Expanded(child: _QuickActionCard(
+              icon: _actions[1].$1, label: _actions[1].$2,
+              onTap: () => context.push(AppRoutes.reportUpload),
+            )),
           ],
         ),
         const SizedBox(height: AppSpacing.s12),
         Row(
           children: [
-            Expanded(child: _QuickActionCard(icon: _actions[2].$1, label: _actions[2].$2)),
+            Expanded(child: _QuickActionCard(
+              icon: _actions[2].$1, label: _actions[2].$2,
+              onTap: () => context.go(AppRoutes.medicines),
+            )),
             const SizedBox(width: AppSpacing.s12),
-            Expanded(child: _QuickActionCard(icon: _actions[3].$1, label: _actions[3].$2)),
+            Expanded(child: _QuickActionCard(
+              icon: _actions[3].$1, label: _actions[3].$2,
+              onTap: () => context.go(AppRoutes.labs),
+            )),
           ],
         ),
       ],
@@ -374,14 +393,15 @@ class _QuickActionsGrid extends StatelessWidget {
 }
 
 class _QuickActionCard extends StatelessWidget {
-  const _QuickActionCard({required this.icon, required this.label});
+  const _QuickActionCard({required this.icon, required this.label, this.onTap});
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: onTap,
       child: Container(
         height: 96,
         decoration: BoxDecoration(
@@ -434,7 +454,7 @@ class _NearbyLabsSection extends ConsumerWidget {
             children: [
               Text('Nearby Labs', style: AppTextStyles.h3),
               GestureDetector(
-                onTap: () {},
+                onTap: () => context.go(AppRoutes.labs),
                 child: Text(
                   'See all',
                   style: AppTextStyles.labelMedium.copyWith(
@@ -471,7 +491,9 @@ class _LabCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: () => context.go(AppRoutes.labs),
+      child: Container(
       width: 152,
       margin: const EdgeInsets.only(right: AppSpacing.s12),
       padding: const EdgeInsets.all(AppSpacing.s12),
@@ -536,25 +558,29 @@ class _LabCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),   // closes Container
+  );     // closes GestureDetector
   }
 }
 
 class _MoreLabsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 52,
-      margin: const EdgeInsets.only(right: AppSpacing.s16),
-      alignment: Alignment.center,
+    return GestureDetector(
+      onTap: () => context.go(AppRoutes.labs),
       child: Container(
-        width: 44,
-        height: 44,
-        decoration: const BoxDecoration(
-          color: AppColors.primary,
-          shape: BoxShape.circle,
+        width: 52,
+        margin: const EdgeInsets.only(right: AppSpacing.s16),
+        alignment: Alignment.center,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: const BoxDecoration(
+            color: AppColors.primary,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
         ),
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
       ),
     );
   }
@@ -577,7 +603,7 @@ class _RecentReportsSection extends ConsumerWidget {
           children: [
             Text('Recent Reports', style: AppTextStyles.h3),
             GestureDetector(
-              onTap: () {},
+              onTap: () => context.go(AppRoutes.reports),
               child: Text(
                 'View all',
                 style: AppTextStyles.labelMedium.copyWith(
@@ -616,7 +642,9 @@ class _ReportRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return InkWell(
+      onTap: () => context.go(AppRoutes.reports),
+      child: Padding(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
         children: [
@@ -654,6 +682,7 @@ class _ReportRow extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),   // closes Padding
+  );     // closes InkWell
   }
 }
