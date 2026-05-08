@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../data/models/user_model.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/lab_repository.dart';
@@ -18,6 +19,10 @@ final firestoreProvider = Provider<FirebaseFirestore>(
   (ref) => FirebaseFirestore.instance,
 );
 
+final googleSignInProvider = Provider<GoogleSignIn>(
+  (ref) => GoogleSignIn(),
+);
+
 // ── Cloudinary (replaces Firebase Storage — free 25 GB, no billing required) ─
 
 final cloudinaryProvider = Provider<CloudinaryService>(
@@ -31,6 +36,7 @@ final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(
     auth: ref.watch(firebaseAuthProvider),
     firestore: ref.watch(firestoreProvider),
+    googleSignIn: ref.watch(googleSignInProvider),
   ),
 );
 

@@ -43,17 +43,21 @@ class BookingRepository {
   Stream<List<BookingModel>> watchUserBookings(String userId) {
     return _bookings
         .where('userId', isEqualTo: userId)
-        .orderBy('date', descending: true)
         .snapshots()
-        .map((snap) => snap.docs.map((d) => d.data()).toList());
+        .map((snap) {
+          final list = snap.docs.map((d) => d.data()).toList();
+          list.sort((a, b) => b.date.compareTo(a.date));
+          return list;
+        });
   }
 
   Future<List<BookingModel>> getUserBookings(String userId) async {
     final snap = await _bookings
         .where('userId', isEqualTo: userId)
-        .orderBy('date', descending: true)
         .get();
-    return snap.docs.map((d) => d.data()).toList();
+    final list = snap.docs.map((d) => d.data()).toList();
+    list.sort((a, b) => b.date.compareTo(a.date));
+    return list;
   }
 
   Future<void> updateBookingStatus(String bookingId, String status) async {

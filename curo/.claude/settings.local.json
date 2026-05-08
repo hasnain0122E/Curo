@@ -44,7 +44,10 @@
       "PowerShell(Start-Process \"chrome.exe\" -ArgumentList \"https://console.firebase.google.com/project/curo-healthcare-pk/authentication/providers\")",
       "PowerShell(Start-Process \"chrome.exe\" -ArgumentList \"https://console.firebase.google.com/project/curo-healthcare-pk/firestore/data\")",
       "Bash(echo.)",
-      "Bash(dir *)"
+      "Bash(dir *)",
+      "Bash(findstr /C:\"latlong2\")",
+      "Bash(git rm *)",
+      "Bash(git check-ignore *)"
     ]
   }
 }

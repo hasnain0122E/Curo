@@ -5,8 +5,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/curo_app_bar.dart';
-import '../models/lab_booking_models.dart';
-import '../providers/lab_booking_provider.dart';
+import '../../../data/models/booking_model.dart';
+import '../../../providers/booking_provider.dart';
 
 class MyBookingsScreen extends ConsumerStatefulWidget {
   const MyBookingsScreen({super.key});
@@ -33,45 +33,55 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final all = ref.watch(myBookingsProvider);
-    final upcoming = all
-        .where((b) => b.status == BookingStatus.upcoming)
-        .toList();
-    final past = all
-        .where((b) => b.status != BookingStatus.upcoming)
-        .toList();
+    final asyncBookings = ref.watch(userBookingsProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: CuroAppBar(
-        title: 'My Bookings',
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
-          indicatorSize: TabBarIndicatorSize.label,
-          labelStyle: AppTextStyles.labelLarge,
-          unselectedLabelStyle: AppTextStyles.labelLarge,
-          tabs: const [
-            Tab(text: 'Upcoming'),
-            Tab(text: 'Past'),
-          ],
+    return asyncBookings.when(
+      loading: () => Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CuroAppBar(title: 'My Bookings'),
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, st) => Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: CuroAppBar(title: 'My Bookings'),
+        body: Center(
+          child: Text('Could not load bookings.',
+              style: AppTextStyles.bodyMedium
+                  .copyWith(color: AppColors.textSecondary)),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _BookingsList(
-            bookings: upcoming,
-            emptyMessage: 'No upcoming bookings',
+      data: (all) {
+        final upcoming =
+            all.where((b) => b.status == 'upcoming').toList();
+        final past =
+            all.where((b) => b.status != 'upcoming').toList();
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: CuroAppBar(
+            title: 'My Bookings',
+            bottom: TabBar(
+              controller: _tabController,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicatorColor: AppColors.primary,
+              indicatorSize: TabBarIndicatorSize.label,
+              labelStyle: AppTextStyles.labelLarge,
+              unselectedLabelStyle: AppTextStyles.labelLarge,
+              tabs: const [Tab(text: 'Upcoming'), Tab(text: 'Past')],
+            ),
           ),
-          _BookingsList(
-            bookings: past,
-            emptyMessage: 'No past bookings',
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              _BookingsList(
+                  bookings: upcoming, emptyMessage: 'No upcoming bookings'),
+              _BookingsList(
+                  bookings: past, emptyMessage: 'No past bookings'),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -79,12 +89,10 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen>
 // ── Bookings List ─────────────────────────────────────────────────────────────
 
 class _BookingsList extends StatelessWidget {
-  const _BookingsList({
-    required this.bookings,
-    required this.emptyMessage,
-  });
+  const _BookingsList(
+      {required this.bookings, required this.emptyMessage});
 
-  final List<MyBooking> bookings;
+  final List<BookingModel> bookings;
   final String emptyMessage;
 
   @override
@@ -97,16 +105,13 @@ class _BookingsList extends StatelessWidget {
             const Icon(Icons.calendar_today_outlined,
                 size: 52, color: AppColors.border),
             const SizedBox(height: AppSpacing.s16),
-            Text(
-              emptyMessage,
-              style: AppTextStyles.bodyMedium
-                  .copyWith(color: AppColors.textSecondary),
-            ),
+            Text(emptyMessage,
+                style: AppTextStyles.bodyMedium
+                    .copyWith(color: AppColors.textSecondary)),
           ],
         ),
       );
     }
-
     return ListView.builder(
       padding: const EdgeInsets.all(AppSpacing.s16),
       itemCount: bookings.length,
@@ -119,12 +124,39 @@ class _BookingsList extends StatelessWidget {
 
 class _BookingCard extends StatelessWidget {
   const _BookingCard({required this.booking});
+  final BookingModel booking;
 
-  final MyBooking booking;
+  static const _labColors = [
+    Color(0xFF1A5276),
+    Color(0xFF154360),
+    Color(0xFF0B5345),
+    Color(0xFF4A235A),
+    Color(0xFF1B4F72),
+    Color(0xFF6E2F0A),
+  ];
+
+  Color _labColor() {
+    final index = booking.labId.hashCode.abs() % _labColors.length;
+    return _labColors[index];
+  }
+
+  Color _statusColor() => switch (booking.status) {
+        'upcoming' => AppColors.primary,
+        'completed' => AppColors.success,
+        _ => AppColors.textSecondary,
+      };
+
+  String _statusLabel() => switch (booking.status) {
+        'upcoming' => 'Upcoming',
+        'completed' => 'Completed',
+        _ => 'Cancelled',
+      };
 
   @override
   Widget build(BuildContext context) {
     final dateFmt = DateFormat('EEE, d MMM yyyy');
+    final color = _labColor();
+    final statusColor = _statusColor();
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.s12),
@@ -140,57 +172,49 @@ class _BookingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Lab avatar
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: booking.labColor,
+                  color: color,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.science_rounded,
                     color: Colors.white, size: 22),
               ),
               const SizedBox(width: AppSpacing.s12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(booking.labName, style: AppTextStyles.labelLarge),
                     const SizedBox(height: 2),
-                    Text(
-                      booking.testName,
-                      style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary),
-                    ),
+                    Text(booking.testName,
+                        style: AppTextStyles.bodySmall
+                            .copyWith(color: AppColors.textSecondary)),
                   ],
                 ),
               ),
-
-              // Status chip
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: booking.status.color.withValues(alpha: 0.12),
+                  color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppRadius.r24),
                 ),
                 child: Text(
-                  booking.status.label,
+                  _statusLabel(),
                   style: AppTextStyles.labelSmall.copyWith(
-                    color: booking.status.color,
+                    color: statusColor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: AppSpacing.s12),
           const Divider(height: 1, color: AppColors.border),
           const SizedBox(height: AppSpacing.s12),
-
           Row(
             children: [
               _DetailItem(
@@ -204,7 +228,7 @@ class _BookingCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '₨ ${booking.priceRs}',
+                'Rs ${booking.priceRs}',
                 style: AppTextStyles.labelLarge.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w700,
@@ -220,7 +244,6 @@ class _BookingCard extends StatelessWidget {
 
 class _DetailItem extends StatelessWidget {
   const _DetailItem({required this.icon, required this.text});
-
   final IconData icon;
   final String text;
 

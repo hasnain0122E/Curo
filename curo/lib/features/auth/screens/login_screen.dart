@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/curo_button.dart';
+import '../../../core/widgets/curo_input_field.dart';
 import '../../../core/router/app_router.dart';
 import '../providers/auth_provider.dart';
 
@@ -18,31 +18,41 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _sendOtp() async {
+  Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
-    final phone = '+92${_phoneController.text.trim()}';
-    ref.read(authProvider.notifier).setPhone(phone);
-    await ref.read(authProvider.notifier).sendOtp();
-    if (mounted) context.push(AppRoutes.otp, extra: phone);
+    final ok = await ref.read(authProvider.notifier).signInWithEmail(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+    if (ok && mounted) context.go(AppRoutes.home);
+  }
+
+  Future<void> _googleSignIn() async {
+    final ok = await ref.read(authProvider.notifier).signInWithGoogle();
+    if (ok && mounted) context.go(AppRoutes.home);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(authProvider).isLoading;
+    final authState = ref.watch(authProvider);
+    final isLoading = authState.isLoading;
+    final error = authState.error;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Top cyan blob decoration
+          // Decorative blobs
           Positioned(
             top: -80,
             left: -60,
@@ -70,7 +80,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -79,11 +90,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: AppSpacing.s48),
 
                     // Logo
-                    _LoginLogo(),
+                    _AuthLogo(size: 80, radius: 22, fontSize: 46),
                     const SizedBox(height: AppSpacing.s24),
 
                     // Title
-                    Text('Welcome Back 👋', style: AppTextStyles.h1),
+                    Text('Welcome Back', style: AppTextStyles.h1),
                     const SizedBox(height: AppSpacing.s8),
                     Text(
                       'Log in to access your health dashboard',
@@ -94,33 +105,67 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: AppSpacing.s32),
 
-                    // Phone input
-                    _LoginPhoneField(controller: _phoneController),
+                    // Error banner
+                    if (error != null) ...[
+                      _ErrorBanner(message: error),
+                      const SizedBox(height: AppSpacing.s16),
+                    ],
+
+                    // Email
+                    CuroInputField(
+                      label: 'Email',
+                      hint: 'your@email.com',
+                      controller: _emailController,
+                      prefixIcon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.email],
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) {
+                          return 'Email is required';
+                        }
+                        if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v.trim())) {
+                          return 'Enter a valid email address';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.s16),
+
+                    // Password
+                    CuroInputField(
+                      label: 'Password',
+                      hint: 'Enter your password',
+                      controller: _passwordController,
+                      prefixIcon: Icons.lock_outline_rounded,
+                      obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.password],
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Password is required';
+                        return null;
+                      },
+                    ),
                     const SizedBox(height: AppSpacing.s12),
 
                     // Security note
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
-                          Icons.lock_outline_rounded,
-                          size: 13,
-                          color: AppColors.textSecondary,
-                        ),
+                        const Icon(Icons.lock_outline_rounded,
+                            size: 13, color: AppColors.textSecondary),
                         const SizedBox(width: 5),
-                        Text(
-                          'Your data is secure',
-                          style: AppTextStyles.caption,
-                        ),
+                        Text('Your data is secure',
+                            style: AppTextStyles.caption),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.s24),
 
-                    // Send OTP
+                    // Sign In button
                     CuroButton(
-                      label: 'Send OTP',
+                      label: 'Sign In',
                       isLoading: isLoading,
-                      onPressed: isLoading ? null : _sendOtp,
+                      onPressed: isLoading ? null : _signIn,
                     ),
                     const SizedBox(height: AppSpacing.s24),
 
@@ -130,12 +175,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         const Expanded(child: Divider()),
                         Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.s12,
-                          ),
-                          child: Text(
-                            'OR CONTINUE WITH',
-                            style: AppTextStyles.labelSmall,
-                          ),
+                              horizontal: AppSpacing.s12),
+                          child: Text('OR CONTINUE WITH',
+                              style: AppTextStyles.labelSmall),
                         ),
                         const Expanded(child: Divider()),
                       ],
@@ -143,7 +185,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: AppSpacing.s20),
 
                     // Google button
-                    _GoogleButton(),
+                    _GoogleButton(
+                      isLoading: isLoading,
+                      onTap: isLoading ? null : _googleSignIn,
+                    ),
                     const SizedBox(height: AppSpacing.s32),
 
                     // Sign up link
@@ -180,21 +225,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
-class _LoginLogo extends StatelessWidget {
+// ── Shared auth widgets ────────────────────────────────────────────────────────
+
+class _AuthLogo extends StatelessWidget {
+  const _AuthLogo(
+      {required this.size, required this.radius, required this.fontSize});
+  final double size;
+  final double radius;
+  final double fontSize;
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 80,
-      height: 80,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         color: AppColors.primary,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(radius),
       ),
-      child: const Center(
+      child: Center(
         child: Text(
           'c',
           style: TextStyle(
-            fontSize: 46,
+            fontSize: fontSize,
             fontWeight: FontWeight.w800,
             color: Colors.white,
             height: 1.1,
@@ -205,89 +258,51 @@ class _LoginLogo extends StatelessWidget {
   }
 }
 
-class _LoginPhoneField extends StatelessWidget {
-  const _LoginPhoneField({required this.controller});
-  final TextEditingController controller;
-
-  OutlineInputBorder _border(Color color) => OutlineInputBorder(
-    borderRadius: BorderRadius.circular(AppRadius.r12),
-    borderSide: BorderSide(color: color, width: 1.5),
-  );
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.message});
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: TextInputType.phone,
-      textInputAction: TextInputAction.done,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      autofillHints: const [AutofillHints.telephoneNumberNational],
-      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
-      decoration: InputDecoration(
-        hintText: '3XX XXX XXXX',
-        hintStyle: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.textSecondary,
-        ),
-        prefixIcon: Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
-          margin: const EdgeInsets.symmetric(vertical: 10),
-          decoration: const BoxDecoration(
-            border: Border(
-              right: BorderSide(color: AppColors.border, width: 1),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+      decoration: BoxDecoration(
+        color: AppColors.danger.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppRadius.r12),
+        border: Border.all(
+            color: AppColors.danger.withValues(alpha: 0.3), width: 1),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline_rounded,
+              color: AppColors.danger, size: 18),
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(
+            child: Text(
+              message,
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.danger),
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.phone_outlined,
-                size: 18,
-                color: AppColors.textSecondary,
-              ),
-              const SizedBox(width: 6),
-              const Text('🇵🇰', style: TextStyle(fontSize: 16, height: 1.2)),
-              const SizedBox(width: AppSpacing.s4),
-              Text(
-                '+92',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-        ),
-        prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-        constraints: const BoxConstraints(minHeight: 52),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s16,
-          vertical: 14,
-        ),
-        filled: true,
-        fillColor: AppColors.surface,
-        border: _border(AppColors.border),
-        enabledBorder: _border(AppColors.border),
-        focusedBorder: _border(AppColors.primary),
-        errorBorder: _border(AppColors.danger),
-        focusedErrorBorder: _border(AppColors.danger),
-        errorStyle: AppTextStyles.caption.copyWith(color: AppColors.danger),
+        ],
       ),
-      validator: (v) {
-        if (v == null || v.isEmpty) return 'Phone number is required';
-        if (v.length < 10) return 'Enter a valid Pakistani number';
-        return null;
-      },
     );
   }
 }
 
 class _GoogleButton extends StatelessWidget {
+  const _GoogleButton({required this.onTap, required this.isLoading});
+  final VoidCallback? onTap;
+  final bool isLoading;
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 52,
       width: double.infinity,
       child: OutlinedButton(
-        onPressed: () {},
+        onPressed: onTap,
         style: OutlinedButton.styleFrom(
           backgroundColor: AppColors.surface,
           foregroundColor: AppColors.textPrimary,
@@ -300,13 +315,12 @@ class _GoogleButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _GoogleG(),
+            const _GoogleG(),
             const SizedBox(width: 10),
             Text(
               'Continue with Google',
-              style: AppTextStyles.button.copyWith(
-                color: AppColors.textPrimary,
-              ),
+              style:
+                  AppTextStyles.button.copyWith(color: AppColors.textPrimary),
             ),
           ],
         ),
@@ -316,6 +330,8 @@ class _GoogleButton extends StatelessWidget {
 }
 
 class _GoogleG extends StatelessWidget {
+  const _GoogleG();
+
   @override
   Widget build(BuildContext context) {
     return const SizedBox(
@@ -350,12 +366,11 @@ class _GoogleGPainter extends CustomPainter {
     }
 
     const pi = 3.14159265;
-    drawArc(const Color(0xFF4285F4), -pi / 4, pi / 2); // Blue (right)
-    drawArc(const Color(0xFF34A853), pi / 4, pi / 2); // Green (bottom)
-    drawArc(const Color(0xFFFBBC05), 3 * pi / 4, pi / 2); // Yellow (left)
-    drawArc(const Color(0xFFEA4335), 5 * pi / 4, pi / 2); // Red (top)
+    drawArc(const Color(0xFF4285F4), -pi / 4, pi / 2);
+    drawArc(const Color(0xFF34A853), pi / 4, pi / 2);
+    drawArc(const Color(0xFFFBBC05), 3 * pi / 4, pi / 2);
+    drawArc(const Color(0xFFEA4335), 5 * pi / 4, pi / 2);
 
-    // Horizontal bar of G
     final barPaint = Paint()
       ..color = const Color(0xFF4285F4)
       ..strokeWidth = 3.5

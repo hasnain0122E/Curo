@@ -7,7 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/router/app_router.dart';
-import '../../../data/services/gemini_service.dart';
+import '../../../data/services/ml_kit_ocr_service.dart';
 import '../providers/medicine_provider.dart';
 
 class PrescriptionScannerScreen extends ConsumerStatefulWidget {
@@ -24,7 +24,6 @@ class _PrescriptionScannerScreenState
   late AnimationController _scanLine;
   late Animation<double> _scanAnim;
 
-  // Shared frame geometry (fraction of screen)
   static const _frameLeft = 0.08;
   static const _frameRight = 0.92;
   static const _frameTop = 0.20;
@@ -52,28 +51,28 @@ class _PrescriptionScannerScreenState
 
   Future<void> _capture() async {
     final picked = await ImagePicker()
-        .pickImage(source: ImageSource.camera, imageQuality: 85);
+        .pickImage(source: ImageSource.camera, imageQuality: 90);
     if (picked == null || !mounted) return;
-    await _scanAndNavigate(await picked.readAsBytes());
+    await _scanAndNavigate(picked.path);
   }
 
   Future<void> _pickFromGallery() async {
-    final picked =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+    final picked = await ImagePicker()
+        .pickImage(source: ImageSource.gallery, imageQuality: 90);
     if (picked == null || !mounted) return;
-    await _scanAndNavigate(await picked.readAsBytes());
+    await _scanAndNavigate(picked.path);
   }
 
-  Future<void> _scanAndNavigate(Uint8List bytes) async {
+  Future<void> _scanAndNavigate(String imagePath) async {
     if (!mounted) return;
-    // Show scanning state while Gemini processes the image
     ref.read(medicineProvider.notifier).loadMockScanResults();
 
-    final names = await GeminiService.scanPrescription(bytes);
+    // On-device ML Kit OCR — no network required
+    final names = await MlKitOcrService.scanPrescription(imagePath);
     if (!mounted) return;
 
     await ref.read(medicineProvider.notifier).loadScannedFromFirebase(
-          names.isNotEmpty ? names : ['Amoxicillin', 'Metformin'],
+          names.isNotEmpty ? names : ['Amoxicillin', 'Panadol', 'Brufen'],
         );
     if (!mounted) return;
     context.push(AppRoutes.medicineResults);
@@ -95,7 +94,6 @@ class _PrescriptionScannerScreenState
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Simulated dark camera background
           Container(
             decoration: const BoxDecoration(
               gradient: RadialGradient(
@@ -106,7 +104,6 @@ class _PrescriptionScannerScreenState
             ),
           ),
 
-          // Scan overlay + corner brackets
           AnimatedBuilder(
             animation: _scanAnim,
             builder: (_, _) => CustomPaint(
@@ -118,7 +115,6 @@ class _PrescriptionScannerScreenState
             ),
           ),
 
-          // Top bar
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(
@@ -151,7 +147,6 @@ class _PrescriptionScannerScreenState
             ),
           ),
 
-          // Hint pill — just above frame
           Positioned(
             top: frameRect.top - 44,
             left: 0,
@@ -182,7 +177,6 @@ class _PrescriptionScannerScreenState
             ),
           ),
 
-          // Bottom controls
           Positioned(
             bottom: 0,
             left: 0,
@@ -199,7 +193,6 @@ class _PrescriptionScannerScreenState
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Torch
                         GestureDetector(
                           onTap: () =>
                               ref.read(medicineProvider.notifier).toggleTorch(),
@@ -222,7 +215,6 @@ class _PrescriptionScannerScreenState
                           ),
                         ),
 
-                        // Capture button
                         GestureDetector(
                           onTap: _capture,
                           child: Container(
@@ -248,7 +240,6 @@ class _PrescriptionScannerScreenState
                           ),
                         ),
 
-                        // Gallery
                         GestureDetector(
                           onTap: _pickFromGallery,
                           child: Container(
@@ -266,7 +257,6 @@ class _PrescriptionScannerScreenState
                     ),
                   ),
 
-                  // Enter manually link
                   GestureDetector(
                     onTap: () {
                       ref.read(medicineProvider.notifier).loadMockScanResults();
@@ -317,7 +307,6 @@ class _ScanOverlayPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Dark overlay outside frame
     final overlayPaint = Paint()..color = Colors.black.withValues(alpha: 0.55);
     final fullPath = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
@@ -327,7 +316,6 @@ class _ScanOverlayPainter extends CustomPainter {
       overlayPaint,
     );
 
-    // Corner brackets
     const cornerLen = 26.0;
     final bracketPaint = Paint()
       ..color = AppColors.primary
@@ -335,30 +323,24 @@ class _ScanOverlayPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    // Top-left
     canvas.drawLine(frameRect.topLeft,
         frameRect.topLeft + const Offset(cornerLen, 0), bracketPaint);
     canvas.drawLine(frameRect.topLeft,
         frameRect.topLeft + const Offset(0, cornerLen), bracketPaint);
-    // Top-right
     canvas.drawLine(frameRect.topRight,
         frameRect.topRight + const Offset(-cornerLen, 0), bracketPaint);
     canvas.drawLine(frameRect.topRight,
         frameRect.topRight + const Offset(0, cornerLen), bracketPaint);
-    // Bottom-left
     canvas.drawLine(frameRect.bottomLeft,
         frameRect.bottomLeft + const Offset(cornerLen, 0), bracketPaint);
     canvas.drawLine(frameRect.bottomLeft,
         frameRect.bottomLeft + const Offset(0, -cornerLen), bracketPaint);
-    // Bottom-right
     canvas.drawLine(frameRect.bottomRight,
         frameRect.bottomRight + const Offset(-cornerLen, 0), bracketPaint);
     canvas.drawLine(frameRect.bottomRight,
         frameRect.bottomRight + const Offset(0, -cornerLen), bracketPaint);
 
-    // Animated scan line
-    final scanY =
-        frameRect.top + frameRect.height * scanProgress;
+    final scanY = frameRect.top + frameRect.height * scanProgress;
     final linePaint = Paint()
       ..shader = LinearGradient(
         colors: [

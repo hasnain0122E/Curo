@@ -1,8 +1,9 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:latlong2/latlong.dart' show LatLng;
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -19,114 +20,39 @@ class LabMapScreen extends ConsumerStatefulWidget {
 }
 
 class _LabMapScreenState extends ConsumerState<LabMapScreen> {
-  GoogleMapController? _mapController;
-  final Map<MarkerId, Marker> _markers = {};
+  final MapController _mapController = MapController();
   String? _selectedLabId;
   final DraggableScrollableController _sheetController =
       DraggableScrollableController();
 
-  static const _initialCamera = CameraPosition(
-    target: LatLng(24.8607, 67.0011),
-    zoom: 13.5,
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _buildMarkers());
-  }
+  static const _defaultCenter = LatLng(24.8607, 67.0011);
+  static const _defaultZoom = 13.5;
 
   @override
   void dispose() {
-    _mapController?.dispose();
     _sheetController.dispose();
     super.dispose();
   }
 
-  Future<void> _buildMarkers() async {
-    final labs = ref.read(allLabsProvider);
-    final ratio = MediaQuery.devicePixelRatioOf(context);
-    final newMarkers = <MarkerId, Marker>{};
-
-    for (final lab in labs) {
-      final icon = await _createPriceMarker(lab.startingPriceRs, ratio);
-      final id = MarkerId(lab.id);
-      newMarkers[id] = Marker(
-        markerId: id,
-        position: LatLng(lab.lat, lab.lng),
-        icon: icon,
-        onTap: () {
-          setState(() => _selectedLabId = lab.id);
-          _sheetController.animateTo(
-            0.48,
-            duration: const Duration(milliseconds: 320),
-            curve: Curves.easeOut,
-          );
-        },
+  Future<void> _goToMyLocation() async {
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        _mapController.move(_defaultCenter, _defaultZoom);
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
       );
+      _mapController.move(LatLng(pos.latitude, pos.longitude), 15.0);
+    } catch (_) {
+      _mapController.move(_defaultCenter, _defaultZoom);
     }
-
-    if (mounted) setState(() => _markers.addAll(newMarkers));
-  }
-
-  Future<BitmapDescriptor> _createPriceMarker(
-      int priceRs, double ratio) async {
-    const double w = 84;
-    const double bh = 34; // bubble height
-    const double ph = 10; // pointer height
-    const double r = 17.0; // corner radius
-    final double totalH = bh + ph;
-    final int pw = (w * ratio).toInt();
-    final int pTotalH = (totalH * ratio).toInt();
-
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(
-      recorder,
-      Rect.fromLTWH(0, 0, pw.toDouble(), pTotalH.toDouble()),
-    );
-    canvas.scale(ratio);
-
-    final paint = Paint()..color = AppColors.primary;
-
-    // Bubble
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, w, bh), Radius.circular(r)),
-      paint,
-    );
-
-    // Pointer triangle
-    canvas.drawPath(
-      Path()
-        ..moveTo(w / 2 - 7, bh)
-        ..lineTo(w / 2 + 7, bh)
-        ..lineTo(w / 2, totalH)
-        ..close(),
-      paint,
-    );
-
-    // Price text
-    final tp = TextPainter(
-      text: TextSpan(
-        text: '₨$priceRs',
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.2,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout(maxWidth: w);
-    tp.paint(canvas, Offset((w - tp.width) / 2, (bh - tp.height) / 2));
-
-    final picture = recorder.endRecording();
-    final img = await picture.toImage(pw, pTotalH);
-    final data = await img.toByteData(format: ui.ImageByteFormat.png);
-
-    return BitmapDescriptor.bytes(
-      data!.buffer.asUint8List(),
-      imagePixelRatio: ratio,
-    );
   }
 
   void _onNavTap(int i) {
@@ -143,28 +69,56 @@ class _LabMapScreenState extends ConsumerState<LabMapScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // ── Full-screen map ──────────────────────────────────────────────
-          GoogleMap(
-            initialCameraPosition: _initialCamera,
-            markers: Set<Marker>.of(_markers.values),
-            style: _kMapStyle,
-            onMapCreated: (ctrl) => _mapController = ctrl,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
-            compassEnabled: false,
-            mapToolbarEnabled: false,
-            onTap: (_) => setState(() => _selectedLabId = null),
+          // ── OpenStreetMap (free, no API key) ─────────────────────────────
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: _defaultCenter,
+              initialZoom: _defaultZoom,
+              onTap: (tapPos, point) => setState(() => _selectedLabId = null),
+            ),
+            children: [
+              TileLayer(
+                urlTemplate:
+                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.curo.healthcare.pk',
+                maxZoom: 19,
+              ),
+              MarkerLayer(
+                markers: labs
+                    .map(
+                      (lab) => Marker(
+                        point: LatLng(lab.lat, lab.lng),
+                        width: 84,
+                        height: 50,
+                        alignment: Alignment.bottomCenter,
+                        child: _PriceMarker(
+                          price: lab.startingPriceRs,
+                          selected: lab.id == _selectedLabId,
+                          onTap: () {
+                            setState(() => _selectedLabId = lab.id);
+                            _sheetController.animateTo(
+                              0.48,
+                              duration: const Duration(milliseconds: 320),
+                              curve: Curves.easeOut,
+                            );
+                          },
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
           ),
 
-          // ── Top overlay: search bar + filter pills ───────────────────────
+          // ── Search bar + filter pills ─────────────────────────────────────
           SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.s16, AppSpacing.s12,
-                      AppSpacing.s16, 0),
+                      AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, 0),
                   child: _SearchBar(),
                 ),
                 const SizedBox(height: AppSpacing.s8),
@@ -173,14 +127,12 @@ class _LabMapScreenState extends ConsumerState<LabMapScreen> {
             ),
           ),
 
-          // ── My-location FAB ──────────────────────────────────────────────
+          // ── My-location FAB ───────────────────────────────────────────────
           Positioned(
             right: AppSpacing.s16,
             bottom: 300,
             child: GestureDetector(
-              onTap: () => _mapController?.animateCamera(
-                CameraUpdate.newCameraPosition(_initialCamera),
-              ),
+              onTap: _goToMyLocation,
               child: Container(
                 width: 40,
                 height: 40,
@@ -195,7 +147,7 @@ class _LabMapScreenState extends ConsumerState<LabMapScreen> {
             ),
           ),
 
-          // ── Draggable bottom sheet ───────────────────────────────────────
+          // ── Draggable bottom sheet ────────────────────────────────────────
           DraggableScrollableSheet(
             controller: _sheetController,
             initialChildSize: 0.40,
@@ -211,12 +163,84 @@ class _LabMapScreenState extends ConsumerState<LabMapScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: CuroBottomNavBar(
-        currentIndex: 1,
-        onTap: _onNavTap,
+      bottomNavigationBar:
+          CuroBottomNavBar(currentIndex: 1, onTap: _onNavTap),
+    );
+  }
+}
+
+// ── Price Marker (Flutter widget — no async bitmap needed) ────────────────────
+
+class _PriceMarker extends StatelessWidget {
+  const _PriceMarker({
+    required this.price,
+    required this.selected,
+    required this.onTap,
+  });
+  final int price;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? const Color(0xFF1A9AD4) : AppColors.primary;
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(17),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.4),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              'Rs $price',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
+          CustomPaint(
+            size: const Size(14, 7),
+            painter: _TrianglePainter(color: color),
+          ),
+        ],
       ),
     );
   }
+}
+
+class _TrianglePainter extends CustomPainter {
+  const _TrianglePainter({required this.color});
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, 0)
+        ..lineTo(size.width, 0)
+        ..lineTo(size.width / 2, size.height)
+        ..close(),
+      Paint()..color = color,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_TrianglePainter old) => old.color != color;
 }
 
 // ── Search Bar ────────────────────────────────────────────────────────────────
@@ -250,11 +274,7 @@ class _SearchBar extends StatelessWidget {
               style: AppTextStyles.bodyMedium,
             ),
           ),
-          Container(
-            width: 1,
-            height: 24,
-            color: AppColors.border,
-          ),
+          Container(width: 1, height: 24, color: AppColors.border),
           const SizedBox(width: AppSpacing.s12),
           const Icon(Icons.tune_rounded,
               size: 20, color: AppColors.textPrimary),
@@ -271,26 +291,27 @@ class _FilterRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(labFilterProvider);
-
     const filters = [
       (LabFilter.all, 'All'),
       (LabFilter.nearest, 'Nearest'),
       (LabFilter.cheapest, 'Cheapest'),
       (LabFilter.highestRated, 'Highest Rated'),
     ];
-
     return SizedBox(
       height: 36,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
+        padding:
+            const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
         itemCount: filters.length,
-        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s8),
+        separatorBuilder: (_, _) =>
+            const SizedBox(width: AppSpacing.s8),
         itemBuilder: (_, i) {
           final (filter, label) = filters[i];
           final active = current == filter;
           return GestureDetector(
-            onTap: () => ref.read(labFilterProvider.notifier).set(filter),
+            onTap: () =>
+                ref.read(labFilterProvider.notifier).set(filter),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(
@@ -309,7 +330,9 @@ class _FilterRow extends ConsumerWidget {
               child: Text(
                 label,
                 style: AppTextStyles.labelMedium.copyWith(
-                  color: active ? AppColors.primary : AppColors.textSecondary,
+                  color: active
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
                 ),
               ),
             ),
@@ -328,14 +351,12 @@ class _LabListSheet extends StatelessWidget {
     required this.labs,
     this.selectedLabId,
   });
-
   final ScrollController scrollController;
   final List<LabLocation> labs;
   final String? selectedLabId;
 
   @override
   Widget build(BuildContext context) {
-    // Selected lab floats to top
     final sorted = selectedLabId != null
         ? [
             ...labs.where((l) => l.id == selectedLabId),
@@ -349,16 +370,14 @@ class _LabListSheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x1A000000),
-            blurRadius: 20,
-            offset: Offset(0, -4),
-          ),
+              color: Color(0x1A000000),
+              blurRadius: 20,
+              offset: Offset(0, -4))
         ],
       ),
       child: CustomScrollView(
         controller: scrollController,
         slivers: [
-          // Drag handle + header
           SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,18 +397,14 @@ class _LabListSheet extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.s16),
-                  child: Text(
-                    '${labs.length} labs found nearby',
-                    style: AppTextStyles.h3,
-                  ),
+                  child: Text('${labs.length} labs found nearby',
+                      style: AppTextStyles.h3),
                 ),
                 const SizedBox(height: AppSpacing.s12),
                 const Divider(height: 1, color: AppColors.border),
               ],
             ),
           ),
-
-          // Lab cards
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (_, i) => _LabListCard(
@@ -399,8 +414,8 @@ class _LabListSheet extends StatelessWidget {
               childCount: sorted.length,
             ),
           ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.s24)),
+          const SliverToBoxAdapter(
+              child: SizedBox(height: AppSpacing.s24)),
         ],
       ),
     );
@@ -433,7 +448,6 @@ class _LabListCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Avatar
             Container(
               width: 52,
               height: 52,
@@ -445,18 +459,13 @@ class _LabListCard extends StatelessWidget {
                   color: Colors.white, size: 24),
             ),
             const SizedBox(width: AppSpacing.s12),
-
-            // Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(lab.name, style: AppTextStyles.labelLarge),
                   const SizedBox(height: 2),
-                  Text(
-                    lab.address,
-                    style: AppTextStyles.bodySmall,
-                  ),
+                  Text(lab.address, style: AppTextStyles.bodySmall),
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -466,15 +475,13 @@ class _LabListCard extends StatelessWidget {
                       Text(
                         '${lab.rating} (${lab.reviewCount})',
                         style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textPrimary,
-                          fontSize: 11,
-                        ),
+                            color: AppColors.textPrimary, fontSize: 11),
                       ),
                     ],
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Starts ₨ ${lab.startingPriceRs}',
+                    'Starts Rs ${lab.startingPriceRs}',
                     style: AppTextStyles.labelSmall.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w700,
@@ -483,12 +490,11 @@ class _LabListCard extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Book button
             CuroButton(
               label: 'Book',
               width: 72,
-              onPressed: () => context.push(AppRoutes.labDetail, extra: lab),
+              onPressed: () =>
+                  context.push(AppRoutes.labDetail, extra: lab),
             ),
           ],
         ),
@@ -496,23 +502,3 @@ class _LabListCard extends StatelessWidget {
     );
   }
 }
-
-// ── Minimal map style JSON ────────────────────────────────────────────────────
-
-const _kMapStyle = '''[
-  {"featureType":"poi","elementType":"labels","stylers":[{"visibility":"off"}]},
-  {"featureType":"poi.business","stylers":[{"visibility":"off"}]},
-  {"featureType":"transit","elementType":"labels.icon","stylers":[{"visibility":"off"}]},
-  {"featureType":"road","elementType":"geometry","stylers":[{"color":"#ffffff"}]},
-  {"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#e8edf2"}]},
-  {"featureType":"road.arterial","elementType":"labels.text.fill","stylers":[{"color":"#8a9bb0"}]},
-  {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#f0f4f8"}]},
-  {"featureType":"road.highway","elementType":"geometry.stroke","stylers":[{"color":"#dbe4ed"}]},
-  {"featureType":"road.highway","elementType":"labels.text.fill","stylers":[{"color":"#6b7a8d"}]},
-  {"featureType":"road.local","elementType":"labels.text.fill","stylers":[{"color":"#9baab8"}]},
-  {"featureType":"landscape","elementType":"geometry","stylers":[{"color":"#f5f9ff"}]},
-  {"featureType":"administrative","elementType":"geometry.stroke","stylers":[{"color":"#dce5ee"}]},
-  {"featureType":"administrative.locality","elementType":"labels.text.fill","stylers":[{"color":"#4a6080"}]},
-  {"featureType":"water","elementType":"geometry","stylers":[{"color":"#c8e6f5"}]},
-  {"featureType":"water","elementType":"labels.text.fill","stylers":[{"color":"#8aabb8"}]}
-]''';

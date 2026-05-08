@@ -5,9 +5,9 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import '../../features/reports/models/report_models.dart';
 
 // ── API Key ───────────────────────────────────────────────────────────────────
-// Get your key from: https://aistudio.google.com/app/apikey
-// Then replace the string below.
-const kGeminiApiKey = 'AIzaSyB3dhpG5Nhp3FhafPW1uOYI6eQgwgTf-9w';
+// Pass at build time: flutter run --dart-define-from-file=dart_defines/secrets.json
+// See dart_defines/secrets.json.example for the required format.
+const kGeminiApiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
 
 // ── GeminiService ─────────────────────────────────────────────────────────────
 
@@ -65,23 +65,16 @@ Return ONLY a valid JSON object (no markdown, no explanation):
     required Uint8List bytes,
     required String mimeType,
   }) async {
-    if (kGeminiApiKey == 'YOUR_GEMINI_API_KEY') {
-      await Future.delayed(const Duration(seconds: 3));
-      return ReportAnalysisResult.mock;
-    }
-    try {
-      return await _withRetry(() async {
-        final res = await _model_().generateContent([
-          Content.multi([DataPart(mimeType, bytes), TextPart(_analyzePrompt)]),
-        ]);
-        final json = ReportAnalysisResult.tryParseGeminiJson(res.text ?? '');
-        return json != null
-            ? ReportAnalysisResult.fromJson(json)
-            : ReportAnalysisResult.mock;
-      });
-    } catch (_) {
-      return ReportAnalysisResult.mock;
-    }
+    return await _withRetry(() async {
+      final res = await _model_().generateContent([
+        Content.multi([DataPart(mimeType, bytes), TextPart(_analyzePrompt)]),
+      ]);
+      final text = res.text;
+      if (text == null || text.isEmpty) throw Exception('Empty response from AI.');
+      final json = ReportAnalysisResult.tryParseGeminiJson(text);
+      if (json == null) throw Exception('Could not parse AI response.');
+      return ReportAnalysisResult.fromJson(json);
+    });
   }
 
   // ── 2. Scan prescription — returns medicine names for Firebase lookup ──────
@@ -93,7 +86,7 @@ Return ONLY a valid JSON array (no markdown, no explanation):
 If no medicines are visible return an empty array [].''';
 
   static Future<List<String>> scanPrescription(Uint8List bytes) async {
-    if (kGeminiApiKey == 'YOUR_GEMINI_API_KEY') {
+    if (kGeminiApiKey.isEmpty) {
       await Future.delayed(const Duration(seconds: 2));
       return ['Amoxicillin', 'Metformin', 'Omeprazole', 'Panadol'];
     }
@@ -140,7 +133,7 @@ If no medicines are visible return an empty array [].''';
     required Map<String, dynamic> reportData,
     String language = 'en',
   }) async {
-    if (kGeminiApiKey == 'YOUR_GEMINI_API_KEY') {
+    if (kGeminiApiKey.isEmpty) {
       await Future.delayed(const Duration(seconds: 1));
       return language == 'ur'
           ? 'آپ کی رپورٹ میں زیادہ تر قدریں نارمل حد میں ہیں۔ براہ کرم اپنے ڈاکٹر سے مشورہ کریں۔'

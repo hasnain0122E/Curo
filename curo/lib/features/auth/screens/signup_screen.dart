@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
@@ -19,15 +18,17 @@ class SignupScreen extends ConsumerStatefulWidget {
 
 class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _agreedToTerms = false;
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -36,25 +37,32 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (!_agreedToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please agree to the Terms of Service.')),
+        const SnackBar(
+            content: Text('Please agree to the Terms of Service.')),
       );
       return;
     }
-    final phone = '+92${_phoneController.text.trim()}';
-    ref.read(authProvider.notifier).setPhone(phone);
-    await ref.read(authProvider.notifier).sendOtp();
-    if (mounted) context.push(AppRoutes.otp, extra: phone);
+    final ok = await ref.read(authProvider.notifier).signUpWithEmail(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+        );
+    if (ok && mounted) context.go(AppRoutes.home);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(authProvider).isLoading;
+    final authState = ref.watch(authProvider);
+    final isLoading = authState.isLoading;
+    final error = authState.error;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
+          padding:
+              const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
           child: Form(
             key: _formKey,
             child: Column(
@@ -63,11 +71,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 const SizedBox(height: AppSpacing.s32),
 
                 // Logo
-                _AuthLogo(),
+                _AuthLogo(size: 52, radius: 14, fontSize: 30),
                 const SizedBox(height: AppSpacing.s20),
 
                 // Title
-                Text('Join CURO 👋', style: AppTextStyles.h1),
+                Text('Join CURO', style: AppTextStyles.h1),
                 const SizedBox(height: AppSpacing.s8),
                 Text(
                   'Create your health account in 30 seconds',
@@ -78,21 +86,65 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 ),
                 const SizedBox(height: AppSpacing.s32),
 
-                // Full Name
-                CuroInputField(
-                  label: 'Full Name',
-                  hint: 'Enter your full name',
-                  controller: _nameController,
-                  textInputAction: TextInputAction.next,
-                  keyboardType: TextInputType.name,
-                  autofillHints: const [AutofillHints.name],
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                // Error banner
+                if (error != null) ...[
+                  _ErrorBanner(message: error),
+                  const SizedBox(height: AppSpacing.s16),
+                ],
+
+                // First Name + Last Name row
+                Row(
+                  children: [
+                    Expanded(
+                      child: CuroInputField(
+                        label: 'First Name',
+                        hint: 'Ali',
+                        controller: _firstNameController,
+                        keyboardType: TextInputType.name,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.givenName],
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Required'
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.s12),
+                    Expanded(
+                      child: CuroInputField(
+                        label: 'Last Name',
+                        hint: 'Ahmed',
+                        controller: _lastNameController,
+                        keyboardType: TextInputType.name,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.familyName],
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Required'
+                            : null,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.s16),
 
-                // Phone
-                _PhoneInputField(controller: _phoneController),
+                // Email
+                CuroInputField(
+                  label: 'Email',
+                  hint: 'your@email.com',
+                  controller: _emailController,
+                  prefixIcon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.email],
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Email is required';
+                    }
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v.trim())) {
+                      return 'Enter a valid email address';
+                    }
+                    return null;
+                  },
+                ),
                 const SizedBox(height: AppSpacing.s16),
 
                 // Password
@@ -114,17 +166,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     const Icon(Icons.check_rounded,
                         size: 14, color: AppColors.textSecondary),
                     const SizedBox(width: 5),
-                    Text(
-                      'Passwords must be 8+ characters',
-                      style: AppTextStyles.caption,
-                    ),
+                    Text('Passwords must be 8+ characters',
+                        style: AppTextStyles.caption),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.s20),
 
                 // Terms checkbox
                 GestureDetector(
-                  onTap: () => setState(() => _agreedToTerms = !_agreedToTerms),
+                  onTap: () =>
+                      setState(() => _agreedToTerms = !_agreedToTerms),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -186,10 +237,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     const Icon(Icons.lock_outline_rounded,
                         size: 13, color: AppColors.textSecondary),
                     const SizedBox(width: 5),
-                    Text(
-                      'Your data is encrypted and secure',
-                      style: AppTextStyles.caption,
-                    ),
+                    Text('Your data is encrypted and secure',
+                        style: AppTextStyles.caption),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.s24),
@@ -237,20 +286,26 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 // ── Shared auth widgets ────────────────────────────────────────────────────────
 
 class _AuthLogo extends StatelessWidget {
+  const _AuthLogo(
+      {required this.size, required this.radius, required this.fontSize});
+  final double size;
+  final double radius;
+  final double fontSize;
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 52,
-      height: 52,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         color: AppColors.primary,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(radius),
       ),
-      child: const Center(
+      child: Center(
         child: Text(
           'c',
           style: TextStyle(
-            fontSize: 30,
+            fontSize: fontSize,
             fontWeight: FontWeight.w800,
             color: Colors.white,
             height: 1.1,
@@ -261,77 +316,36 @@ class _AuthLogo extends StatelessWidget {
   }
 }
 
-class _PhoneInputField extends StatelessWidget {
-  const _PhoneInputField({required this.controller});
-  final TextEditingController controller;
-
-  OutlineInputBorder _border(Color color) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.r12),
-        borderSide: BorderSide(color: color, width: 1.5),
-      );
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.message});
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text('Phone Number', style: AppTextStyles.labelLarge),
-        const SizedBox(height: AppSpacing.s8),
-        TextFormField(
-          controller: controller,
-          keyboardType: TextInputType.phone,
-          textInputAction: TextInputAction.next,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          autofillHints: const [AutofillHints.telephoneNumberNational],
-          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
-          decoration: InputDecoration(
-            hintText: '3XX XXX XXXX',
-            hintStyle: AppTextStyles.bodyMedium
-                .copyWith(color: AppColors.textSecondary),
-            prefixIcon: Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              decoration: const BoxDecoration(
-                border: Border(
-                  right: BorderSide(color: AppColors.border, width: 1),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('🇵🇰', style: TextStyle(fontSize: 18, height: 1.2)),
-                  const SizedBox(width: AppSpacing.s4),
-                  Text(
-                    '+92',
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(color: AppColors.textPrimary),
-                  ),
-                ],
-              ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+      decoration: BoxDecoration(
+        color: AppColors.danger.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppRadius.r12),
+        border: Border.all(
+            color: AppColors.danger.withValues(alpha: 0.3), width: 1),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline_rounded,
+              color: AppColors.danger, size: 18),
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(
+            child: Text(
+              message,
+              style:
+                  AppTextStyles.bodySmall.copyWith(color: AppColors.danger),
             ),
-            prefixIconConstraints:
-                const BoxConstraints(minWidth: 0, minHeight: 0),
-            constraints: const BoxConstraints(minHeight: 52),
-            contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s16, vertical: 14),
-            filled: true,
-            fillColor: AppColors.surface,
-            border: _border(AppColors.border),
-            enabledBorder: _border(AppColors.border),
-            focusedBorder: _border(AppColors.primary),
-            errorBorder: _border(AppColors.danger),
-            focusedErrorBorder: _border(AppColors.danger),
-            errorStyle:
-                AppTextStyles.caption.copyWith(color: AppColors.danger),
           ),
-          validator: (v) {
-            if (v == null || v.isEmpty) return 'Phone number is required';
-            if (v.length < 10) return 'Enter a valid Pakistani number';
-            return null;
-          },
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

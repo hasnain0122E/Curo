@@ -14,19 +14,19 @@ class MedicineRepository {
         toFirestore: (model, _) => model.toFirestore(),
       );
 
-  /// Prefix search on medicine name (case-insensitive).
   Future<List<MedicineModel>> searchMedicines(String query) async {
     if (query.trim().isEmpty) return [];
     final lower = query.trim().toLowerCase();
+    // Append high-value char to create prefix upper bound for Firestore range query
+    final upperBound = lower + String.fromCharCode(0xf8ff);
     final snap = await _medicines
         .where('nameLower', isGreaterThanOrEqualTo: lower)
-        .where('nameLower', isLessThanOrEqualTo: '$lower')
+        .where('nameLower', isLessThanOrEqualTo: upperBound)
         .limit(10)
         .get();
     return snap.docs.map((d) => d.data()).toList();
   }
 
-  /// Fetch medicines by exact name list (used after prescription scan).
   Future<List<MedicineModel>> getMedicinesByNames(List<String> names) async {
     if (names.isEmpty) return [];
     final lower = names.map((n) => n.trim().toLowerCase()).toList();

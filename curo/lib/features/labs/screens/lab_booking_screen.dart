@@ -8,8 +8,8 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/curo_app_bar.dart';
 import '../../../core/widgets/curo_button.dart';
+import '../../../providers/booking_provider.dart';
 import '../models/lab_booking_models.dart';
-import '../providers/lab_booking_provider.dart';
 import '../providers/lab_map_provider.dart';
 
 class LabBookingScreen extends ConsumerStatefulWidget {
@@ -30,6 +30,7 @@ class _LabBookingScreenState extends ConsumerState<LabBookingScreen> {
   late DateTime _selectedDate;
   TimeSlot? _selectedSlot;
   bool _isConfirmed = false;
+  bool _isBookingLoading = false;
 
   @override
   void initState() {
@@ -37,21 +38,25 @@ class _LabBookingScreenState extends ConsumerState<LabBookingScreen> {
     _selectedDate = DateTime.now();
   }
 
-  void _confirmBooking() {
-    if (_selectedSlot == null) return;
-    final booking = MyBooking(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+  Future<void> _confirmBooking() async {
+    if (_selectedSlot == null || _isBookingLoading) return;
+    setState(() => _isBookingLoading = true);
+    final booking = await ref.read(bookingCreateProvider.notifier).createBooking(
       labId: widget.lab.id,
       labName: widget.lab.name,
-      labColor: widget.lab.avatarColor,
       testName: widget.test.name,
       date: _selectedDate,
       timeSlot: _selectedSlot!.label,
       priceRs: widget.test.priceRs,
-      status: BookingStatus.upcoming,
     );
-    ref.read(myBookingsProvider.notifier).add(booking);
-    setState(() => _isConfirmed = true);
+    if (!mounted) return;
+    if (booking != null) {
+      setState(() { _isBookingLoading = false; _isConfirmed = true; });
+    } else {
+      setState(() => _isBookingLoading = false);
+      final error = ref.read(bookingCreateProvider).error ?? 'Booking failed. Try again.';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+    }
   }
 
   @override
@@ -108,8 +113,11 @@ class _LabBookingScreenState extends ConsumerState<LabBookingScreen> {
                     child: CuroButton(
                       label: _selectedSlot == null
                           ? 'Select a Time Slot'
-                          : 'Confirm Booking  ·  ₨ ${widget.test.priceRs}',
-                      onPressed: _selectedSlot != null ? _confirmBooking : null,
+                          : 'Confirm Booking  ·  Rs ${widget.test.priceRs}',
+                      isLoading: _isBookingLoading,
+                      onPressed: (_selectedSlot != null && !_isBookingLoading)
+                          ? _confirmBooking
+                          : null,
                     ),
                   ),
                 ),
