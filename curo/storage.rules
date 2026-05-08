@@ -1,0 +1,12 @@
+// Firebase Storage is not used in this project.
+// File uploads go to Cloudinary (free 25 GB tier — no billing required).
+// Security is enforced client-side via Cloudinary unsigned upload presets
+// scoped to a specific folder per user.
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

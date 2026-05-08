@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../providers/lab_provider.dart';
 import '../models/lab_booking_models.dart';
 
 // ── Mock test catalogs per lab ─────────────────────────────────────────────────
@@ -50,19 +51,11 @@ const _aghaKhanTests = <LabTest>[
 ];
 
 const _labTestsMap = <String, List<LabTest>>{
-  '1': _apolloTests,
-  '2': _metropolisTests,
-  '3': _chughtaiTests,
-  '4': _essaTests,
-  '5': _aghaKhanTests,
-};
-
-const _openingHours = <String, String>{
-  '1': 'Mon–Sat: 7AM–10PM',
-  '2': 'Daily: 8AM–9PM',
-  '3': 'Mon–Sun: 24 Hours',
-  '4': 'Mon–Sat: 8AM–8PM',
-  '5': 'Mon–Sun: 6AM–11PM',
+  'lab_001': _apolloTests,
+  'lab_002': _chughtaiTests,
+  'lab_003': _metropolisTests,
+  'lab_004': _essaTests,
+  'lab_005': _aghaKhanTests,
 };
 
 // ── Providers ──────────────────────────────────────────────────────────────────
@@ -71,8 +64,13 @@ final labTestsProvider = Provider.family<List<LabTest>, String>((ref, labId) {
   return _labTestsMap[labId] ?? _apolloTests;
 });
 
-final labOpeningHoursProvider = Provider.family<String, String>((ref, labId) {
-  return _openingHours[labId] ?? 'Mon–Sat: 8AM–8PM';
+final labOpeningHoursProvider =
+    Provider.family<String, String>((ref, labId) {
+  final asyncLabs = ref.watch(labsStreamProvider);
+  final lab = asyncLabs.asData?.value
+      .where((l) => l.id == labId)
+      .firstOrNull;
+  return lab?.openingHours ?? 'Mon–Sat: 8AM–8PM';
 });
 
 final myBookingsProvider =
@@ -85,7 +83,7 @@ class MyBookingsNotifier extends Notifier<List<MyBooking>> {
     return [
       MyBooking(
         id: 'b1',
-        labId: '1',
+        labId: 'lab_001',
         labName: 'Apollo Diagnostics',
         labColor: const Color(0xFF1A5276),
         testName: 'Complete Blood Count',
@@ -96,9 +94,9 @@ class MyBookingsNotifier extends Notifier<List<MyBooking>> {
       ),
       MyBooking(
         id: 'b2',
-        labId: '3',
+        labId: 'lab_002',
         labName: 'Chughtai Lab',
-        labColor: const Color(0xFF0B5345),
+        labColor: const Color(0xFF154360),
         testName: 'ECG 12-Lead',
         date: now.add(const Duration(days: 3)),
         timeSlot: '10:30 AM',
@@ -107,9 +105,9 @@ class MyBookingsNotifier extends Notifier<List<MyBooking>> {
       ),
       MyBooking(
         id: 'b3',
-        labId: '2',
-        labName: 'Metropolis Lab',
-        labColor: const Color(0xFF154360),
+        labId: 'lab_003',
+        labName: 'Excel Labs',
+        labColor: const Color(0xFF0B5345),
         testName: 'Lipid Profile',
         date: now.subtract(const Duration(days: 7)),
         timeSlot: '8:30 AM',
@@ -118,7 +116,7 @@ class MyBookingsNotifier extends Notifier<List<MyBooking>> {
       ),
       MyBooking(
         id: 'b4',
-        labId: '4',
+        labId: 'lab_004',
         labName: 'Dr. Essa Laboratory',
         labColor: const Color(0xFF4A235A),
         testName: 'Blood Sugar (Fasting)',
@@ -129,8 +127,8 @@ class MyBookingsNotifier extends Notifier<List<MyBooking>> {
       ),
       MyBooking(
         id: 'b5',
-        labId: '5',
-        labName: 'Agha Khan Lab',
+        labId: 'lab_005',
+        labName: 'Aga Khan Lab',
         labColor: const Color(0xFF1B4F72),
         testName: 'Thyroid Function (TSH)',
         date: now.subtract(const Duration(days: 30)),

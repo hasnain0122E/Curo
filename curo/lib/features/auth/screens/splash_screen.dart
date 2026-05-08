@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -15,7 +16,9 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(milliseconds: 2500), () {
-      if (mounted) context.go(AppRoutes.onboarding);
+      if (!mounted) return;
+      final user = FirebaseAuth.instance.currentUser;
+      context.go(user != null ? AppRoutes.home : AppRoutes.onboarding);
     });
   }
 

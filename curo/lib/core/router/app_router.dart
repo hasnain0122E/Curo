@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/onboarding_screen.dart';
@@ -39,8 +42,46 @@ abstract final class AppRoutes {
   static const profile = '/profile';
 }
 
+// Routes accessible without authentication
+const _publicRoutes = {
+  AppRoutes.splash,
+  AppRoutes.onboarding,
+  AppRoutes.signup,
+  AppRoutes.login,
+  AppRoutes.otp,
+};
+
+// Notifier that refreshes GoRouter whenever Firebase auth state changes
+class _AuthChangeNotifier extends ChangeNotifier {
+  _AuthChangeNotifier() {
+    _sub = FirebaseAuth.instance.authStateChanges().listen((_) {
+      notifyListeners();
+    });
+  }
+  late final StreamSubscription<User?> _sub;
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
+  }
+}
+
+final _authNotifier = _AuthChangeNotifier();
+
+String? _authRedirect(BuildContext context, GoRouterState state) {
+  final isLoggedIn = FirebaseAuth.instance.currentUser != null;
+  final loc = state.matchedLocation;
+  final isPublic = _publicRoutes.contains(loc);
+
+  if (!isLoggedIn && !isPublic) return AppRoutes.login;
+  return null;
+}
+
 final appRouter = GoRouter(
   initialLocation: AppRoutes.splash,
+  refreshListenable: _authNotifier,
+  redirect: _authRedirect,
   routes: [
     GoRoute(
       path: AppRoutes.splash,

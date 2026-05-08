@@ -8,6 +8,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/curo_bottom_nav_bar.dart';
 import '../../../core/widgets/status_chip.dart';
+import '../../../providers/medipoints_provider.dart';
 import '../providers/home_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -76,11 +77,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
 // ── Header ────────────────────────────────────────────────────────────────────
 
-class _HomeHeader extends StatelessWidget {
+class _HomeHeader extends ConsumerWidget {
   const _HomeHeader();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final points = ref.watch(medipointsProvider);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -115,7 +118,7 @@ class _HomeHeader extends StatelessWidget {
             children: [
               Text('Good morning, Ali 👋', style: AppTextStyles.h3),
               const SizedBox(height: 4),
-              _MedipointsBadge(points: 240),
+              _MedipointsBadge(points: points),
             ],
           ),
         ),

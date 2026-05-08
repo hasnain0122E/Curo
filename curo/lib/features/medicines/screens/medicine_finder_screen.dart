@@ -168,8 +168,14 @@ class _MedicineFinderScreenState
             ),
           ),
 
+          // Loading indicator
+          if (state.isSearching) ...[
+            const SizedBox(height: AppSpacing.s48),
+            const Center(child: CircularProgressIndicator()),
+          ]
+
           // Comparison cards (shown when there's a result)
-          if (state.comparison != null) ...[
+          else if (state.comparison != null) ...[
             const SizedBox(height: AppSpacing.s24),
             _BrandedCard(comparison: state.comparison!),
             const SizedBox(height: AppSpacing.s4),
@@ -249,7 +255,7 @@ class _BrandedCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              _Pill(label: 'BRANDED', color: AppColors.textSecondary),
+              _Pill(label: 'FULL PRICE', color: AppColors.textSecondary),
               const SizedBox(height: 6),
               Text(
                 'Rs ${comparison.brandedPriceRs}',
@@ -342,15 +348,17 @@ class _GenericCard extends StatelessWidget {
                     Row(
                       children: [
                         _Pill(
-                            label: 'GENERIC',
+                            label: 'DISCOUNTED',
                             color: AppColors.success,
                             bgColor: const Color(0xFFF0FDF4)),
-                        const SizedBox(width: AppSpacing.s8),
-                        _Pill(
-                          label: 'SAVE ${comparison.savingsPercent}%',
-                          color: const Color(0xFFEA580C),
-                          bgColor: const Color(0xFFFFF7ED),
-                        ),
+                        if (comparison.savingsPercent > 0) ...[
+                          const SizedBox(width: AppSpacing.s8),
+                          _Pill(
+                            label: 'SAVE ${comparison.savingsPercent}%',
+                            color: const Color(0xFFEA580C),
+                            bgColor: const Color(0xFFFFF7ED),
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: AppSpacing.s8),

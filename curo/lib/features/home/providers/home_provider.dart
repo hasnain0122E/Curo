@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../core/widgets/status_chip.dart';
+import '../../../data/models/lab_model.dart';
+import '../../../data/models/report_model.dart';
+import '../../../providers/lab_provider.dart';
+import '../../../providers/report_provider.dart';
 
 enum HealthRiskLevel { low, medium, high }
 
@@ -64,60 +69,94 @@ class RecentReport {
   final Color iconColor;
 }
 
-// ── Mock providers ─────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
-final healthRiskProvider = Provider<HealthRiskData>(
-  (_) => const HealthRiskData(level: HealthRiskLevel.low, reportCount: 3),
-);
+const _avatarColors = [
+  Color(0xFF1A5276),
+  Color(0xFF154360),
+  Color(0xFF0B5345),
+  Color(0xFF4A235A),
+  Color(0xFF1B4F72),
+];
 
-final nearbyLabsProvider = Provider<List<NearbyLab>>(
-  (_) => const [
-    NearbyLab(
-      id: '1',
-      name: 'Apollo Diagnostics',
-      distanceKm: 1.2,
-      rating: 4.8,
-      fromPriceRs: 500,
-      avatarColor: Color(0xFF1A5276),
-    ),
-    NearbyLab(
-      id: '2',
-      name: 'Thyrocare Lab',
-      distanceKm: 2.5,
-      rating: 4.3,
-      fromPriceRs: 450,
-      avatarColor: Color(0xFF154360),
-    ),
-    NearbyLab(
-      id: '3',
-      name: 'Chughtai Lab',
-      distanceKm: 3.1,
-      rating: 4.6,
-      fromPriceRs: 650,
-      avatarColor: Color(0xFF0B5345),
-    ),
-  ],
-);
+const _distancesKm = [1.2, 2.5, 3.1, 3.8, 4.5];
 
-final recentReportsProvider = Provider<List<RecentReport>>(
-  (_) => const [
-    RecentReport(
-      id: '1',
-      name: 'Full Body Checkup',
-      date: 'Oct 24, 2023',
-      statusLabel: 'Normal',
-      status: StatusVariant.success,
-      icon: Icons.assignment_outlined,
-      iconColor: Color(0xFF36BDF2),
-    ),
-    RecentReport(
-      id: '2',
-      name: 'CBC & Diabetes',
-      date: 'Sep 15, 2023',
-      statusLabel: 'Normal',
-      status: StatusVariant.success,
-      icon: Icons.monitor_heart_outlined,
-      iconColor: Color(0xFF36BDF2),
-    ),
-  ],
-);
+NearbyLab _toNearbyLab(LabModel lab, int index) => NearbyLab(
+      id: lab.id,
+      name: lab.name,
+      distanceKm: _distancesKm[index % _distancesKm.length],
+      rating: lab.rating,
+      fromPriceRs: lab.startingPriceRs,
+      avatarColor: _avatarColors[index % _avatarColors.length],
+    );
+
+RecentReport _toRecentReport(ReportModel r) {
+  final summary = r.aiSummary?.toLowerCase() ?? '';
+  StatusVariant variant;
+  String label;
+  if (summary.contains('critical') || summary.contains('abnormal')) {
+    variant = StatusVariant.danger;
+    label = 'Abnormal';
+  } else if (summary.contains('attention') || summary.contains('borderline')) {
+    variant = StatusVariant.warning;
+    label = 'Review';
+  } else {
+    variant = StatusVariant.success;
+    label = 'Normal';
+  }
+
+  final IconData icon;
+  final Color iconColor;
+  switch (r.category) {
+    case 'X-Ray':
+    case 'MRI':
+      icon = Icons.medical_information_outlined;
+      iconColor = const Color(0xFF8B5CF6);
+    case 'ECG':
+      icon = Icons.monitor_heart_outlined;
+      iconColor = const Color(0xFFEF4444);
+    case 'Blood Test':
+      icon = Icons.bloodtype_outlined;
+      iconColor = const Color(0xFF36BDF2);
+    default:
+      icon = Icons.assignment_outlined;
+      iconColor = const Color(0xFF36BDF2);
+  }
+
+  return RecentReport(
+    id: r.id,
+    name: r.name,
+    date: DateFormat('MMM d, yyyy').format(r.uploadedAt),
+    statusLabel: label,
+    status: variant,
+    icon: icon,
+    iconColor: iconColor,
+  );
+}
+
+// ── Providers ──────────────────────────────────────────────────────────────────
+
+final healthRiskProvider = Provider<HealthRiskData>((ref) {
+  final reportsAsync = ref.watch(userReportsProvider);
+  final count = reportsAsync.asData?.value.length ?? 0;
+  final level = count >= 5
+      ? HealthRiskLevel.low
+      : count >= 2
+          ? HealthRiskLevel.medium
+          : HealthRiskLevel.high;
+  return HealthRiskData(level: level, reportCount: count);
+});
+
+final nearbyLabsProvider = Provider<List<NearbyLab>>((ref) {
+  final asyncLabs = ref.watch(labsStreamProvider);
+  final models = asyncLabs.asData?.value ?? [];
+  return [
+    for (int i = 0; i < models.length; i++) _toNearbyLab(models[i], i),
+  ];
+});
+
+final recentReportsProvider = Provider<List<RecentReport>>((ref) {
+  final asyncReports = ref.watch(userReportsProvider);
+  final models = asyncReports.asData?.value ?? [];
+  return models.take(3).map(_toRecentReport).toList();
+});

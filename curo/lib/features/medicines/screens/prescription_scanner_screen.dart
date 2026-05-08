@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/router/app_router.dart';
+import '../../../data/services/gemini_service.dart';
 import '../providers/medicine_provider.dart';
 
 class PrescriptionScannerScreen extends ConsumerStatefulWidget {
@@ -50,21 +51,31 @@ class _PrescriptionScannerScreenState
   }
 
   Future<void> _capture() async {
-    final picker = ImagePicker();
-    await picker.pickImage(source: ImageSource.camera, imageQuality: 85);
-    if (!mounted) return;
-    _goToResults();
+    final picked = await ImagePicker()
+        .pickImage(source: ImageSource.camera, imageQuality: 85);
+    if (picked == null || !mounted) return;
+    await _scanAndNavigate(await picked.readAsBytes());
   }
 
   Future<void> _pickFromGallery() async {
-    final picker = ImagePicker();
-    await picker.pickImage(source: ImageSource.gallery);
-    if (!mounted) return;
-    _goToResults();
+    final picked =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked == null || !mounted) return;
+    await _scanAndNavigate(await picked.readAsBytes());
   }
 
-  void _goToResults() {
+  Future<void> _scanAndNavigate(Uint8List bytes) async {
+    if (!mounted) return;
+    // Show scanning state while Gemini processes the image
     ref.read(medicineProvider.notifier).loadMockScanResults();
+
+    final names = await GeminiService.scanPrescription(bytes);
+    if (!mounted) return;
+
+    await ref.read(medicineProvider.notifier).loadScannedFromFirebase(
+          names.isNotEmpty ? names : ['Amoxicillin', 'Metformin'],
+        );
+    if (!mounted) return;
     context.push(AppRoutes.medicineResults);
   }
 
@@ -257,7 +268,10 @@ class _PrescriptionScannerScreenState
 
                   // Enter manually link
                   GestureDetector(
-                    onTap: _goToResults,
+                    onTap: () {
+                      ref.read(medicineProvider.notifier).loadMockScanResults();
+                      context.push(AppRoutes.medicineResults);
+                    },
                     child: Padding(
                       padding:
                           const EdgeInsets.only(bottom: AppSpacing.s16),

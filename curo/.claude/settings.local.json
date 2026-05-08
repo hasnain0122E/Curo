@@ -28,7 +28,23 @@
       "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; & \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\cmdline-tools\\\\latest\\\\bin\\\\sdkmanager.bat\" --version 2>&1)",
       "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; echo \"y`ny`ny`ny`ny`ny`ny`ny`n\" | & \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\cmdline-tools\\\\latest\\\\bin\\\\sdkmanager.bat\" --licenses 2>&1)",
       "PowerShell(flutter doctor *)",
-      "Bash(flutter --version)"
+      "Bash(flutter --version)",
+      "Bash(Get-ChildItem -Path \"E:\\\\SMIU\\\\SE 7B\\\\MAD\\\\CURO - MAD + AI PROJECT\\\\CURO - Low Cost HealthCare Near You\\\\curo\\\\lib\\\\data\" -Recurse -Force)",
+      "Bash(Select-Object -Property FullName, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(firebase *)",
+      "PowerShell(dart pub *)",
+      "Bash(firebase login *)",
+      "Bash(jobs -l)",
+      "PowerShell(Start-Process -FilePath \"cmd.exe\" -ArgumentList \"/k firebase login\" -WindowStyle Normal)",
+      "PowerShell(gcloud --version 2>&1 | Select-Object -First 3)",
+      "Bash(python3 -c ' *)",
+      "PowerShell(Start-Process \"chrome.exe\" -ArgumentList \"https://console.firebase.google.com/project/curo-healthcare-pk/settings/general/android:com.curo.curo\")",
+      "PowerShell(Start-Process \"chrome.exe\" -ArgumentList \"https://console.firebase.google.com/project/curo-healthcare-pk/storage\")",
+      "PowerShell(Start-Process \"chrome.exe\" -ArgumentList \"https://console.firebase.google.com/project/curo-healthcare-pk/authentication/providers\")",
+      "PowerShell(Start-Process \"chrome.exe\" -ArgumentList \"https://console.firebase.google.com/project/curo-healthcare-pk/firestore/data\")",
+      "Bash(echo.)",
+      "Bash(dir *)"
     ]
   }
 }

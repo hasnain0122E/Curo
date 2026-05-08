@@ -44,3 +44,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 claude.md
+
+# Firebase service account — never commit
+scripts/serviceAccountKey.json
+scripts/*firebase-adminsdk*.json

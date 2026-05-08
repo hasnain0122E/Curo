@@ -62,9 +62,10 @@ class MedicineState {
   const MedicineState({
     this.scannedMedicines = const [],
     this.comparison,
-    this.recentSearches = const ['Panadol', 'Augmentin', 'Ibuprofen', 'Amoxil'],
+    this.recentSearches = const ['Panadol', 'Augmentin', 'Brufen', 'Amoxil'],
     this.searchQuery = '',
     this.hasTorch = false,
+    this.isSearching = false,
   });
 
   final List<ScannedMedicine> scannedMedicines;
@@ -72,6 +73,7 @@ class MedicineState {
   final List<String> recentSearches;
   final String searchQuery;
   final bool hasTorch;
+  final bool isSearching;
 
   int get includedCount => scannedMedicines.where((m) => m.isIncluded).length;
   int get unclearCount => scannedMedicines.where((m) => m.isUnclear).length;
@@ -83,6 +85,7 @@ class MedicineState {
     List<String>? recentSearches,
     String? searchQuery,
     bool? hasTorch,
+    bool? isSearching,
   }) =>
       MedicineState(
         scannedMedicines: scannedMedicines ?? this.scannedMedicines,
@@ -91,5 +94,6 @@ class MedicineState {
         recentSearches: recentSearches ?? this.recentSearches,
         searchQuery: searchQuery ?? this.searchQuery,
         hasTorch: hasTorch ?? this.hasTorch,
+        isSearching: isSearching ?? this.isSearching,
       );
 }

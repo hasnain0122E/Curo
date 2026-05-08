@@ -102,10 +102,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.lock_outline_rounded,
-                            size: 13, color: AppColors.textSecondary),
+                        const Icon(
+                          Icons.lock_outline_rounded,
+                          size: 13,
+                          color: AppColors.textSecondary,
+                        ),
                         const SizedBox(width: 5),
-                        Text('Your data is secure', style: AppTextStyles.caption),
+                        Text(
+                          'Your data is secure',
+                          style: AppTextStyles.caption,
+                        ),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.s24),
@@ -124,7 +130,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         const Expanded(child: Divider()),
                         Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.s12),
+                            horizontal: AppSpacing.s12,
+                          ),
                           child: Text(
                             'OR CONTINUE WITH',
                             style: AppTextStyles.labelSmall,
@@ -203,9 +210,9 @@ class _LoginPhoneField extends StatelessWidget {
   final TextEditingController controller;
 
   OutlineInputBorder _border(Color color) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.r12),
-        borderSide: BorderSide(color: color, width: 1.5),
-      );
+    borderRadius: BorderRadius.circular(AppRadius.r12),
+    borderSide: BorderSide(color: color, width: 1.5),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -218,8 +225,9 @@ class _LoginPhoneField extends StatelessWidget {
       style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
       decoration: InputDecoration(
         hintText: '3XX XXX XXXX',
-        hintStyle:
-            AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+        hintStyle: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.textSecondary,
+        ),
         prefixIcon: Container(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
           margin: const EdgeInsets.symmetric(vertical: 10),
@@ -231,15 +239,19 @@ class _LoginPhoneField extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.phone_outlined,
-                  size: 18, color: AppColors.textSecondary),
+              const Icon(
+                Icons.phone_outlined,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: 6),
               const Text('🇵🇰', style: TextStyle(fontSize: 16, height: 1.2)),
               const SizedBox(width: AppSpacing.s4),
               Text(
                 '+92',
-                style: AppTextStyles.bodyMedium
-                    .copyWith(color: AppColors.textPrimary),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textPrimary,
+                ),
               ),
             ],
           ),
@@ -247,7 +259,9 @@ class _LoginPhoneField extends StatelessWidget {
         prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
         constraints: const BoxConstraints(minHeight: 52),
         contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s16, vertical: 14),
+          horizontal: AppSpacing.s16,
+          vertical: 14,
+        ),
         filled: true,
         fillColor: AppColors.surface,
         border: _border(AppColors.border),
@@ -273,9 +287,7 @@ class _GoogleButton extends StatelessWidget {
       height: 52,
       width: double.infinity,
       child: OutlinedButton(
-        onPressed: () {
-          // TODO: Google Sign-In
-        },
+        onPressed: () {},
         style: OutlinedButton.styleFrom(
           backgroundColor: AppColors.surface,
           foregroundColor: AppColors.textPrimary,
@@ -338,24 +350,19 @@ class _GoogleGPainter extends CustomPainter {
     }
 
     const pi = 3.14159265;
-    drawArc(const Color(0xFF4285F4), -pi / 4, pi / 2);        // Blue (right)
-    drawArc(const Color(0xFF34A853), pi / 4, pi / 2);         // Green (bottom)
-    drawArc(const Color(0xFFFBBC05), 3 * pi / 4, pi / 2);     // Yellow (left)
-    drawArc(const Color(0xFFEA4335), 5 * pi / 4, pi / 2);     // Red (top)
+    drawArc(const Color(0xFF4285F4), -pi / 4, pi / 2); // Blue (right)
+    drawArc(const Color(0xFF34A853), pi / 4, pi / 2); // Green (bottom)
+    drawArc(const Color(0xFFFBBC05), 3 * pi / 4, pi / 2); // Yellow (left)
+    drawArc(const Color(0xFFEA4335), 5 * pi / 4, pi / 2); // Red (top)
 
     // Horizontal bar of G
     final barPaint = Paint()
       ..color = const Color(0xFF4285F4)
       ..strokeWidth = 3.5
       ..strokeCap = StrokeCap.round;
-    canvas.drawLine(
-      Offset(cx, cy),
-      Offset(size.width, cy),
-      barPaint,
-    );
+    canvas.drawLine(Offset(cx, cy), Offset(size.width, cy), barPaint);
   }
 
   @override
   bool shouldRepaint(_GoogleGPainter old) => false;
 }
-
