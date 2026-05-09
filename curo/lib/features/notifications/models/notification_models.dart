@@ -1,3 +1,5 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
+
 enum NotifType { labResult, booking, aiTrend, medicine }
 
 class AppNotification {
@@ -25,4 +27,32 @@ class AppNotification {
         time: time,
         isRead: isRead ?? this.isRead,
       );
+
+  /// Converts an FCM [RemoteMessage] into an [AppNotification].
+  ///
+  /// Expected FCM data payload:
+  /// ```json
+  /// { "type": "labResult" | "booking" | "aiTrend" | "medicine" }
+  /// ```
+  factory AppNotification.fromRemoteMessage(RemoteMessage message) {
+    final data  = message.data;
+    final notif = message.notification;
+
+    final typeStr = data['type'] as String? ?? '';
+    final type = switch (typeStr) {
+      'booking'   => NotifType.booking,
+      'aiTrend'   => NotifType.aiTrend,
+      'medicine'  => NotifType.medicine,
+      _           => NotifType.labResult,
+    };
+
+    return AppNotification(
+      id:    message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      type:  type,
+      title: notif?.title ?? data['title'] as String? ?? 'CURO',
+      body:  notif?.body  ?? data['body']  as String? ?? '',
+      time:  message.sentTime ?? DateTime.now(),
+      isRead: false,
+    );
+  }
 }

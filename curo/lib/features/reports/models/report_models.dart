@@ -170,51 +170,6 @@ class ReportAnalysisResult {
     );
   }
 
-  static ReportAnalysisResult get mock => const ReportAnalysisResult(
-        meta: ReportMeta(
-          patientName: 'Ali Ahmed',
-          labName: 'Chughtai Lab',
-          date: 'Oct 12, 2023',
-        ),
-        summary: AiSummary(
-          headline: 'Review Required',
-          body: 'Most markers are within range, but your Blood Sugar levels '
-              'require clinical attention.',
-          testsAnalyzed: 3,
-          criticalAlerts: 1,
-        ),
-        results: [
-          LabResult(
-            testName: 'Hemoglobin',
-            value: 14.2,
-            unit: 'g/dL',
-            refRangeLow: 13.5,
-            refRangeHigh: 17.5,
-            status: LabStatus.normal,
-          ),
-          LabResult(
-            testName: 'Blood Sugar (Fasting)',
-            value: 126,
-            unit: 'mg/dL',
-            refRangeLow: 70,
-            refRangeHigh: 100,
-            status: LabStatus.high,
-            aiExplanation:
-                'Your fasting sugar is elevated, which may indicate '
-                'pre-diabetes. Consult your doctor for a HbA1c screening.',
-            learnMoreTopic: 'Diabetes',
-          ),
-          LabResult(
-            testName: 'White Blood Cell Count',
-            value: 7.8,
-            unit: 'x10⁹/L',
-            refRangeLow: 4.5,
-            refRangeHigh: 11.0,
-            status: LabStatus.normal,
-          ),
-        ],
-      );
-
   // Strips markdown code fences and locates the first JSON object.
   static Map<String, dynamic>? tryParseGeminiJson(String raw) {
     try {

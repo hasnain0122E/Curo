@@ -1,39 +1,53 @@
 rules_version = '2';
-
+// ─────────────────────────────────────────────────────────────────────────────
+// CURO – Firestore Security Rules
+//
+// HOW TO APPLY:
+//   Firebase Console → Firestore Database → Rules tab → paste this → Publish
+// ─────────────────────────────────────────────────────────────────────────────
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users: only the owner can read/write their own document
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // ── Helper functions ────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
     }
 
-    // Labs: publicly readable, only admins write (server-side only)
+    // ── Shared read-only catalogs ───────────────────────────────────────────
+    // labs, pharmacies: create allowed so the client-side seeder can run on
+    // first launch. update/delete are blocked so users cannot tamper with data.
     match /labs/{labId} {
-      allow read: if true;
-      allow write: if false;
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
 
-    // Bookings: users can read/write only their own
-    match /bookings/{bookingId} {
-      allow read, write: if request.auth != null
-        && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.userId;
+    match /pharmacies/{pharmacyId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
 
-    // Reports: private per user
-    match /reports/{reportId} {
-      allow read, write: if request.auth != null
-        && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.userId;
-    }
-
-    // Medicines: publicly readable, only admins write (server-side only)
+    // medicines was seeded via Node.js Admin SDK - no client writes needed
     match /medicines/{medicineId} {
-      allow read: if true;
+      allow read:  if isSignedIn();
       allow write: if false;
+    }
+
+    // ── Per-user data (strict isolation) ───────────────────────────────────
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      match /reports/{reportId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /bookings/{bookingId} {
+        allow read, write: if isOwner(userId);
+      }
     }
   }
 }

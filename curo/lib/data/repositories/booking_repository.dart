@@ -7,7 +7,10 @@ class BookingRepository {
 
   final FirebaseFirestore _firestore;
 
-  CollectionReference<BookingModel> get _bookings => _firestore
+  /// Subcollection path: users/{uid}/bookings
+  CollectionReference<BookingModel> _bookingsOf(String userId) => _firestore
+      .collection('users')
+      .doc(userId)
       .collection('bookings')
       .withConverter<BookingModel>(
         fromFirestore: (snap, _) => BookingModel.fromFirestore(snap),
@@ -23,7 +26,7 @@ class BookingRepository {
     required String timeSlot,
     required int priceRs,
   }) async {
-    final docRef = _bookings.doc();
+    final docRef = _bookingsOf(userId).doc();
     final booking = BookingModel(
       id: docRef.id,
       userId: userId,
@@ -41,29 +44,28 @@ class BookingRepository {
   }
 
   Stream<List<BookingModel>> watchUserBookings(String userId) {
-    return _bookings
-        .where('userId', isEqualTo: userId)
-        .snapshots()
-        .map((snap) {
-          final list = snap.docs.map((d) => d.data()).toList();
-          list.sort((a, b) => b.date.compareTo(a.date));
-          return list;
-        });
+    return _bookingsOf(userId).snapshots().map((snap) {
+      final list = snap.docs.map((d) => d.data()).toList();
+      list.sort((a, b) => b.date.compareTo(a.date));
+      return list;
+    });
   }
 
   Future<List<BookingModel>> getUserBookings(String userId) async {
-    final snap = await _bookings
-        .where('userId', isEqualTo: userId)
-        .get();
+    final snap = await _bookingsOf(userId).get();
     final list = snap.docs.map((d) => d.data()).toList();
     list.sort((a, b) => b.date.compareTo(a.date));
     return list;
   }
 
-  Future<void> updateBookingStatus(String bookingId, String status) async {
-    await _bookings.doc(bookingId).update({'status': status});
+  Future<void> updateBookingStatus(
+    String userId,
+    String bookingId,
+    String status,
+  ) async {
+    await _bookingsOf(userId).doc(bookingId).update({'status': status});
   }
 
-  Future<void> cancelBooking(String bookingId) =>
-      updateBookingStatus(bookingId, 'cancelled');
+  Future<void> cancelBooking(String userId, String bookingId) =>
+      updateBookingStatus(userId, bookingId, 'cancelled');
 }

@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../providers/report_provider.dart' as global;
 import '../models/report_models.dart';
 import '../services/gemini_report_service.dart';
 
@@ -54,20 +55,24 @@ class ReportNotifier extends Notifier<ReportState> {
       processingStep: 0,
     );
 
-    // Step 1 — uploading
-    await Future.delayed(const Duration(milliseconds: 800));
+    // Step 1 — uploading to Cloudinary
+    await Future.delayed(const Duration(milliseconds: 400));
     state = state.copyWith(processingStep: 1);
 
-    // Step 2 — reading values
-    await Future.delayed(const Duration(milliseconds: 700));
+    // Step 2 — reading values with Gemini
+    await Future.delayed(const Duration(milliseconds: 400));
     state = state.copyWith(processingStep: 2);
 
-    // Step 3 — AI analysis (actual API call)
+    // Step 3 — actual AI analysis
     try {
       final result = await GeminiReportService.analyze(
         fileBytes: state.fileBytes!,
         mimeType: state.mimeType ?? 'image/jpeg',
       );
+
+      // Step 4 — save to Cloudinary + Firestore in background
+      _persistReport(result);
+
       state = state.copyWith(
         phase: ReportScreenPhase.results,
         results: result.results,
@@ -79,9 +84,58 @@ class ReportNotifier extends Notifier<ReportState> {
     } catch (e) {
       state = state.copyWith(
         phase: ReportScreenPhase.error,
-        error: 'Analysis failed. Please try again.',
+        error: _friendlyError(e),
       );
     }
+  }
+
+  void _persistReport(ReportAnalysisResult result) {
+    final bytes = state.fileBytes;
+    final filename = state.fileName ?? 'report';
+    if (bytes == null) return;
+
+    // Derive a human-readable category from the Gemini result
+    final name = result.meta.patientName != 'Patient'
+        ? '${result.meta.labName} – ${result.meta.date}'
+        : filename;
+    const category = 'Blood Test'; // default; UI can improve this
+
+    final analysisJson = <String, dynamic>{
+      'patientName': result.meta.patientName,
+      'labName': result.meta.labName,
+      'date': result.meta.date,
+      'summaryHeadline': result.summary.headline,
+      'summary': result.summary.body,
+      'criticalAlerts': result.summary.criticalAlerts,
+      'results': result.results.map((r) => {
+        'testName': r.testName,
+        'value': r.value,
+        'unit': r.unit,
+        'refRangeLow': r.refRangeLow,
+        'refRangeHigh': r.refRangeHigh,
+        'status': r.status.name,
+        'aiExplanation': r.aiExplanation,
+        'learnMoreTopic': r.learnMoreTopic,
+      }).toList(),
+    };
+
+    ref.read(global.reportUploadProvider.notifier).uploadBytes(
+      bytes: bytes,
+      filename: filename,
+      name: name,
+      category: category,
+      aiSummary: result.summary.headline,
+      analysisJson: analysisJson,
+    );
+  }
+
+  String _friendlyError(Object e) {
+    final msg = e.toString();
+    if (msg.contains('API key')) return 'AI service is not configured. Contact support.';
+    if (msg.contains('timeout') || msg.contains('TimeoutException')) {
+      return 'Analysis timed out. Please try again.';
+    }
+    return 'Analysis failed. Please try again.';
   }
 
   void toggleExpanded(int index) {

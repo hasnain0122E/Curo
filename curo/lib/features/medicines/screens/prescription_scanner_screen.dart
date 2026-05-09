@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/router/app_router.dart';
+import '../../../data/services/gemini_service.dart';
 import '../../../data/services/ml_kit_ocr_service.dart';
 import '../providers/medicine_provider.dart';
 
@@ -63,19 +65,43 @@ class _PrescriptionScannerScreenState
     await _scanAndNavigate(picked.path);
   }
 
+  bool _isScanning = false;
+
   Future<void> _scanAndNavigate(String imagePath) async {
-    if (!mounted) return;
-    ref.read(medicineProvider.notifier).loadMockScanResults();
+    if (!mounted || _isScanning) return;
+    setState(() => _isScanning = true);
 
-    // On-device ML Kit OCR — no network required
-    final names = await MlKitOcrService.scanPrescription(imagePath);
-    if (!mounted) return;
+    try {
+      // Step 1: On-device ML Kit OCR (no network needed)
+      final ocrNames = await MlKitOcrService.scanPrescription(imagePath);
 
-    await ref.read(medicineProvider.notifier).loadScannedFromFirebase(
-          names.isNotEmpty ? names : ['Amoxicillin', 'Panadol', 'Brufen'],
-        );
-    if (!mounted) return;
-    context.push(AppRoutes.medicineResults);
+      if (!mounted) return;
+
+      List<String> finalNames = ocrNames;
+
+      // Step 2: Gemini gives better structured extraction when API key present
+      if (kGeminiApiKey.isNotEmpty) {
+        try {
+          final bytes = await File(imagePath).readAsBytes();
+          final geminiNames = await GeminiService.scanPrescription(bytes);
+          if (geminiNames.isNotEmpty) finalNames = geminiNames;
+        } catch (_) {
+          // Gemini failed — use OCR result
+        }
+      }
+
+      if (!mounted) return;
+
+      // Step 3: Firebase medicines lookup
+      await ref
+          .read(medicineProvider.notifier)
+          .loadScannedFromFirebase(finalNames);
+
+      if (!mounted) return;
+      context.push(AppRoutes.medicineResults);
+    } finally {
+      if (mounted) setState(() => _isScanning = false);
+    }
   }
 
   @override
@@ -103,6 +129,24 @@ class _PrescriptionScannerScreenState
               ),
             ),
           ),
+
+          if (_isScanning)
+            Container(
+              color: Colors.black.withValues(alpha: 0.65),
+              child: const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: AppColors.primary),
+                    SizedBox(height: 16),
+                    Text(
+                      'Scanning prescription…',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
           AnimatedBuilder(
             animation: _scanAnim,
@@ -259,7 +303,8 @@ class _PrescriptionScannerScreenState
 
                   GestureDetector(
                     onTap: () {
-                      ref.read(medicineProvider.notifier).loadMockScanResults();
+                      // Clear scan state; user will add medicines manually
+                      ref.read(medicineProvider.notifier).setScannedNames([]);
                       context.push(AppRoutes.medicineResults);
                     },
                     child: Padding(

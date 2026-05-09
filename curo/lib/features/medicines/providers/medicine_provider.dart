@@ -8,17 +8,17 @@ import '../models/medicine_models.dart';
 MedicineComparison _toComparison(MedicineModel m) {
   final hasDiscount = m.hasDiscount;
   return MedicineComparison(
-    brandedName:    m.name,
-    brandedMaker:   m.manufacturer,
-    brandedForm:    m.packSize.isNotEmpty ? m.packSize : '–',
+    brandedName: m.name,
+    brandedMaker: m.manufacturer,
+    brandedForm: m.packSize.isNotEmpty ? m.packSize : '–',
     brandedPriceRs: m.priceBeforeRs,
-    genericName:    m.name,
-    genericDesc:    hasDiscount
+    genericName: m.name,
+    genericDesc: hasDiscount
         ? '${m.discountPercent}% discount applied\nSame medicine at reduced price'
         : 'Standard price\nNo discount currently available',
     genericPriceRs: m.priceAfterRs,
     savingsPercent: m.discountPercent,
-    pharmacyCount:  10 + (m.name.codeUnitAt(0) % 15),
+    pharmacyCount: 10 + (m.name.codeUnitAt(0) % 15),
   );
 }
 
@@ -26,11 +26,11 @@ List<ScannedMedicine> _buildScanned(List<MedicineModel> models) =>
     models.asMap().entries.map((e) {
       final m = e.value;
       return ScannedMedicine(
-        id:           '${e.key}',
-        name:         m.name,
+        id: '${e.key}',
+        name: m.name,
         genericLabel: '${m.name.toUpperCase()} · ${m.packSize}',
-        isIncluded:   true,
-        isUnclear:    false,
+        isIncluded: true,
+        isUnclear: false,
       );
     }).toList();
 
@@ -43,7 +43,8 @@ class MedicineNotifier extends Notifier<MedicineState> {
   Future<void> searchMedicine(String query) async {
     final q = query.trim();
     if (q.isEmpty) {
-      state = state.copyWith(searchQuery: '', clearComparison: true, isSearching: false);
+      state = state.copyWith(
+          searchQuery: '', clearComparison: true, isSearching: false);
       return;
     }
 
@@ -53,9 +54,9 @@ class MedicineNotifier extends Notifier<MedicineState> {
     ].take(5).toList();
 
     state = state.copyWith(
-      searchQuery:    q,
+      searchQuery: q,
       recentSearches: recent,
-      isSearching:    true,
+      isSearching: true,
       clearComparison: true,
     );
 
@@ -67,7 +68,7 @@ class MedicineNotifier extends Notifier<MedicineState> {
       } else {
         state = state.copyWith(
           isSearching: false,
-          comparison:  _toComparison(results.first),
+          comparison: _toComparison(results.first),
         );
       }
     } catch (_) {
@@ -76,9 +77,6 @@ class MedicineNotifier extends Notifier<MedicineState> {
   }
 
   void selectRecent(String label) => searchMedicine(label);
-
-  void loadMockScanResults() =>
-      state = state.copyWith(scannedMedicines: _buildMockScanned());
 
   void toggleIncluded(String id) {
     final updated = state.scannedMedicines.map((m) {
@@ -112,44 +110,47 @@ class MedicineNotifier extends Notifier<MedicineState> {
     ]);
   }
 
+  /// Loads scanned medicines from Firebase lookup by name.
+  /// Shows empty list (not mock data) when Firebase returns nothing.
   Future<void> loadScannedFromFirebase(List<String> names) async {
+    if (names.isEmpty) {
+      state = state.copyWith(scannedMedicines: []);
+      return;
+    }
     state = state.copyWith(isSearching: true);
     try {
       final results =
           await ref.read(medicineRepositoryProvider).getMedicinesByNames(names);
-      final scanned = results.isNotEmpty
-          ? _buildScanned(results)
-          : _buildMockScanned();
-      state = state.copyWith(isSearching: false, scannedMedicines: scanned);
+      state = state.copyWith(
+        isSearching: false,
+        scannedMedicines: _buildScanned(results),
+      );
     } catch (_) {
-      state = state.copyWith(isSearching: false, scannedMedicines: _buildMockScanned());
+      state = state.copyWith(isSearching: false, scannedMedicines: []);
     }
   }
 
+  /// Sets scanned medicines directly (e.g. names from OCR before Firebase lookup).
+  void setScannedNames(List<String> names) {
+    final medicines = names
+        .asMap()
+        .entries
+        .map((e) => ScannedMedicine(
+              id: '${e.key}',
+              name: e.value,
+              genericLabel: e.value.toUpperCase(),
+              isIncluded: true,
+              isUnclear: false,
+            ))
+        .toList();
+    state = state.copyWith(scannedMedicines: medicines);
+  }
+
   void toggleTorch() => state = state.copyWith(hasTorch: !state.hasTorch);
-  void resetSearch() => state = state.copyWith(searchQuery: '', clearComparison: true);
+  void resetSearch() =>
+      state = state.copyWith(searchQuery: '', clearComparison: true);
   void resetAll() => state = const MedicineState();
 }
 
 final medicineProvider =
     NotifierProvider<MedicineNotifier, MedicineState>(MedicineNotifier.new);
-
-// ── Mock scan data (fallback when Firebase returns nothing) ────────────────────
-
-List<ScannedMedicine> _buildMockScanned() => [
-      ScannedMedicine(id: '1', name: 'Amoxicillin 500mg',
-          genericLabel: 'AMOXICILLIN CAP 500MG', frequency: '3x daily',
-          isIncluded: true, isUnclear: false),
-      ScannedMedicine(id: '2', name: 'Lisinopril 10mg',
-          genericLabel: 'LISINOPRIL TAB 10MG (UNCLEAR)', frequency: '1x daily',
-          isIncluded: true, isUnclear: true),
-      ScannedMedicine(id: '3', name: 'Metformin 850mg',
-          genericLabel: 'METFORMIN HCL 850MG', frequency: '2x daily',
-          isIncluded: true, isUnclear: false),
-      ScannedMedicine(id: '4', name: 'Atorvastatin 20mg',
-          genericLabel: 'ATORVASTATIN CALC 20MG', frequency: '1x daily',
-          isIncluded: true, isUnclear: false),
-      ScannedMedicine(id: '5', name: 'Omeprazole 20mg',
-          genericLabel: 'OMEPRAZ TAB 20MG DELAYED', frequency: '1x daily',
-          isIncluded: true, isUnclear: true),
-    ];

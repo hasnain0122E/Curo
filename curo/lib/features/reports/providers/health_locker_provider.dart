@@ -1,7 +1,89 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../core/widgets/status_chip.dart';
+import '../../../data/models/report_model.dart';
+import '../../../providers/report_provider.dart';
 import '../models/health_locker_models.dart';
+
+// ── ReportModel → LockerReport mapping ───────────────────────────────────────
+
+ReportCategory _categoryFrom(String raw) {
+  switch (raw.toLowerCase()) {
+    case 'blood test':
+    case 'blood':
+      return ReportCategory.blood;
+    case 'urine':
+      return ReportCategory.urine;
+    case 'x-ray':
+    case 'xray':
+    case 'mri':
+      return ReportCategory.xray;
+    case 'ecg':
+      return ReportCategory.ecg;
+    default:
+      return ReportCategory.other;
+  }
+}
+
+LockerReport _toLockerReport(ReportModel r) {
+  final cat = _categoryFrom(r.category);
+  final summary = (r.aiSummary ?? '').toLowerCase();
+
+  final StatusVariant variant;
+  final String statusLabel;
+  if (summary.isEmpty) {
+    variant = StatusVariant.warning;
+    statusLabel = 'PENDING';
+  } else if (summary.contains('critical') ||
+      summary.contains('abnormal') ||
+      summary.contains('high') ||
+      summary.contains('danger')) {
+    variant = StatusVariant.danger;
+    statusLabel = 'ABNORMAL';
+  } else if (summary.contains('review') ||
+      summary.contains('attention') ||
+      summary.contains('borderline')) {
+    variant = StatusVariant.warning;
+    statusLabel = 'REVIEW';
+  } else {
+    variant = StatusVariant.success;
+    statusLabel = 'NORMAL';
+  }
+
+  final IconData icon;
+  final Color iconColor;
+  switch (cat) {
+    case ReportCategory.blood:
+      icon = Icons.bloodtype_outlined;
+      iconColor = const Color(0xFF36BDF2);
+    case ReportCategory.urine:
+      icon = Icons.science_outlined;
+      iconColor = const Color(0xFFF59E0B);
+    case ReportCategory.xray:
+      icon = Icons.image_search_outlined;
+      iconColor = const Color(0xFF8B5CF6);
+    case ReportCategory.ecg:
+      icon = Icons.monitor_heart_outlined;
+      iconColor = const Color(0xFF22C55E);
+    default:
+      icon = Icons.assignment_outlined;
+      iconColor = const Color(0xFF36BDF2);
+  }
+
+  return LockerReport(
+    id: r.id,
+    name: r.name,
+    date: DateFormat('MMM d, yyyy').format(r.uploadedAt),
+    category: cat,
+    statusLabel: statusLabel,
+    status: variant,
+    icon: icon,
+    iconColor: iconColor,
+  );
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
 
 class HealthLockerState {
   const HealthLockerState({
@@ -30,60 +112,36 @@ class HealthLockerState {
       );
 }
 
+// ── Notifier ──────────────────────────────────────────────────────────────────
+
 class HealthLockerNotifier extends Notifier<HealthLockerState> {
+  ReportCategory _selectedCategory = ReportCategory.all;
+  bool _isGridView = true;
+
   @override
-  HealthLockerState build() => HealthLockerState(reports: _mockReports);
+  HealthLockerState build() {
+    final reportsAsync = ref.watch(userReportsProvider);
+    final models = reportsAsync.asData?.value ?? [];
+    final lockerReports = models.map(_toLockerReport).toList();
+    return HealthLockerState(
+      selectedCategory: _selectedCategory,
+      isGridView: _isGridView,
+      reports: lockerReports,
+    );
+  }
 
-  void selectCategory(ReportCategory cat) =>
-      state = state.copyWith(selectedCategory: cat);
+  void selectCategory(ReportCategory cat) {
+    _selectedCategory = cat;
+    state = state.copyWith(selectedCategory: cat);
+  }
 
-  void toggleView() => state = state.copyWith(isGridView: !state.isGridView);
+  void toggleView() {
+    _isGridView = !_isGridView;
+    state = state.copyWith(isGridView: _isGridView);
+  }
 }
 
 final healthLockerProvider =
     NotifierProvider<HealthLockerNotifier, HealthLockerState>(
   HealthLockerNotifier.new,
 );
-
-const _mockReports = [
-  LockerReport(
-    id: '1',
-    name: 'Complete Blood Count',
-    date: 'Oct 24, 2023',
-    category: ReportCategory.blood,
-    statusLabel: 'NORMAL',
-    status: StatusVariant.success,
-    icon: Icons.water_drop_outlined,
-    iconColor: Color(0xFF36BDF2),
-  ),
-  LockerReport(
-    id: '2',
-    name: 'Urine Analysis',
-    date: 'Oct 20, 2023',
-    category: ReportCategory.urine,
-    statusLabel: 'ABNORMAL',
-    status: StatusVariant.danger,
-    icon: Icons.science_outlined,
-    iconColor: Color(0xFFF59E0B),
-  ),
-  LockerReport(
-    id: '3',
-    name: 'Chest X-Ray',
-    date: 'Oct 15, 2023',
-    category: ReportCategory.xray,
-    statusLabel: 'NORMAL',
-    status: StatusVariant.success,
-    icon: Icons.image_search_outlined,
-    iconColor: Color(0xFF36BDF2),
-  ),
-  LockerReport(
-    id: '4',
-    name: 'ECG Report',
-    date: 'Sep 28, 2023',
-    category: ReportCategory.ecg,
-    statusLabel: 'PENDING REVIEW',
-    status: StatusVariant.warning,
-    icon: Icons.monitor_heart_outlined,
-    iconColor: Color(0xFF22C55E),
-  ),
-];

@@ -11,6 +11,11 @@ class LabModel {
     required this.reviewCount,
     required this.startingPriceRs,
     required this.openingHours,
+    this.city = '',
+    this.area = '',
+    this.phone = '',
+    this.website = '',
+    this.is24Hours = false,
     this.tests = const [],
   });
 
@@ -23,33 +28,48 @@ class LabModel {
   final int reviewCount;
   final int startingPriceRs;
   final String openingHours;
+  final String city;
+  final String area;
+  final String phone;
+  final String website;
+  final bool is24Hours;
   final List<String> tests;
 
   factory LabModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
     return LabModel(
-      id: doc.id,
-      name: data['name'] as String? ?? '',
-      address: data['address'] as String? ?? '',
-      lat: (data['lat'] as num?)?.toDouble() ?? 0,
-      lng: (data['lng'] as num?)?.toDouble() ?? 0,
-      rating: (data['rating'] as num?)?.toDouble() ?? 0,
-      reviewCount: data['reviewCount'] as int? ?? 0,
-      startingPriceRs: data['startingPriceRs'] as int? ?? 0,
-      openingHours: data['openingHours'] as String? ?? '',
-      tests: List<String>.from(data['tests'] as List? ?? []),
+      id:              doc.id,
+      name:            data['name']            as String? ?? '',
+      address:         data['address']         as String? ?? '',
+      lat:             (data['lat']            as num?)?.toDouble() ?? 0,
+      lng:             (data['lng']            as num?)?.toDouble() ?? 0,
+      rating:          (data['rating']         as num?)?.toDouble() ?? 0,
+      reviewCount:     (data['reviewCount']    as num?)?.toInt() ?? 0,
+      startingPriceRs: (data['startingPriceRs'] as num?)?.toInt() ?? 0,
+      openingHours:    data['openingHours']    as String? ?? '',
+      city:            data['city']            as String? ?? '',
+      area:            data['area']            as String? ?? '',
+      phone:           data['phone']           as String? ?? '',
+      website:         data['website']         as String? ?? '',
+      is24Hours:       data['is24Hours']       as bool?   ?? false,
+      tests:           List<String>.from(data['tests'] as List? ?? []),
     );
   }
 
   Map<String, dynamic> toFirestore() => {
-        'name': name,
-        'address': address,
-        'lat': lat,
-        'lng': lng,
-        'rating': rating,
-        'reviewCount': reviewCount,
+        'name':            name,
+        'address':         address,
+        'area':            area,
+        'city':            city,
+        'lat':             lat,
+        'lng':             lng,
+        'rating':          rating,
+        'reviewCount':     reviewCount,
         'startingPriceRs': startingPriceRs,
-        'openingHours': openingHours,
-        'tests': tests,
+        'openingHours':    openingHours,
+        'phone':           phone,
+        'website':         website,
+        'is24Hours':       is24Hours,
+        'tests':           tests,
       };
 }

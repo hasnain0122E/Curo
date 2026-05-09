@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/status_chip.dart';
 import '../../../data/models/lab_model.dart';
 import '../../../data/models/report_model.dart';
+import '../../../data/services/location_service.dart';
+import '../../../providers/app_providers.dart';
 import '../../../providers/lab_provider.dart';
 import '../../../providers/report_provider.dart';
 
@@ -69,7 +71,7 @@ class RecentReport {
   final Color iconColor;
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+// ── Avatar colors (deterministic, not positional) ────────────────────────────
 
 const _avatarColors = [
   Color(0xFF1A5276),
@@ -79,16 +81,24 @@ const _avatarColors = [
   Color(0xFF1B4F72),
 ];
 
-const _distancesKm = [1.2, 2.5, 3.1, 3.8, 4.5];
+Color _avatarColor(String labId) =>
+    _avatarColors[labId.hashCode.abs() % _avatarColors.length];
 
-NearbyLab _toNearbyLab(LabModel lab, int index) => NearbyLab(
-      id: lab.id,
-      name: lab.name,
-      distanceKm: _distancesKm[index % _distancesKm.length],
-      rating: lab.rating,
-      fromPriceRs: lab.startingPriceRs,
-      avatarColor: _avatarColors[index % _avatarColors.length],
-    );
+// ── Karachi city centre as fallback when location is unavailable ──────────────
+const _fallbackLat = 24.8607;
+const _fallbackLng = 67.0114;
+
+NearbyLab _toNearbyLab(LabModel lab, double userLat, double userLng) {
+  final dist = LocationService.distanceKm(userLat, userLng, lab.lat, lab.lng);
+  return NearbyLab(
+    id: lab.id,
+    name: lab.name,
+    distanceKm: double.parse(dist.toStringAsFixed(1)),
+    rating: lab.rating,
+    fromPriceRs: lab.startingPriceRs,
+    avatarColor: _avatarColor(lab.id),
+  );
+}
 
 RecentReport _toRecentReport(ReportModel r) {
   final summary = r.aiSummary?.toLowerCase() ?? '';
@@ -100,22 +110,26 @@ RecentReport _toRecentReport(ReportModel r) {
   } else if (summary.contains('attention') || summary.contains('borderline')) {
     variant = StatusVariant.warning;
     label = 'Review';
-  } else {
+  } else if (summary.isNotEmpty) {
     variant = StatusVariant.success;
     label = 'Normal';
+  } else {
+    variant = StatusVariant.warning;
+    label = 'Pending';
   }
 
   final IconData icon;
   final Color iconColor;
-  switch (r.category) {
-    case 'X-Ray':
-    case 'MRI':
+  switch (r.category.toLowerCase()) {
+    case 'x-ray':
+    case 'mri':
       icon = Icons.medical_information_outlined;
       iconColor = const Color(0xFF8B5CF6);
-    case 'ECG':
+    case 'ecg':
       icon = Icons.monitor_heart_outlined;
       iconColor = const Color(0xFFEF4444);
-    case 'Blood Test':
+    case 'blood test':
+    case 'blood':
       icon = Icons.bloodtype_outlined;
       iconColor = const Color(0xFF36BDF2);
     default:
@@ -150,9 +164,12 @@ final healthRiskProvider = Provider<HealthRiskData>((ref) {
 final nearbyLabsProvider = Provider<List<NearbyLab>>((ref) {
   final asyncLabs = ref.watch(labsStreamProvider);
   final models = asyncLabs.asData?.value ?? [];
-  return [
-    for (int i = 0; i < models.length; i++) _toNearbyLab(models[i], i),
-  ];
+  final location = ref.watch(userLocationProvider).asData?.value;
+  final lat = location?.latitude ?? _fallbackLat;
+  final lng = location?.longitude ?? _fallbackLng;
+  final labs = models.map((lab) => _toNearbyLab(lab, lat, lng)).toList()
+    ..sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
+  return labs;
 });
 
 final recentReportsProvider = Provider<List<RecentReport>>((ref) {

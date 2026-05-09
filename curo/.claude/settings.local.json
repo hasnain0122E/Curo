@@ -47,7 +47,14 @@
       "Bash(dir *)",
       "Bash(findstr /C:\"latlong2\")",
       "Bash(git rm *)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(powershell -command \"\\(Get-Content 'scripts\\\\medicines_dataset.json' | ConvertFrom-Json\\).Count\")",
+      "Bash(npm --version)",
+      "Bash(ls *.jfif *.png *.jpg)",
+      "Bash(dir /b *.jfif *.png *.jpg)",
+      "Bash(python -c ' *)",
+      "PowerShell(New-Item *)",
+      "Bash(powershell -c \"\\(Get-Content 'lib\\\\features\\\\labs\\\\screens\\\\lab_map_screen.dart'\\).Count\")"
     ]
   }
 }

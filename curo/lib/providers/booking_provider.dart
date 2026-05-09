@@ -1,13 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/booking_model.dart';
-import '../data/repositories/booking_repository.dart';
 import 'app_providers.dart';
-
-// ── Repository provider ───────────────────────────────────────────────────────
-
-final bookingRepositoryProvider = Provider<BookingRepository>((ref) =>
-    BookingRepository(firestore: ref.watch(firestoreProvider)));
 
 // ── Live bookings stream ──────────────────────────────────────────────────────
 
@@ -71,7 +65,9 @@ class BookingCreateNotifier extends Notifier<BookingCreateState> {
   }
 
   Future<void> cancel(String bookingId) async {
-    await ref.read(bookingRepositoryProvider).cancelBooking(bookingId);
+    final user = ref.read(authStateChangesProvider).asData?.value;
+    if (user == null) return;
+    await ref.read(bookingRepositoryProvider).cancelBooking(user.uid, bookingId);
   }
 }
 
