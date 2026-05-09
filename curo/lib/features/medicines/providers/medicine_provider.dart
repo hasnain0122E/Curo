@@ -6,29 +6,38 @@ import '../models/medicine_models.dart';
 // ── Model mapping ──────────────────────────────────────────────────────────────
 
 MedicineComparison _toComparison(MedicineModel m) {
-  final hasDiscount = m.hasDiscount;
+  final genericName = m.genericName.isNotEmpty ? m.genericName : m.name;
+  final desc = m.description.isNotEmpty
+      ? m.description
+      : (m.hasDiscount
+          ? '${m.discountPercent}% discount applied — same medicine at reduced price'
+          : 'Generic equivalent available at standard price');
   return MedicineComparison(
-    brandedName: m.name,
-    brandedMaker: m.manufacturer,
-    brandedForm: m.packSize.isNotEmpty ? m.packSize : '–',
-    brandedPriceRs: m.priceBeforeRs,
-    genericName: m.name,
-    genericDesc: hasDiscount
-        ? '${m.discountPercent}% discount applied\nSame medicine at reduced price'
-        : 'Standard price\nNo discount currently available',
-    genericPriceRs: m.priceAfterRs,
-    savingsPercent: m.discountPercent,
-    pharmacyCount: 10 + (m.name.codeUnitAt(0) % 15),
+    brandedName:          m.name,
+    brandedMaker:         m.manufacturer,
+    brandedForm:          m.displayForm.isNotEmpty ? m.displayForm : '–',
+    brandedPriceRs:       m.priceBeforeRs,
+    prescriptionRequired: m.prescriptionRequired,
+    category:             m.category,
+    genericName:          genericName,
+    genericDesc:          desc,
+    firstUsage:           m.usage.isNotEmpty ? m.usage.first : '',
+    genericPriceRs:       m.priceAfterRs,
+    savingsPercent:       m.discountPercent,
+    pharmacyCount:        m.pharmacies.isNotEmpty ? m.pharmacies.length : 0,
+    pharmacyNames:        m.pharmacies,
   );
 }
 
 List<ScannedMedicine> _buildScanned(List<MedicineModel> models) =>
-    models.asMap().entries.map((e) {
-      final m = e.value;
+    models.map((m) {
+      final generic = m.genericName.isNotEmpty ? m.genericName : m.name;
       return ScannedMedicine(
-        id: '${e.key}',
+        id: m.id,
         name: m.name,
-        genericLabel: '${m.name.toUpperCase()} · ${m.packSize}',
+        genericLabel: m.strength.isNotEmpty
+            ? '$generic · ${m.strength}'
+            : generic,
         isIncluded: true,
         isUnclear: false,
       );

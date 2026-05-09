@@ -446,6 +446,8 @@ class _NearbyLabsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final labs = ref.watch(nearbyLabsProvider);
+    final recentIds = ref.watch(recentlyViewedLabsProvider);
+    final title = recentIds.isNotEmpty ? 'Recently Visited' : 'Nearby Labs';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -455,7 +457,7 @@ class _NearbyLabsSection extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Nearby Labs', style: AppTextStyles.h3),
+              Text(title, style: AppTextStyles.h3),
               GestureDetector(
                 onTap: () => context.go(AppRoutes.labs),
                 child: Text(

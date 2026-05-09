@@ -54,7 +54,10 @@
       "Bash(dir /b *.jfif *.png *.jpg)",
       "Bash(python -c ' *)",
       "PowerShell(New-Item *)",
-      "Bash(powershell -c \"\\(Get-Content 'lib\\\\features\\\\labs\\\\screens\\\\lab_map_screen.dart'\\).Count\")"
+      "Bash(powershell -c \"\\(Get-Content 'lib\\\\features\\\\labs\\\\screens\\\\lab_map_screen.dart'\\).Count\")",
+      "Bash(Get-ChildItem -Recurse -Filter \"*.dart\" \"E:\\\\SMIU\\\\SE 7B\\\\MAD\\\\CURO - MAD + AI PROJECT\\\\CURO - Low Cost HealthCare Near You\\\\curo\\\\lib\\\\features\\\\auth\")",
+      "Bash(Select-Object FullName)",
+      "Bash(grep \"\\\\.dart$\")"
     ]
   }
 }

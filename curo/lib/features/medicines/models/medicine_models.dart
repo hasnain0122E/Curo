@@ -37,25 +37,34 @@ class MedicineComparison {
     required this.brandedMaker,
     required this.brandedForm,
     required this.brandedPriceRs,
+    required this.prescriptionRequired,
+    required this.category,
     required this.genericName,
     required this.genericDesc,
+    required this.firstUsage,
     required this.genericPriceRs,
     required this.savingsPercent,
     required this.pharmacyCount,
+    required this.pharmacyNames,
   });
 
   final String brandedName;
   final String brandedMaker;
   final String brandedForm;
   final int brandedPriceRs;
+  final bool prescriptionRequired;
+  final String category;
   final String genericName;
   final String genericDesc;
+  final String firstUsage;
   final int genericPriceRs;
   final int savingsPercent;
   final int pharmacyCount;
+  final List<String> pharmacyNames;
 
-  int get priceDiffPercent =>
-      (((brandedPriceRs - genericPriceRs) / brandedPriceRs) * 100).round();
+  int get priceDiffPercent => brandedPriceRs > 0
+      ? (((brandedPriceRs - genericPriceRs) / brandedPriceRs) * 100).round()
+      : 0;
 }
 
 class MedicineState {

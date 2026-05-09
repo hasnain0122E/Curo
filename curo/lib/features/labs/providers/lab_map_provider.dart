@@ -50,6 +50,11 @@ Color _avatarColor(String id) =>
 const _fallbackLat = 24.8607;
 const _fallbackLng = 67.0114;
 
+// Discovery limits: max results for Nearest/Cheapest/TopRated filters
+const _kMaxFiltered = 5;
+// Radius (km) used when real GPS is available for the "Nearest" filter
+const _kNearbyKm = 10.0;
+
 // ── Lab display model ─────────────────────────────────────────────────────────
 
 class LabLocation {
@@ -138,6 +143,7 @@ final filteredLabsProvider = Provider<List<LabLocation>>((ref) {
   final filter = ref.watch(labFilterProvider);
   final query = ref.watch(labSearchProvider).toLowerCase().trim();
   final labs = ref.watch(allLabsProvider);
+  final hasGps = ref.watch(userLocationProvider).asData?.value != null;
 
   final searched = query.isEmpty
       ? labs
@@ -145,19 +151,32 @@ final filteredLabsProvider = Provider<List<LabLocation>>((ref) {
           .where((l) =>
               l.name.toLowerCase().contains(query) ||
               l.address.toLowerCase().contains(query) ||
-              l.city.toLowerCase().contains(query))
+              l.city.toLowerCase().contains(query) ||
+              l.area.toLowerCase().contains(query))
           .toList();
 
-  return switch (filter) {
-    LabFilter.all => searched,
-    LabFilter.nearest =>
-      [...searched]..sort((a, b) => a.distanceKm.compareTo(b.distanceKm)),
-    LabFilter.cheapest =>
-      [...searched]
-        ..sort((a, b) => a.startingPriceRs.compareTo(b.startingPriceRs)),
-    LabFilter.highestRated =>
-      [...searched]..sort((a, b) => b.rating.compareTo(a.rating)),
-  };
+  switch (filter) {
+    case LabFilter.all:
+      return searched;
+    case LabFilter.nearest:
+      final sorted = [...searched]
+        ..sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
+      if (hasGps && query.isEmpty) {
+        final nearby =
+            sorted.where((l) => l.distanceKm <= _kNearbyKm).take(_kMaxFiltered).toList();
+        return nearby.isEmpty ? sorted.take(_kMaxFiltered).toList() : nearby;
+      }
+      return sorted.take(_kMaxFiltered).toList();
+    case LabFilter.cheapest:
+      return ([...searched]
+            ..sort((a, b) => a.startingPriceRs.compareTo(b.startingPriceRs)))
+          .take(_kMaxFiltered)
+          .toList();
+    case LabFilter.highestRated:
+      return ([...searched]..sort((a, b) => b.rating.compareTo(a.rating)))
+          .take(_kMaxFiltered)
+          .toList();
+  }
 });
 
 // ── Pharmacy display model ────────────────────────────────────────────────────
@@ -247,6 +266,7 @@ final filteredPharmaciesProvider = Provider<List<PharmacyLocation>>((ref) {
   final filter = ref.watch(pharmacyFilterProvider);
   final query = ref.watch(labSearchProvider).toLowerCase().trim();
   final pharmacies = ref.watch(allPharmaciesProvider);
+  final hasGps = ref.watch(userLocationProvider).asData?.value != null;
 
   final searched = query.isEmpty
       ? pharmacies
@@ -254,19 +274,32 @@ final filteredPharmaciesProvider = Provider<List<PharmacyLocation>>((ref) {
           .where((p) =>
               p.name.toLowerCase().contains(query) ||
               p.address.toLowerCase().contains(query) ||
-              p.city.toLowerCase().contains(query))
+              p.city.toLowerCase().contains(query) ||
+              p.area.toLowerCase().contains(query))
           .toList();
 
-  return switch (filter) {
-    PharmacyFilter.all => searched,
-    PharmacyFilter.nearest =>
-      [...searched]..sort((a, b) => a.distanceKm.compareTo(b.distanceKm)),
-    PharmacyFilter.open24h =>
-      (searched.where((p) => p.is24Hours).toList()
-        ..sort((a, b) => a.distanceKm.compareTo(b.distanceKm))),
-    PharmacyFilter.highestRated =>
-      [...searched]..sort((a, b) => b.rating.compareTo(a.rating)),
-  };
+  switch (filter) {
+    case PharmacyFilter.all:
+      return searched;
+    case PharmacyFilter.nearest:
+      final sorted = [...searched]
+        ..sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
+      if (hasGps && query.isEmpty) {
+        final nearby =
+            sorted.where((p) => p.distanceKm <= _kNearbyKm).take(_kMaxFiltered).toList();
+        return nearby.isEmpty ? sorted.take(_kMaxFiltered).toList() : nearby;
+      }
+      return sorted.take(_kMaxFiltered).toList();
+    case PharmacyFilter.open24h:
+      return (searched.where((p) => p.is24Hours).toList()
+            ..sort((a, b) => a.distanceKm.compareTo(b.distanceKm)))
+          .take(_kMaxFiltered)
+          .toList();
+    case PharmacyFilter.highestRated:
+      return ([...searched]..sort((a, b) => b.rating.compareTo(a.rating)))
+          .take(_kMaxFiltered)
+          .toList();
+  }
 });
 
 // ── Real-time OSM places (Overpass API) ───────────────────────────────────────

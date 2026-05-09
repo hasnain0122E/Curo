@@ -110,18 +110,22 @@ class _CuroLogo extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(size * 0.24),
-      ),
-      child: Center(
-        child: Text(
-          'c',
-          style: TextStyle(
-            fontSize: size * 0.58,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-            height: 1.1,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(size * 0.24),
+        child: Image.asset(
+          'assets/icons/CURO_icon.png',
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
         ),
       ),
     );

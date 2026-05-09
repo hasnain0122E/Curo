@@ -15,11 +15,7 @@ class FcmService {
     required void Function(AppNotification) onNotification,
   }) async {
     // 1. Request permission (required on iOS; Android 13+ with POST_NOTIFICATIONS)
-    await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    await _messaging.requestPermission(alert: true, badge: true, sound: true);
 
     // 2. Foreground messages — OS does NOT auto-display these on Android, so
     //    we add them to the in-app list immediately.
@@ -47,7 +43,6 @@ class FcmService {
     _messaging.onTokenRefresh.listen((newToken) {
       // ignore: avoid_print
       print('[FCM] Token refreshed: $newToken');
-      // TODO: persist newToken to Firestore users/{uid}/fcmToken when needed
     });
   }
 }

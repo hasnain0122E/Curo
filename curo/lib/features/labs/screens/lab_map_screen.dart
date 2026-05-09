@@ -13,6 +13,7 @@ import '../../../core/widgets/curo_bottom_nav_bar.dart';
 import '../../../core/widgets/curo_button.dart';
 import '../../../data/services/location_service.dart';
 import '../../../data/services/overpass_service.dart';
+import '../../../features/home/providers/home_provider.dart';
 import '../../../providers/lab_provider.dart';
 import '../../../providers/pharmacy_provider.dart';
 import '../providers/lab_map_provider.dart';
@@ -896,7 +897,7 @@ class _MapModeToggle extends ConsumerWidget {
 
 // ── Lab list card ─────────────────────────────────────────────────────────────
 
-class _LabListCard extends StatelessWidget {
+class _LabListCard extends ConsumerWidget {
   const _LabListCard({
     required this.lab,
     required this.isSelected,
@@ -907,7 +908,7 @@ class _LabListCard extends StatelessWidget {
   final String? badge;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       decoration: BoxDecoration(
@@ -993,8 +994,10 @@ class _LabListCard extends StatelessWidget {
             CuroButton(
               label: 'Book',
               width: 72,
-              onPressed: () =>
-                  context.push(AppRoutes.labDetail, extra: lab),
+              onPressed: () {
+                ref.read(recentlyViewedLabsProvider.notifier).add(lab.id);
+                context.push(AppRoutes.labDetail, extra: lab);
+              },
             ),
           ],
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/widgets/status_chip.dart';
 import '../../../data/models/lab_model.dart';
 import '../../../data/models/report_model.dart';
@@ -148,6 +149,33 @@ RecentReport _toRecentReport(ReportModel r) {
   );
 }
 
+// ── Recently-viewed labs (persisted via SharedPreferences) ────────────────────
+
+class RecentlyViewedLabsNotifier extends Notifier<List<String>> {
+  static const _key = 'recently_viewed_labs';
+  static const _max = 10;
+
+  @override
+  List<String> build() {
+    Future(() async {
+      final prefs = await SharedPreferences.getInstance();
+      state = prefs.getStringList(_key) ?? [];
+    });
+    return [];
+  }
+
+  Future<void> add(String id) async {
+    final updated = [id, ...state.where((x) => x != id)].take(_max).toList();
+    state = updated;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_key, updated);
+  }
+}
+
+final recentlyViewedLabsProvider =
+    NotifierProvider<RecentlyViewedLabsNotifier, List<String>>(
+        RecentlyViewedLabsNotifier.new);
+
 // ── Providers ──────────────────────────────────────────────────────────────────
 
 final healthRiskProvider = Provider<HealthRiskData>((ref) {
@@ -167,9 +195,25 @@ final nearbyLabsProvider = Provider<List<NearbyLab>>((ref) {
   final location = ref.watch(userLocationProvider).asData?.value;
   final lat = location?.latitude ?? _fallbackLat;
   final lng = location?.longitude ?? _fallbackLng;
-  final labs = models.map((lab) => _toNearbyLab(lab, lat, lng)).toList()
-    ..sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
-  return labs;
+
+  final allLabs = models.map((lab) => _toNearbyLab(lab, lat, lng)).toList();
+  final recentIds = ref.watch(recentlyViewedLabsProvider);
+
+  // If user has previously visited labs, surface those first
+  if (recentIds.isNotEmpty) {
+    final labById = {for (final l in allLabs) l.id: l};
+    final recent = recentIds
+        .where(labById.containsKey)
+        .map((id) => labById[id]!)
+        .take(5)
+        .toList();
+    if (recent.isNotEmpty) return recent;
+  }
+
+  // Fall back to 5 nearest labs
+  return (allLabs..sort((a, b) => a.distanceKm.compareTo(b.distanceKm)))
+      .take(5)
+      .toList();
 });
 
 final recentReportsProvider = Provider<List<RecentReport>>((ref) {

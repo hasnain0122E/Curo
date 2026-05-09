@@ -185,7 +185,7 @@ class _MedicineFinderScreenState
             const SizedBox(height: AppSpacing.s24),
             _FindPharmaciesButton(comparison: state.comparison!),
             const SizedBox(height: AppSpacing.s16),
-            _PharmacyAvailabilityRow(count: state.comparison!.pharmacyCount),
+            _PharmacyAvailabilityRow(comparison: state.comparison!),
           ] else if (state.searchQuery.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s48),
             _EmptyResult(query: state.searchQuery),
@@ -224,6 +224,7 @@ class _BrandedCard extends StatelessWidget {
         boxShadow: AppShadows.sm,
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Red X icon
           Container(
@@ -243,10 +244,26 @@ class _BrandedCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(comparison.brandedName, style: AppTextStyles.h3),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(comparison.brandedName,
+                          style: AppTextStyles.h3),
+                    ),
+                    if (comparison.prescriptionRequired) ...[
+                      const SizedBox(width: 6),
+                      _Pill(label: 'Rx', color: const Color(0xFF7C3AED),
+                          bgColor: const Color(0xFFF5F3FF)),
+                    ],
+                  ],
+                ),
                 const SizedBox(height: 2),
-                Text(comparison.brandedMaker, style: AppTextStyles.bodySmall),
-                Text(comparison.brandedForm, style: AppTextStyles.bodySmall),
+                Text(comparison.brandedMaker,
+                    style: AppTextStyles.bodySmall),
+                if (comparison.brandedForm.isNotEmpty)
+                  Text(comparison.brandedForm,
+                      style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary)),
               ],
             ),
           ),
@@ -345,20 +362,25 @@ class _GenericCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      spacing: AppSpacing.s8,
+                      runSpacing: 4,
                       children: [
-                        _Pill(
-                            label: 'DISCOUNTED',
-                            color: AppColors.success,
-                            bgColor: const Color(0xFFF0FDF4)),
-                        if (comparison.savingsPercent > 0) ...[
-                          const SizedBox(width: AppSpacing.s8),
+                        if (comparison.savingsPercent > 0)
                           _Pill(
                             label: 'SAVE ${comparison.savingsPercent}%',
-                            color: const Color(0xFFEA580C),
-                            bgColor: const Color(0xFFFFF7ED),
-                          ),
-                        ],
+                            color: AppColors.success,
+                            bgColor: const Color(0xFFF0FDF4),
+                          )
+                        else
+                          _Pill(
+                              label: 'GENERIC',
+                              color: AppColors.success,
+                              bgColor: const Color(0xFFF0FDF4)),
+                        _Pill(
+                          label: comparison.category.toUpperCase(),
+                          color: AppColors.textSecondary,
+                        ),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.s8),
@@ -370,34 +392,52 @@ class _GenericCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s12),
 
-          // Description + price row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  comparison.genericDesc,
-                  style: AppTextStyles.bodySmall.copyWith(height: 1.6),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'Rs ${comparison.genericPriceRs}',
-                    style: AppTextStyles.h2.copyWith(color: AppColors.success),
-                  ),
-                  Text(
-                    '${comparison.priceDiffPercent}% less than branded',
+          // Description
+          Text(
+            comparison.genericDesc,
+            style: AppTextStyles.bodySmall.copyWith(height: 1.6),
+          ),
+
+          // Usage instruction
+          if (comparison.firstUsage.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.info_outline_rounded,
+                    size: 13, color: AppColors.textSecondary),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    comparison.firstUsage,
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.success,
-                      fontSize: 10,
+                      color: AppColors.textSecondary,
+                      fontStyle: FontStyle.italic,
                     ),
-                    textAlign: TextAlign.right,
                   ),
-                ],
+                ),
+              ],
+            ),
+          ],
+
+          const SizedBox(height: AppSpacing.s12),
+
+          // Price row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Rs ${comparison.genericPriceRs}',
+                style: AppTextStyles.h2.copyWith(color: AppColors.success),
               ),
+              if (comparison.priceDiffPercent > 0)
+                Text(
+                  '${comparison.priceDiffPercent}% less than branded',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.success,
+                    fontSize: 10,
+                  ),
+                ),
             ],
           ),
         ],
@@ -425,54 +465,53 @@ class _FindPharmaciesButton extends StatelessWidget {
 // ── Pharmacy Availability Row ─────────────────────────────────────────────────
 
 class _PharmacyAvailabilityRow extends StatelessWidget {
-  const _PharmacyAvailabilityRow({required this.count});
-  final int count;
+  const _PharmacyAvailabilityRow({required this.comparison});
+  final MedicineComparison comparison;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Stacked avatar circles
-        SizedBox(
-          width: 56,
-          height: 28,
-          child: Stack(
-            children: [
-              for (int i = 0; i < 3; i++)
-                Positioned(
-                  left: i * 16.0,
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15 + i * 0.10),
-                      shape: BoxShape.circle,
-                      border:
-                          Border.all(color: AppColors.surface, width: 2),
-                    ),
-                    child: const Icon(Icons.local_pharmacy_rounded,
-                        size: 13, color: AppColors.primary),
+    final names = comparison.pharmacyNames;
+    final count = comparison.pharmacyCount;
+    if (count == 0) return const SizedBox.shrink();
+
+    final shown = names.take(3).toList();
+    final extra = count - shown.length;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(AppRadius.r12),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.local_pharmacy_rounded,
+              size: 18, color: AppColors.primary),
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Available at $count ${count == 1 ? 'pharmacy' : 'pharmacies'}',
+                  style: AppTextStyles.labelMedium,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  [
+                    ...shown,
+                    if (extra > 0) '+$extra more',
+                  ].join(' · '),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: AppSpacing.s8),
-        RichText(
-          text: TextSpan(
-            style: AppTextStyles.bodySmall,
-            children: [
-              TextSpan(
-                text: '$count+ ',
-                style: AppTextStyles.labelMedium
-                    .copyWith(color: AppColors.textPrimary),
-              ),
-              TextSpan(text: 'Available in $count pharmacies near you'),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
