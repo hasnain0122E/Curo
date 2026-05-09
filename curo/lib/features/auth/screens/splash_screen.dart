@@ -85,9 +85,17 @@ class _WavePainter extends CustomPainter {
     final path = Path()
       ..moveTo(0, size.height * 0.55)
       ..quadraticBezierTo(
-          size.width * 0.28, 0, size.width * 0.55, size.height * 0.4)
+        size.width * 0.28,
+        0,
+        size.width * 0.55,
+        size.height * 0.4,
+      )
       ..quadraticBezierTo(
-          size.width * 0.78, size.height * 0.7, size.width, size.height * 0.25)
+        size.width * 0.78,
+        size.height * 0.7,
+        size.width,
+        size.height * 0.25,
+      )
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
       ..close();
