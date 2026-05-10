@@ -194,6 +194,10 @@ class _MedicineFinderScreenState
             _ScanPromptCard(
               onTap: () => context.push(AppRoutes.medicineScanner),
             ),
+            const SizedBox(height: AppSpacing.s12),
+            _LabScanPromptCard(
+              onTap: () => context.push(AppRoutes.labTestScanner),
+            ),
           ],
 
           const SizedBox(height: AppSpacing.s16),
@@ -589,6 +593,64 @@ class _ScanPromptCard extends StatelessWidget {
                     'Get generic alternatives for all your medicines at once',
                     style: AppTextStyles.bodySmall
                         .copyWith(color: Colors.white70),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded,
+                color: Colors.white60, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Lab Scan Prompt Card ──────────────────────────────────────────────────────
+
+class _LabScanPromptCard extends StatelessWidget {
+  const _LabScanPromptCard({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.s20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0B5345), Color(0xFF0E7A5A)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.r16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(AppRadius.r12),
+              ),
+              child: const Icon(Icons.biotech_outlined,
+                  color: Colors.white, size: 26),
+            ),
+            const SizedBox(width: AppSpacing.s16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Scan Lab Test Prescription',
+                      style: AppTextStyles.labelLarge
+                          .copyWith(color: Colors.white)),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Find the most affordable labs for your doctor\'s tests',
+                    style:
+                        AppTextStyles.bodySmall.copyWith(color: Colors.white70),
                   ),
                 ],
               ),

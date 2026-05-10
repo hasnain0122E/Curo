@@ -18,6 +18,19 @@ class MlKitOcrService {
     }
   }
 
+  // Words/patterns that are never medicine names — used to filter OCR noise.
+  static final _blocklistPattern = RegExp(
+    r'^(dr|mr|mrs|ms|prof|patient|name|age|date|sex|gender|diagnosis|rx|'
+    r'twice|thrice|daily|morning|night|evening|after|before|meals|days|weeks|'
+    r'bd|tds|qid|od|sos|prn|stat|hs|ac|pc|'
+    r'hospital|clinic|pharmacy|lab|laboratory|address|phone|tel|'
+    r'cbc|lft|rft|urine|blood|sugar|glucose|hba1c|tsh|ecg|x.?ray|'
+    r'fever|infection|hypertension|diabetes|cold|cough|pain|pressure|'
+    r'take|use|apply|dissolve|swallow|tablet|capsule|syrup|injection|'
+    r'signature|stamp|seal|ref|no\.|#)\b',
+    caseSensitive: false,
+  );
+
   static List<String> _parseMedicineNames(String rawText) {
     if (rawText.trim().isEmpty) return [];
 
@@ -31,28 +44,41 @@ class MlKitOcrService {
         .toList();
 
     for (final line in lines) {
-      // Skip lines that are purely numeric/symbolic or too long
+      // Skip purely numeric/symbolic lines and very long lines
       if (RegExp(r'^[\d\s\.\-\+\/\(\),]+$').hasMatch(line)) continue;
-      if (line.length > 80) continue;
+      if (line.length > 60) continue;
 
-      // Try to extract medicine name from line with dosage info
+      // Must start with a letter (drug names always do)
+      if (!RegExp(r'^[A-Za-z]').hasMatch(line)) continue;
+
+      // Skip lines that match known non-medicine patterns
+      if (_blocklistPattern.hasMatch(line.trim())) continue;
+
+      String candidate;
+
+      // Prefer lines that contain a dosage strength — most reliable signal
       final dosageMatch = RegExp(
         r'^([A-Za-z][A-Za-z\s\-]+?)\s+\d+\s*(?:mg|ml|mcg|g|iu|units?)',
         caseSensitive: false,
       ).firstMatch(line);
 
-      String candidate;
       if (dosageMatch != null) {
-        candidate = dosageMatch.group(1)!.trim();
+        // Keep the name + strength together (e.g. "Augmentin 625mg")
+        candidate = line
+            .substring(0, dosageMatch.end)
+            .trim()
+            .replaceAll(RegExp(r'\s+'), ' ');
       } else {
-        // Accept lines that look like medicine names (start with a letter)
-        if (!RegExp(r'^[A-Za-z]').hasMatch(line)) continue;
-        candidate = line.replaceAll(RegExp(r'[^a-zA-Z\s\-]'), '').trim();
+        // No dosage — only accept if it looks like a single-word drug name
+        // (multi-word non-dosage lines are usually diagnoses or instructions)
+        final words = line.split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
+        if (words.length > 2) continue; // too many words without a dosage
+        candidate = line.replaceAll(RegExp(r'[^a-zA-Z0-9\s\-]'), '').trim();
       }
 
       if (candidate.length < 3 || candidate.length > 50) continue;
 
-      // Normalize: capitalize first letter only
+      // Normalize: capitalize first letter
       candidate = candidate[0].toUpperCase() + candidate.substring(1);
 
       final key = candidate.toLowerCase();

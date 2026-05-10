@@ -104,9 +104,20 @@ final labFilterProvider =
 
 class _LabFilterNotifier extends Notifier<LabFilter> {
   @override
-  LabFilter build() => LabFilter.all;
+  LabFilter build() => LabFilter.cheapest;
   void set(LabFilter f) => state = f;
 }
+
+// Holds test names extracted from a lab prescription scan; empty = no filter.
+class _LabTestNamesNotifier extends Notifier<List<String>> {
+  @override
+  List<String> build() => [];
+  void set(List<String> tests) => state = tests;
+}
+
+final labTestNamesFilterProvider =
+    NotifierProvider<_LabTestNamesNotifier, List<String>>(
+        _LabTestNamesNotifier.new);
 
 LabLocation _toLabLocation(LabModel lab, double userLat, double userLng) {
   final dist = LocationService.distanceKm(userLat, userLng, lab.lat, lab.lng);
@@ -144,8 +155,9 @@ final filteredLabsProvider = Provider<List<LabLocation>>((ref) {
   final query = ref.watch(labSearchProvider).toLowerCase().trim();
   final labs = ref.watch(allLabsProvider);
   final hasGps = ref.watch(userLocationProvider).asData?.value != null;
+  final testNames = ref.watch(labTestNamesFilterProvider);
 
-  final searched = query.isEmpty
+  var searched = query.isEmpty
       ? labs
       : labs
           .where((l) =>
@@ -154,6 +166,17 @@ final filteredLabsProvider = Provider<List<LabLocation>>((ref) {
               l.city.toLowerCase().contains(query) ||
               l.area.toLowerCase().contains(query))
           .toList();
+
+  // When coming from lab test scan, narrow to labs that offer those tests.
+  if (testNames.isNotEmpty) {
+    final lowerTests = testNames.map((t) => t.toLowerCase()).toSet();
+    final matched = searched.where((lab) {
+      final labTests = lab.tests.map((t) => t.toLowerCase()).toList();
+      return lowerTests.any(
+          (test) => labTests.any((lt) => lt.contains(test) || test.contains(lt)));
+    }).toList();
+    if (matched.isNotEmpty) searched = matched;
+  }
 
   switch (filter) {
     case LabFilter.all:

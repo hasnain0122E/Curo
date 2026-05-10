@@ -9,6 +9,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/widgets/curo_bottom_nav_bar.dart';
 import '../../../core/widgets/status_chip.dart';
 import '../../../providers/medipoints_provider.dart';
+import '../../../features/profile/providers/profile_provider.dart';
 import '../providers/home_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -52,6 +53,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const _NearbyLabsSection(),
               const SizedBox(height: AppSpacing.s24),
 
+              // Cheapest Lab — full-width card
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
+                child: const _CheapestLabSection(),
+              ),
+              const SizedBox(height: AppSpacing.s24),
+
               // Recent Reports — padded
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
@@ -80,9 +88,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 class _HomeHeader extends ConsumerWidget {
   const _HomeHeader();
 
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final points = ref.watch(medipointsProvider);
+    final profile = ref.watch(userProfileProvider);
+    final firstName = profile.name.split(' ').first;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -99,7 +116,7 @@ class _HomeHeader extends ConsumerWidget {
             ),
             child: Center(
               child: Text(
-                'AA',
+                profile.initials,
                 style: AppTextStyles.labelLarge.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -116,9 +133,27 @@ class _HomeHeader extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Good morning, Ali 👋', style: AppTextStyles.h3),
+              Text('${_greeting()}, $firstName 👋', style: AppTextStyles.h3),
               const SizedBox(height: 4),
-              _MedipointsBadge(points: points),
+              GestureDetector(
+                onTap: () => context.push(AppRoutes.medipoints),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _MedipointsBadge(points: points),
+                    const SizedBox(width: 4),
+                    Text(
+                      'View details',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: const Color(0xFFD97706),
+                        fontSize: 10,
+                        decoration: TextDecoration.underline,
+                        decorationColor: const Color(0xFFD97706),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -356,7 +391,7 @@ class _QuickActionsGrid extends StatelessWidget {
     (Icons.science_outlined, 'Find Lab'),
     (Icons.document_scanner_outlined, 'Scan Report'),
     (Icons.medication_outlined, 'Find Medicine'),
-    (Icons.event_note_outlined, 'Book Test'),
+    (Icons.biotech_outlined, 'Scan Lab Test'),
   ];
 
   @override
@@ -386,7 +421,7 @@ class _QuickActionsGrid extends StatelessWidget {
             const SizedBox(width: AppSpacing.s12),
             Expanded(child: _QuickActionCard(
               icon: _actions[3].$1, label: _actions[3].$2,
-              onTap: () => context.go(AppRoutes.labs),
+              onTap: () => context.push(AppRoutes.labTestScanner),
             )),
           ],
         ),
@@ -585,6 +620,127 @@ class _MoreLabsCard extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Cheapest Lab ──────────────────────────────────────────────────────────────
+
+class _CheapestLabSection extends ConsumerWidget {
+  const _CheapestLabSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lab = ref.watch(cheapestLabProvider);
+    if (lab == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Cheapest Nearby', style: AppTextStyles.h3),
+            GestureDetector(
+              onTap: () => context.go(AppRoutes.labs),
+              child: Text(
+                'See all',
+                style: AppTextStyles.labelMedium.copyWith(color: AppColors.primary),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        _CheapestLabCard(lab: lab),
+      ],
+    );
+  }
+}
+
+class _CheapestLabCard extends StatelessWidget {
+  const _CheapestLabCard({required this.lab});
+  final NearbyLab lab;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.go(AppRoutes.labs),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.r16),
+          border: Border.all(color: AppColors.success.withValues(alpha: 0.35)),
+          boxShadow: AppShadows.sm,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.science_rounded,
+                  color: AppColors.success, size: 24),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    lab.name,
+                    style: AppTextStyles.labelLarge,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      const Icon(Icons.star_rounded,
+                          size: 12, color: Color(0xFFF59E0B)),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${lab.rating.toStringAsFixed(1)} · ${lab.distanceKm}km away',
+                        style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDF4),
+                    borderRadius: BorderRadius.circular(AppRadius.r4),
+                  ),
+                  child: Text(
+                    'BEST VALUE',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'From Rs. ${lab.fromPriceRs}',
+                  style: AppTextStyles.labelLarge.copyWith(
+                      color: AppColors.success),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

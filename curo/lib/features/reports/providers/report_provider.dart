@@ -131,11 +131,21 @@ class ReportNotifier extends Notifier<ReportState> {
 
   String _friendlyError(Object e) {
     final msg = e.toString();
-    if (msg.contains('API key')) return 'AI service is not configured. Contact support.';
-    if (msg.contains('timeout') || msg.contains('TimeoutException')) {
-      return 'Analysis timed out. Please try again.';
+    if (msg.contains('API key')) {
+      return 'AI service is not configured. Contact support.';
     }
-    return 'Analysis failed. Please try again.';
+    if (msg.contains('timeout') || msg.contains('TimeoutException')) {
+      return 'Analysis timed out. Please try again with a smaller file.';
+    }
+    if (msg.contains('empty response') || msg.contains('Empty response')) {
+      return 'The AI could not read the document. Try a clearer, well-lit photo.';
+    }
+    if (msg.contains('Could not read') || msg.contains('Could not parse')) {
+      return 'The AI response was unexpected. Please try again.';
+    }
+    // Surface the real error message so issues are diagnosable.
+    final clean = msg.replaceFirst('Exception: ', '');
+    return clean.isNotEmpty ? clean : 'Analysis failed. Please try again.';
   }
 
   void toggleExpanded(int index) {

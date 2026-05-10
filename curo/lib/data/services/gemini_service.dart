@@ -1,16 +1,21 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../../features/reports/models/report_models.dart';
 
-// Pass at build time: flutter run --dart-define-from-file=dart_defines/secrets.json
-const kGeminiApiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
+// Injected at build time via: flutter run --dart-define-from-file=dart_defines/secrets.json
+// Falls back to the embedded key for development builds.
+const kGeminiApiKey = String.fromEnvironment(
+  'GEMINI_API_KEY',
+  defaultValue: 'AIzaSyCUO4pwP0v6qvRvWGcRgm7XnReGXpoMaME',
+);
 
 class GeminiService {
   GeminiService._();
 
-  static const _model = 'gemini-1.5-flash';
+  static const _model = 'gemini-2.0-flash';
   static const _timeout = Duration(seconds: 45);
 
   static GenerativeModel _genModel({double temperature = 0.1}) =>
@@ -40,90 +45,118 @@ class GeminiService {
     }
   }
 
-  // ── 1. Analyze medical lab report ─────────────────────────────────────────
-
-  static const _analyzePrompt = '''
-You are a medical lab report analyst. Analyze the provided lab report and extract all test results.
-Return ONLY a valid JSON object (no markdown, no explanation):
-{
-  "patientName": "string or Patient if not found",
-  "labName": "string or Lab if not found",
-  "date": "string or empty",
-  "summaryHeadline": "2-4 word headline like All Clear or Review Required",
-  "summary": "2-3 sentence plain-language summary of the overall health picture",
-  "criticalAlerts": number,
-  "results": [
-    {
-      "testName": "exact test name",
-      "value": number,
-      "unit": "unit string",
-      "refRangeLow": number,
-      "refRangeHigh": number,
-      "status": "normal | high | low",
-      "aiExplanation": "1-2 sentence plain-language explanation for abnormal only, null otherwise",
-      "learnMoreTopic": "short keyword for abnormal only, null otherwise"
-    }
-  ]
-}''';
+  // ── 1. Analyze medical document (lab report OR prescription) ─────────────────
+  // HARDCODED: Returns demo data. Replace with real Gemini call when ready.
 
   static Future<ReportAnalysisResult> analyzeReport({
     required Uint8List bytes,
     required String mimeType,
   }) async {
-    _assertApiKey();
-    return await _withRetry(() async {
-      final res = await _genModel().generateContent([
-        Content.multi([DataPart(mimeType, bytes), TextPart(_analyzePrompt)]),
-      ]);
-      final text = res.text;
-      if (text == null || text.isEmpty) throw Exception('Empty response from Gemini.');
-      final json = ReportAnalysisResult.tryParseGeminiJson(text);
-      if (json == null) throw Exception('Could not parse Gemini response.');
-      return ReportAnalysisResult.fromJson(json);
-    });
+    await Future.delayed(const Duration(seconds: 2));
+    return _mockReportResult();
+  }
+
+  static ReportAnalysisResult _mockReportResult() {
+    final results = [
+      const LabResult(
+        testName: 'Hemoglobin',
+        value: 10.5,
+        unit: 'g/dL',
+        refRangeLow: 13.0,
+        refRangeHigh: 17.0,
+        status: LabStatus.low,
+        aiExplanation:
+            'Your hemoglobin is below the normal range, indicating mild anemia. '
+            'Common symptoms include fatigue and shortness of breath. '
+            'Iron supplementation may be recommended by your doctor.',
+        learnMoreTopic: 'anemia',
+      ),
+      const LabResult(
+        testName: 'WBC Count',
+        value: 7.2,
+        unit: 'x10³/μL',
+        refRangeLow: 4.0,
+        refRangeHigh: 11.0,
+        status: LabStatus.normal,
+      ),
+      const LabResult(
+        testName: 'Platelet Count',
+        value: 210,
+        unit: 'x10³/μL',
+        refRangeLow: 150,
+        refRangeHigh: 400,
+        status: LabStatus.normal,
+      ),
+      const LabResult(
+        testName: 'Blood Sugar (Fasting)',
+        value: 92,
+        unit: 'mg/dL',
+        refRangeLow: 70,
+        refRangeHigh: 100,
+        status: LabStatus.normal,
+      ),
+      const LabResult(
+        testName: 'Creatinine',
+        value: 1.8,
+        unit: 'mg/dL',
+        refRangeLow: 0.6,
+        refRangeHigh: 1.2,
+        status: LabStatus.high,
+        aiExplanation:
+            'Elevated creatinine may indicate reduced kidney function. '
+            'Stay well hydrated and follow up with your doctor for further evaluation.',
+        learnMoreTopic: 'kidney function',
+      ),
+      const LabResult(
+        testName: 'ALT (SGPT)',
+        value: 28,
+        unit: 'U/L',
+        refRangeLow: 7,
+        refRangeHigh: 56,
+        status: LabStatus.normal,
+      ),
+    ];
+
+    final user = FirebaseAuth.instance.currentUser;
+    final patientName = user?.displayName?.isNotEmpty == true
+        ? user!.displayName!
+        : 'Patient';
+
+    return ReportAnalysisResult(
+      meta: ReportMeta(
+        patientName: patientName,
+        labName: 'Chughtai Lab',
+        date: '10 May 2025',
+      ),
+      summary: AiSummary(
+        headline: 'Review Required',
+        body: 'Your report shows mild anemia with low hemoglobin and slightly '
+            'elevated creatinine levels. Other parameters including white blood '
+            'cells and platelets are within normal range. Please consult your physician.',
+        testsAnalyzed: results.length,
+        criticalAlerts: 2,
+      ),
+      results: results,
+    );
   }
 
   // ── 2. Scan prescription — returns medicine names for Firebase lookup ──────
-
-  static const _prescriptionPrompt = '''
-You are a pharmacy assistant. Extract all medicine names from this prescription image (handwritten or printed).
-Return ONLY a valid JSON array (no markdown, no explanation):
-[{"name": "medicine brand or generic name", "dosage": "e.g. 500mg or empty string", "frequency": "e.g. 2x daily or empty string", "duration": "e.g. 7 days or empty string"}]
-If no medicines are visible return an empty array [].''';
+  // HARDCODED: Returns demo data. Replace with real Gemini call when ready.
 
   static Future<List<String>> scanPrescription(Uint8List bytes) async {
-    _assertApiKey();
-    return await _withRetry(() async {
-      final res = await _genModel(temperature: 0.0).generateContent([
-        Content.multi([
-          DataPart('image/jpeg', bytes),
-          TextPart(_prescriptionPrompt),
-        ]),
-      ]);
-      return _parsePrescriptionNames(res.text ?? '');
-    });
+    await Future.delayed(const Duration(milliseconds: 800));
+    return ['Augmentin 625mg', 'Panadol 500mg', 'Omeprazole 20mg', 'Brufen 400mg'];
   }
 
-  static List<String> _parsePrescriptionNames(String raw) {
-    try {
-      var text = raw;
-      final fence = RegExp(r'```(?:json)?\s*([\s\S]*?)```');
-      final m = fence.firstMatch(text);
-      if (m != null) text = m.group(1)!.trim();
-      final s = text.indexOf('[');
-      final e = text.lastIndexOf(']');
-      if (s == -1 || e <= s) return [];
-      final list = jsonDecode(text.substring(s, e + 1)) as List;
-      return list
-          .map((item) => (item as Map<String, dynamic>)['name'] as String? ?? '')
-          .where((n) => n.isNotEmpty)
-          .toList();
-    } catch (_) {
-      return [];
-    }
+  // ── 3. Scan lab test prescription — returns test names for lab lookup ────────
+  // HARDCODED: Returns demo data. Replace with real Gemini call when ready.
+
+  static Future<List<String>> scanLabTestPrescription(Uint8List bytes) async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    return ['CBC', 'LFT', 'Blood Sugar Fasting', 'Urine DR'];
   }
 
-  // ── 3. Chat with report ───────────────────────────────────────────────────
+  // ── 4. Chat with report ───────────────────────────────────────────────────
 
   static const _disclaimer =
       '\n\n⚠️ This is an AI-generated response for informational purposes only. '

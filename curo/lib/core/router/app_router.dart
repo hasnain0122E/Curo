@@ -19,8 +19,11 @@ import '../../features/reports/screens/report_upload_screen.dart';
 import '../../features/medicines/screens/medicine_finder_screen.dart';
 import '../../features/medicines/screens/prescription_scanner_screen.dart';
 import '../../features/medicines/screens/scanned_medicines_screen.dart';
+import '../../features/labs/screens/lab_test_scanner_screen.dart';
+import '../../features/labs/screens/lab_test_scan_result_screen.dart';
 import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/medipoints/screens/medipoints_screen.dart';
 
 abstract final class AppRoutes {
   static const splash = '/';
@@ -38,8 +41,11 @@ abstract final class AppRoutes {
   static const medicines = '/medicines';
   static const medicineScanner = '/medicines/scanner';
   static const medicineResults = '/medicines/results';
+  static const labTestScanner = '/labs/test-scanner';
+  static const labTestScanResult = '/labs/test-result';
   static const notifications = '/notifications';
   static const profile = '/profile';
+  static const medipoints = '/medipoints';
 }
 
 // Routes accessible without authentication
@@ -151,12 +157,24 @@ final appRouter = GoRouter(
       builder: (_, _) => const ScannedMedicinesScreen(),
     ),
     GoRoute(
+      path: AppRoutes.labTestScanner,
+      builder: (_, _) => const LabTestScannerScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.labTestScanResult,
+      builder: (_, _) => const LabTestScanResultScreen(),
+    ),
+    GoRoute(
       path: AppRoutes.notifications,
       builder: (_, _) => const NotificationsScreen(),
     ),
     GoRoute(
       path: AppRoutes.profile,
       builder: (_, _) => const ProfileScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.medipoints,
+      builder: (_, _) => const MedipointsScreen(),
     ),
   ],
 );

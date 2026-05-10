@@ -60,6 +60,7 @@ dependencies:
   url_launcher: ^6.3.1
 
 dev_dependencies:
+  flutter_launcher_icons: ^0.13.1
   flutter_test:
     sdk: flutter
 
@@ -84,3 +85,8 @@ flutter:
   assets:
     - assets/images/screens/
     - assets/icons/
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/CURO_icon.png" # Path to your 1024x1024 logo

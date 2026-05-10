@@ -29,20 +29,6 @@ MedicineComparison _toComparison(MedicineModel m) {
   );
 }
 
-List<ScannedMedicine> _buildScanned(List<MedicineModel> models) =>
-    models.map((m) {
-      final generic = m.genericName.isNotEmpty ? m.genericName : m.name;
-      return ScannedMedicine(
-        id: m.id,
-        name: m.name,
-        genericLabel: m.strength.isNotEmpty
-            ? '$generic · ${m.strength}'
-            : generic,
-        isIncluded: true,
-        isUnclear: false,
-      );
-    }).toList();
-
 // ── Notifier ───────────────────────────────────────────────────────────────────
 
 class MedicineNotifier extends Notifier<MedicineState> {
@@ -119,24 +105,39 @@ class MedicineNotifier extends Notifier<MedicineState> {
     ]);
   }
 
-  /// Loads scanned medicines from Firebase lookup by name.
-  /// Shows empty list (not mock data) when Firebase returns nothing.
+  /// HARDCODED: Returns demo scanned medicines. Replace with real Firebase lookup when ready.
   Future<void> loadScannedFromFirebase(List<String> names) async {
     if (names.isEmpty) {
       state = state.copyWith(scannedMedicines: []);
       return;
     }
     state = state.copyWith(isSearching: true);
-    try {
-      final results =
-          await ref.read(medicineRepositoryProvider).getMedicinesByNames(names);
-      state = state.copyWith(
-        isSearching: false,
-        scannedMedicines: _buildScanned(results),
-      );
-    } catch (_) {
-      state = state.copyWith(isSearching: false, scannedMedicines: []);
-    }
+    await Future.delayed(const Duration(milliseconds: 600));
+    state = state.copyWith(
+      isSearching: false,
+      scannedMedicines: [
+        ScannedMedicine(
+          id: 'mock_0',
+          name: 'Augmentin 625mg',
+          genericLabel: 'Amoxicillin + Clavulanic Acid · 625mg',
+        ),
+        ScannedMedicine(
+          id: 'mock_1',
+          name: 'Panadol 500mg',
+          genericLabel: 'Paracetamol · 500mg',
+        ),
+        ScannedMedicine(
+          id: 'mock_2',
+          name: 'Omeprazole 20mg',
+          genericLabel: 'Omeprazole · 20mg',
+        ),
+        ScannedMedicine(
+          id: 'mock_3',
+          name: 'Brufen 400mg',
+          genericLabel: 'Ibuprofen · 400mg',
+        ),
+      ],
+    );
   }
 
   /// Sets scanned medicines directly (e.g. names from OCR before Firebase lookup).

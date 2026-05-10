@@ -221,3 +221,18 @@ final recentReportsProvider = Provider<List<RecentReport>>((ref) {
   final models = asyncReports.asData?.value ?? [];
   return models.take(3).map(_toRecentReport).toList();
 });
+
+final cheapestLabProvider = Provider<NearbyLab?>((ref) {
+  final models = ref.watch(labsStreamProvider).asData?.value ?? [];
+  if (models.isEmpty) return null;
+  final location = ref.watch(userLocationProvider).asData?.value;
+  final lat = location?.latitude ?? _fallbackLat;
+  final lng = location?.longitude ?? _fallbackLng;
+
+  final all = models.map((lab) => _toNearbyLab(lab, lat, lng)).toList();
+  // Prefer labs within 20km; fall back to all if none in range.
+  final pool = all.where((l) => l.distanceKm <= 20.0).toList();
+  final sorted = (pool.isNotEmpty ? pool : all)
+    ..sort((a, b) => a.fromPriceRs.compareTo(b.fromPriceRs));
+  return sorted.first;
+});

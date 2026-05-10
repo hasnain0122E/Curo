@@ -271,26 +271,6 @@ class _LabMapScreenState extends ConsumerState<LabMapScreen> {
             ),
           ),
 
-          // ── My-location FAB ────────────────────────────────────────────────
-          Positioned(
-            right: AppSpacing.s16,
-            bottom: 300,
-            child: GestureDetector(
-              onTap: _goToMyLocation,
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  shape: BoxShape.circle,
-                  boxShadow: AppShadows.md,
-                ),
-                child: const Icon(Icons.my_location_rounded,
-                    size: 20, color: AppColors.primary),
-              ),
-            ),
-          ),
-
           // ── Draggable bottom sheet ─────────────────────────────────────────
           DraggableScrollableSheet(
             controller: _sheetController,
@@ -304,6 +284,26 @@ class _LabMapScreenState extends ConsumerState<LabMapScreen> {
               labs: labs,
               pharmacies: pharmacies,
               selectedId: _selectedId,
+            ),
+          ),
+
+          // ── My-location FAB (after sheet so it renders on top) ────────────
+          Positioned(
+            right: AppSpacing.s16,
+            bottom: MediaQuery.of(context).size.height * 0.43,
+            child: GestureDetector(
+              onTap: _goToMyLocation,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  shape: BoxShape.circle,
+                  boxShadow: AppShadows.md,
+                ),
+                child: const Icon(Icons.my_location_rounded,
+                    size: 20, color: AppColors.primary),
+              ),
             ),
           ),
         ],

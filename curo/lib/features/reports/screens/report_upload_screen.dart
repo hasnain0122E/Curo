@@ -625,12 +625,17 @@ class _ResultsView extends ConsumerWidget {
           ),
         ),
 
-        // Section header
+        // Section header — label adapts to document type
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
                 AppSpacing.s16, 0, AppSpacing.s16, AppSpacing.s8),
-            child: Text('Test Results', style: AppTextStyles.h3),
+            child: Text(
+              summary.headline == 'Prescription Scanned'
+                  ? 'Medicines & Tests Ordered'
+                  : 'Test Results',
+              style: AppTextStyles.h3,
+            ),
           ),
         ),
 
@@ -719,8 +724,14 @@ class _LabResultCard extends ConsumerWidget {
   final int index;
   final LabResult result;
 
+  // Prescription items have no numeric data — Gemini sets all numeric fields to 0.
+  bool get _isPrescriptionItem =>
+      result.value == 0 && result.refRangeLow == 0 && result.refRangeHigh == 0;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (_isPrescriptionItem) return _buildPrescriptionItem();
+
     final expanded = ref
         .watch(reportProvider.select((s) => s.expandedSet.contains(index)));
     final hasExplanation = result.aiExplanation != null;
@@ -873,6 +884,54 @@ class _LabResultCard extends ConsumerWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  // Simplified card for prescription items (medicines / lab tests ordered)
+  Widget _buildPrescriptionItem() {
+    final hasExplanation = result.aiExplanation != null &&
+        result.aiExplanation!.isNotEmpty;
+    return Container(
+      margin: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.r12),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppShadows.sm,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.medical_services_outlined,
+                size: 18, color: AppColors.primary),
+          ),
+          const SizedBox(width: AppSpacing.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(result.testName, style: AppTextStyles.labelLarge),
+                if (hasExplanation) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    result.aiExplanation!,
+                    style: AppTextStyles.bodySmall.copyWith(height: 1.5),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
