@@ -54,7 +54,11 @@ class _BackButton extends StatelessWidget {
       padding: const EdgeInsets.only(left: AppSpacing.s16),
       child: Center(
         child: GestureDetector(
-          onTap: onTap ?? () { Navigator.of(context).maybePop(); },
+          onTap:
+              onTap ??
+              () {
+                Navigator.of(context).maybePop();
+              },
           child: Container(
             width: 36,
             height: 36,

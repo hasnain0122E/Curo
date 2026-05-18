@@ -59,7 +59,13 @@
       "Bash(Select-Object FullName)",
       "Bash(grep \"\\\\.dart$\")",
       "Bash(Get-ChildItem -Path . -Name)",
-      "Bash(findstr /i \"issue error warning No issues found\")"
+      "Bash(findstr /i \"issue error warning No issues found\")",
+      "PowerShell(Get-ChildItem -Path \"E:\\\\SMIU\\\\SE 7B\\\\MAD\\\\CURO - MAD + AI PROJECT\\\\CURO - Low Cost HealthCare Near You\\\\curo\\\\lib\" -Recurse -Directory | Select-Object FullName | ForEach-Object { $_.FullName } | Sort-Object)",
+      "Bash(flutter test *)",
+      "Bash(findstr /i \"FAILED\\\\|Error\\\\|failed\\\\|✗\")",
+      "Bash(Select-String -Pattern \"FAILED|✗|Error:\")",
+      "Bash(Select-Object -First 30)",
+      "PowerShell(flutter test *)"
     ]
   }
 }
