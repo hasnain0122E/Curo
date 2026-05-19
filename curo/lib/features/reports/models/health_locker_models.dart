@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../../core/widgets/status_chip.dart';
+import '../../../data/models/report_model.dart';
 
 enum ReportCategory { all, blood, urine, xray, ecg, other }
 
 extension ReportCategoryX on ReportCategory {
   String get label => switch (this) {
-        ReportCategory.all => 'All',
-        ReportCategory.blood => 'Blood',
-        ReportCategory.urine => 'Urine',
-        ReportCategory.xray => 'X-Ray',
-        ReportCategory.ecg => 'ECG',
-        ReportCategory.other => 'Other',
-      };
+    ReportCategory.all => 'All',
+    ReportCategory.blood => 'Blood',
+    ReportCategory.urine => 'Urine',
+    ReportCategory.xray => 'X-Ray',
+    ReportCategory.ecg => 'ECG',
+    ReportCategory.other => 'Other',
+  };
 }
 
 class LockerReport {
@@ -24,6 +25,7 @@ class LockerReport {
     required this.status,
     required this.icon,
     required this.iconColor,
+    required this.sourceModel,
   });
 
   final String id;
@@ -34,4 +36,7 @@ class LockerReport {
   final StatusVariant status;
   final IconData icon;
   final Color iconColor;
+
+  /// The raw Firestore model — passed to [ReportDetailScreen] on tap.
+  final ReportModel sourceModel;
 }

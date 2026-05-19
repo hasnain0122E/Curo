@@ -26,11 +26,15 @@ class ReportUploadScreen extends ConsumerWidget {
         switchInCurve: Curves.easeOut,
         switchOutCurve: Curves.easeIn,
         child: switch (phase) {
-          ReportScreenPhase.upload => const _UploadView(key: ValueKey('upload')),
-          ReportScreenPhase.processing =>
-            const _ProcessingView(key: ValueKey('processing')),
-          ReportScreenPhase.results =>
-            const _ResultsView(key: ValueKey('results')),
+          ReportScreenPhase.upload => const _UploadView(
+            key: ValueKey('upload'),
+          ),
+          ReportScreenPhase.processing => const _ProcessingView(
+            key: ValueKey('processing'),
+          ),
+          ReportScreenPhase.results => const _ResultsView(
+            key: ValueKey('results'),
+          ),
           ReportScreenPhase.error => const _ErrorView(key: ValueKey('error')),
         },
       ),
@@ -74,8 +78,11 @@ class _ReportAppBar extends StatelessWidget implements PreferredSizeWidget {
       leading: isResults
           ? Consumer(
               builder: (_, ref, _) => IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                    size: 18, color: AppColors.textPrimary),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 18,
+                  color: AppColors.textPrimary,
+                ),
                 onPressed: () => ref.read(reportProvider.notifier).reset(),
               ),
             )
@@ -108,8 +115,9 @@ class _UploadView extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             'Upload your lab report for instant AI analysis',
-            style: AppTextStyles.bodyMedium
-                .copyWith(color: AppColors.textSecondary),
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: AppSpacing.s24),
 
@@ -121,7 +129,9 @@ class _UploadView extends ConsumerWidget {
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
-                    vertical: 36, horizontal: AppSpacing.s16),
+                  vertical: 36,
+                  horizontal: AppSpacing.s16,
+                ),
                 decoration: BoxDecoration(
                   color: state.hasFile
                       ? AppColors.primary.withValues(alpha: 0.04)
@@ -157,8 +167,11 @@ class _UploadView extends ConsumerWidget {
                       color: const Color(0xFFEBF8FE),
                       borderRadius: BorderRadius.circular(AppRadius.r8),
                     ),
-                    child: const Icon(Icons.camera_alt_rounded,
-                        color: AppColors.primary, size: 20),
+                    child: const Icon(
+                      Icons.camera_alt_rounded,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.s12),
                   Expanded(
@@ -173,8 +186,10 @@ class _UploadView extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded,
-                      color: AppColors.textSecondary),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textSecondary,
+                  ),
                 ],
               ),
             ),
@@ -241,16 +256,20 @@ class _DropZonePrompt extends StatelessWidget {
             color: const Color(0xFFEBF8FE),
             borderRadius: BorderRadius.circular(AppRadius.r16),
           ),
-          child: const Icon(Icons.upload_file_rounded,
-              color: AppColors.primary, size: 32),
+          child: const Icon(
+            Icons.upload_file_rounded,
+            color: AppColors.primary,
+            size: 32,
+          ),
         ),
         const SizedBox(height: AppSpacing.s16),
         Text('Tap to upload report', style: AppTextStyles.labelLarge),
         const SizedBox(height: 4),
         Text(
           'or drag and drop here',
-          style:
-              AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
       ],
     );
@@ -272,8 +291,11 @@ class _FilePreview extends StatelessWidget {
             color: const Color(0xFFEBF8FE),
             borderRadius: BorderRadius.circular(AppRadius.r8),
           ),
-          child: const Icon(Icons.description_rounded,
-              color: AppColors.primary, size: 24),
+          child: const Icon(
+            Icons.description_rounded,
+            color: AppColors.primary,
+            size: 24,
+          ),
         ),
         const SizedBox(width: AppSpacing.s12),
         Expanded(
@@ -291,8 +313,11 @@ class _FilePreview extends StatelessWidget {
             ],
           ),
         ),
-        const Icon(Icons.check_circle_rounded,
-            color: AppColors.success, size: 20),
+        const Icon(
+          Icons.check_circle_rounded,
+          color: AppColors.success,
+          size: 20,
+        ),
       ],
     );
   }
@@ -383,9 +408,10 @@ class _ProcessingViewState extends ConsumerState<_ProcessingView>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
-    _scale = Tween<double>(begin: 0.92, end: 1.08).animate(
-      CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
-    );
+    _scale = Tween<double>(
+      begin: 0.92,
+      end: 1.08,
+    ).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
   }
 
   @override
@@ -420,8 +446,11 @@ class _ProcessingViewState extends ConsumerState<_ProcessingView>
                     ),
                   ],
                 ),
-                child: const Icon(Icons.auto_awesome_rounded,
-                    color: AppColors.primary, size: 44),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: AppColors.primary,
+                  size: 44,
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.s32),
@@ -430,8 +459,9 @@ class _ProcessingViewState extends ConsumerState<_ProcessingView>
             Text(
               'Our AI is reading your lab values\nand generating insights.',
               textAlign: TextAlign.center,
-              style: AppTextStyles.bodyMedium
-                  .copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: AppSpacing.s48),
             ..._steps.asMap().entries.map((e) {
@@ -451,8 +481,8 @@ class _ProcessingViewState extends ConsumerState<_ProcessingView>
                         color: done
                             ? AppColors.success
                             : active
-                                ? AppColors.primary
-                                : AppColors.border,
+                            ? AppColors.primary
+                            : AppColors.border,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -468,8 +498,7 @@ class _ProcessingViewState extends ConsumerState<_ProcessingView>
                         color: done || active
                             ? AppColors.textPrimary
                             : AppColors.textSecondary,
-                        fontWeight:
-                            active ? FontWeight.w600 : FontWeight.w400,
+                        fontWeight: active ? FontWeight.w600 : FontWeight.w400,
                       ),
                     ),
                     if (active) ...[
@@ -513,7 +542,9 @@ class _ResultsView extends ConsumerWidget {
           child: Container(
             color: AppColors.surface,
             padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s16, vertical: AppSpacing.s16),
+              horizontal: AppSpacing.s16,
+              vertical: AppSpacing.s16,
+            ),
             child: Row(
               children: [
                 Container(
@@ -523,8 +554,11 @@ class _ResultsView extends ConsumerWidget {
                     color: Color(0xFFEBF8FE),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.person_rounded,
-                      color: AppColors.primary, size: 26),
+                  child: const Icon(
+                    Icons.person_rounded,
+                    color: AppColors.primary,
+                    size: 26,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.s12),
                 Expanded(
@@ -541,7 +575,9 @@ class _ResultsView extends ConsumerWidget {
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s12, vertical: 6),
+                    horizontal: AppSpacing.s12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEBF8FE),
                     borderRadius: BorderRadius.circular(AppRadius.r24),
@@ -549,12 +585,18 @@ class _ResultsView extends ConsumerWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.auto_awesome_rounded,
-                          size: 13, color: AppColors.primary),
+                      const Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 13,
+                        color: AppColors.primary,
+                      ),
                       const SizedBox(width: 4),
-                      Text('AI Analysed',
-                          style: AppTextStyles.labelSmall
-                              .copyWith(color: AppColors.primary)),
+                      Text(
+                        'AI Analysed',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -564,7 +606,8 @@ class _ResultsView extends ConsumerWidget {
         ),
 
         const SliverToBoxAdapter(
-            child: Divider(height: 1, color: AppColors.border)),
+          child: Divider(height: 1, color: AppColors.border),
+        ),
 
         // AI Summary card (dark teal)
         SliverToBoxAdapter(
@@ -584,13 +627,17 @@ class _ResultsView extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.auto_awesome_rounded,
-                        color: Colors.white70, size: 16),
+                    const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: Colors.white70,
+                      size: 16,
+                    ),
                     const SizedBox(width: AppSpacing.s8),
                     Text(
                       'AI Summary',
-                      style: AppTextStyles.labelMedium
-                          .copyWith(color: Colors.white70),
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: Colors.white70,
+                      ),
                     ),
                   ],
                 ),
@@ -602,8 +649,9 @@ class _ResultsView extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.s8),
                 Text(
                   summary.body,
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: Colors.white.withValues(alpha: 0.85)),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.s16),
                 Row(
@@ -629,7 +677,11 @@ class _ResultsView extends ConsumerWidget {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s16, 0, AppSpacing.s16, AppSpacing.s8),
+              AppSpacing.s16,
+              0,
+              AppSpacing.s16,
+              AppSpacing.s8,
+            ),
             child: Text(
               summary.headline == 'Prescription Scanned'
                   ? 'Medicines & Tests Ordered'
@@ -642,8 +694,21 @@ class _ResultsView extends ConsumerWidget {
         // Lab result cards
         SliverList(
           delegate: SliverChildBuilderDelegate(
-            (_, i) => _LabResultCard(index: i, result: results[i]),
+            (_, i) => _LabResultCard(result: results[i]),
             childCount: results.length,
+          ),
+        ),
+
+        // Medical disclaimer
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s16,
+              AppSpacing.s8,
+              AppSpacing.s16,
+              0,
+            ),
+            child: const _DisclaimerBanner(),
           ),
         ),
 
@@ -664,8 +729,7 @@ class _ResultsView extends ConsumerWidget {
                   builder: (_, ref, _) => CuroButton(
                     label: 'Analyse Another Report',
                     variant: CuroButtonVariant.text,
-                    onPressed: () =>
-                        ref.read(reportProvider.notifier).reset(),
+                    onPressed: () => ref.read(reportProvider.notifier).reset(),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.s16),
@@ -701,9 +765,11 @@ class _SummaryChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon,
-              size: 13,
-              color: highlight ? Colors.orange.shade300 : Colors.white70),
+          Icon(
+            icon,
+            size: 13,
+            color: highlight ? Colors.orange.shade300 : Colors.white70,
+          ),
           const SizedBox(width: 4),
           Text(
             label,
@@ -719,44 +785,40 @@ class _SummaryChip extends StatelessWidget {
 
 // ── Lab Result Card ───────────────────────────────────────────────────────────
 
-class _LabResultCard extends ConsumerWidget {
-  const _LabResultCard({required this.index, required this.result});
-  final int index;
+class _LabResultCard extends StatelessWidget {
+  const _LabResultCard({required this.result});
   final LabResult result;
 
-  // Prescription items have no numeric data — Gemini sets all numeric fields to 0.
+  // Items with no numeric data (value == 0, no reference range) are treated
+  // as prescription/order items rather than quantitative lab metrics.
   bool get _isPrescriptionItem =>
       result.value == 0 && result.refRangeLow == 0 && result.refRangeHigh == 0;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     if (_isPrescriptionItem) return _buildPrescriptionItem();
 
-    final expanded = ref
-        .watch(reportProvider.select((s) => s.expandedSet.contains(index)));
-    final hasExplanation = result.aiExplanation != null;
+    final hasExplanation = result.aiExplanation?.isNotEmpty == true;
 
     final (statusColor, statusBg, statusLabel) = switch (result.status) {
-      LabStatus.high => (
-          AppColors.danger,
-          const Color(0xFFFEF2F2),
-          'HIGH'
-        ),
+      LabStatus.high => (AppColors.danger, const Color(0xFFFEF2F2), 'HIGH'),
       LabStatus.low => (
-          const Color(0xFFF59E0B),
-          const Color(0xFFFFFBEB),
-          'LOW'
-        ),
+        const Color(0xFFF59E0B),
+        const Color(0xFFFFFBEB),
+        'LOW',
+      ),
       LabStatus.normal => (
-          AppColors.success,
-          const Color(0xFFF0FDF4),
-          'NORMAL'
-        ),
+        AppColors.success,
+        const Color(0xFFF0FDF4),
+        'NORMAL',
+      ),
     };
 
     return Container(
       margin: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s8,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.r12),
@@ -780,8 +842,10 @@ class _LabResultCard extends ConsumerWidget {
                     children: [
                       Text(result.testName, style: AppTextStyles.labelLarge),
                       const SizedBox(height: 4),
-                      Text(result.refRangeLabel,
-                          style: AppTextStyles.bodySmall),
+                      Text(
+                        result.refRangeLabel,
+                        style: AppTextStyles.bodySmall,
+                      ),
                     ],
                   ),
                 ),
@@ -810,7 +874,9 @@ class _LabResultCard extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: statusBg,
                         borderRadius: BorderRadius.circular(AppRadius.r4),
@@ -830,57 +896,46 @@ class _LabResultCard extends ConsumerWidget {
             ),
           ),
 
-          // Expandable AI explanation
+          // Expandable AI explanation via ExpansionTile
           if (hasExplanation) ...[
             const Divider(height: 1, color: AppColors.border),
-            InkWell(
-              borderRadius: const BorderRadius.vertical(
-                  bottom: Radius.circular(AppRadius.r12)),
-              onTap: () =>
-                  ref.read(reportProvider.notifier).toggleExpanded(index),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.auto_awesome_rounded,
-                            size: 14, color: AppColors.primary),
-                        const SizedBox(width: AppSpacing.s8),
-                        Text(
-                          'AI Explanation',
-                          style: AppTextStyles.labelMedium
-                              .copyWith(color: AppColors.primary),
-                        ),
-                        const Spacer(),
-                        Icon(
-                          expanded
-                              ? Icons.keyboard_arrow_up_rounded
-                              : Icons.keyboard_arrow_down_rounded,
-                          size: 18,
-                          color: AppColors.textSecondary,
-                        ),
-                      ],
-                    ),
-                    AnimatedCrossFade(
-                      duration: const Duration(milliseconds: 250),
-                      crossFadeState: expanded
-                          ? CrossFadeState.showSecond
-                          : CrossFadeState.showFirst,
-                      firstChild: const SizedBox.shrink(),
-                      secondChild: Padding(
-                        padding: const EdgeInsets.only(top: AppSpacing.s8),
-                        child: Text(
-                          result.aiExplanation!,
-                          style: AppTextStyles.bodySmall
-                              .copyWith(height: 1.6),
-                        ),
-                      ),
-                    ),
-                  ],
+            Theme(
+              data: Theme.of(
+                context,
+              ).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                tilePadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s16,
+                  vertical: 0,
                 ),
+                childrenPadding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s16,
+                  0,
+                  AppSpacing.s16,
+                  AppSpacing.s12,
+                ),
+                expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                leading: const Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 14,
+                  color: AppColors.primary,
+                ),
+                title: Text(
+                  'AI Explanation',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: AppColors.primary,
+                  ),
+                ),
+                iconColor: AppColors.textSecondary,
+                collapsedIconColor: AppColors.textSecondary,
+                shape: const Border(),
+                collapsedShape: const Border(),
+                children: [
+                  Text(
+                    result.aiExplanation!,
+                    style: AppTextStyles.bodySmall.copyWith(height: 1.6),
+                  ),
+                ],
               ),
             ),
           ],
@@ -889,13 +944,14 @@ class _LabResultCard extends ConsumerWidget {
     );
   }
 
-  // Simplified card for prescription items (medicines / lab tests ordered)
+  // Simplified card for prescription/order items (no numeric data).
   Widget _buildPrescriptionItem() {
-    final hasExplanation = result.aiExplanation != null &&
-        result.aiExplanation!.isNotEmpty;
+    final hasExplanation = result.aiExplanation?.isNotEmpty == true;
     return Container(
       margin: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s8,
+      ),
       padding: const EdgeInsets.all(AppSpacing.s16),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -913,8 +969,11 @@ class _LabResultCard extends ConsumerWidget {
               color: AppColors.primary.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.medical_services_outlined,
-                size: 18, color: AppColors.primary),
+            child: const Icon(
+              Icons.medical_services_outlined,
+              size: 18,
+              color: AppColors.primary,
+            ),
           ),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
@@ -929,6 +988,61 @@ class _LabResultCard extends ConsumerWidget {
                     style: AppTextStyles.bodySmall.copyWith(height: 1.5),
                   ),
                 ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Medical Disclaimer Banner ─────────────────────────────────────────────────
+
+class _DisclaimerBanner extends StatelessWidget {
+  const _DisclaimerBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(AppRadius.r12),
+        border: Border.all(
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.40),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.info_outline_rounded,
+            size: 18,
+            color: Color(0xFFF59E0B),
+          ),
+          const SizedBox(width: AppSpacing.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Medical Disclaimer',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: Color(0xFF92400E),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'These results are AI-generated and intended for informational '
+                  'purposes only. They do not constitute medical advice, '
+                  'diagnosis, or treatment. Always consult a qualified healthcare '
+                  'professional before making any health decisions.',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: Color(0xFF92400E),
+                    height: 1.5,
+                  ),
+                ),
               ],
             ),
           ),
@@ -960,8 +1074,11 @@ class _ErrorView extends ConsumerWidget {
                 color: AppColors.danger.withValues(alpha: 0.10),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.error_outline_rounded,
-                  color: AppColors.danger, size: 40),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                color: AppColors.danger,
+                size: 40,
+              ),
             ),
             const SizedBox(height: AppSpacing.s24),
             Text('Analysis Failed', style: AppTextStyles.h2),
@@ -969,8 +1086,9 @@ class _ErrorView extends ConsumerWidget {
             Text(
               error ?? 'Something went wrong. Please try again.',
               textAlign: TextAlign.center,
-              style: AppTextStyles.bodyMedium
-                  .copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: AppSpacing.s32),
             CuroButton(
@@ -998,16 +1116,21 @@ class _DashedBorderPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
+      ..addRRect(
+        RRect.fromRectAndRadius(
           Rect.fromLTWH(0, 0, size.width, size.height),
-          const Radius.circular(radius)));
+          const Radius.circular(radius),
+        ),
+      );
 
     final metrics = path.computeMetrics().first;
     var distance = 0.0;
     while (distance < metrics.length) {
       canvas.drawPath(
         metrics.extractPath(
-            distance, (distance + dashW).clamp(0, metrics.length)),
+          distance,
+          (distance + dashW).clamp(0, metrics.length),
+        ),
         paint,
       );
       distance += dashW + dashSpace;

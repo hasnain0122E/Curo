@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Minimal fake DocumentSnapshot for unit-testing Firestore model factories.
-/// Only [id] and [data()] are functional — other members throw [UnimplementedError].
 // ignore: subtype_of_sealed_class
 class FakeDoc implements DocumentSnapshot<Map<String, dynamic>> {
   FakeDoc(this.id, this._data);
@@ -12,7 +10,7 @@ class FakeDoc implements DocumentSnapshot<Map<String, dynamic>> {
   final Map<String, dynamic> _data;
 
   @override
-  Map<String, dynamic>? data() => _data;
+  Map<String, dynamic> data() => _data;
 
   @override
   bool get exists => true;

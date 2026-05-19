@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/widgets/curo_button.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/curo_button.dart';
 import '../models/medicine_models.dart';
 import '../providers/medicine_provider.dart';
 
@@ -25,18 +26,22 @@ class ScannedMedicinesScreen extends ConsumerWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              size: 18, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 18,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => context.pop(),
         ),
-        title: Text('Scan Results', style: AppTextStyles.h3),
+        title: Text('Prescription Results', style: AppTextStyles.h3),
         actions: [
           TextButton(
             onPressed: () => context.go(AppRoutes.medicines),
             child: Text(
               'Done',
-              style: AppTextStyles.labelLarge
-                  .copyWith(color: AppColors.primary),
+              style: AppTextStyles.labelLarge.copyWith(
+                color: AppColors.primary,
+              ),
             ),
           ),
         ],
@@ -45,110 +50,85 @@ class ScannedMedicinesScreen extends ConsumerWidget {
           child: Divider(height: 1, color: AppColors.border),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        children: [
-          // Success banner
-          Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(AppRadius.r12),
-              border: Border.all(color: AppColors.success.withValues(alpha: 0.30)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.check_circle_rounded,
-                    color: AppColors.success, size: 20),
-                const SizedBox(width: AppSpacing.s8),
-                Text(
-                  '${state.scannedMedicines.length} medicines detected',
-                  style: AppTextStyles.labelMedium
-                      .copyWith(color: AppColors.success),
-                ),
-              ],
-            ),
+      body: state.scannedMedicines.isEmpty
+          ? _buildEmptyState(context)
+          : _buildResults(context, state, notifier),
+    );
+  }
+
+  Widget _buildResults(
+    BuildContext context,
+    MedicineState state,
+    MedicineNotifier notifier,
+  ) {
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      children: [
+        // ── Detection banner ────────────────────────────────────────────────
+        _DetectedBanner(count: state.scannedMedicines.length),
+
+        const SizedBox(height: AppSpacing.s16),
+
+        // ── Per-medicine: prescribed card + horizontal alternatives ─────────
+        for (final medicine in state.scannedMedicines) ...[
+          _MedicineEntry(
+            medicine: medicine,
+            onToggle: () => notifier.toggleIncluded(medicine.id),
+            onEdit: () => _showEditDialog(context, medicine, notifier),
           ),
-
-          const SizedBox(height: AppSpacing.s16),
-
-          // Medicine list
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppRadius.r12),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Column(
-              children: [
-                for (int i = 0; i < state.scannedMedicines.length; i++) ...[
-                  if (i > 0)
-                    const Divider(height: 1, color: AppColors.border),
-                  _MedicineRow(
-                    medicine: state.scannedMedicines[i],
-                    onToggle: () =>
-                        notifier.toggleIncluded(state.scannedMedicines[i].id),
-                    onEdit: () => _showEditDialog(
-                      context,
-                      state.scannedMedicines[i],
-                      notifier,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-
-          const SizedBox(height: AppSpacing.s12),
-
-          // Add manually button
-          GestureDetector(
-            onTap: () => _showAddDialog(context, notifier),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppRadius.r12),
-                border: Border.all(
-                  color: AppColors.border,
-                  style: BorderStyle.solid,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.add_rounded,
-                      size: 18, color: AppColors.primary),
-                  const SizedBox(width: AppSpacing.s8),
-                  Text(
-                    'Add Medicine Manually',
-                    style: AppTextStyles.labelMedium
-                        .copyWith(color: AppColors.primary),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: AppSpacing.s20),
-
-          // Smart Analysis card
-          _SmartAnalysisCard(state: state),
-
-          const SizedBox(height: AppSpacing.s20),
-
-          CuroButton(
-            label: 'Find Generic Alternatives',
-            icon: Icons.auto_awesome_rounded,
-            onPressed: () => context.go(AppRoutes.medicines),
-          ),
-
           const SizedBox(height: AppSpacing.s16),
         ],
+
+        // ── Add manually ────────────────────────────────────────────────────
+        _AddManuallyTile(onTap: () => _showAddDialog(context, notifier)),
+
+        const SizedBox(height: AppSpacing.s24),
+
+        // ── CTA ─────────────────────────────────────────────────────────────
+        CuroButton(
+          label: 'Search Medicine Finder',
+          icon: Icons.search_rounded,
+          onPressed: () => context.go(AppRoutes.medicines),
+        ),
+
+        const SizedBox(height: AppSpacing.s16),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.medication_outlined,
+              size: 56,
+              color: AppColors.border,
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            Text('No medicines detected', style: AppTextStyles.h3),
+            const SizedBox(height: AppSpacing.s8),
+            Text(
+              'Try a clearer photo or enter medicines manually.',
+              style: AppTextStyles.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.s32),
+            CuroButton(
+              label: 'Browse Medicine Finder',
+              icon: Icons.search_rounded,
+              onPressed: () => context.go(AppRoutes.medicines),
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  // ── Edit dialog ───────────────────────────────────────────────────────────────
 
   Future<void> _showEditDialog(
     BuildContext context,
@@ -171,24 +151,32 @@ class ScannedMedicinesScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
-                style:
-                    AppTextStyles.labelMedium.copyWith(color: AppColors.textSecondary)),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () {
               notifier.editName(medicine.id, controller.text);
               Navigator.pop(context);
             },
-            child: Text('Save',
-                style:
-                    AppTextStyles.labelMedium.copyWith(color: AppColors.primary)),
+            child: Text(
+              'Save',
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
           ),
         ],
       ),
     );
     controller.dispose();
   }
+
+  // ── Add dialog ────────────────────────────────────────────────────────────────
 
   Future<void> _showAddDialog(
     BuildContext context,
@@ -211,18 +199,24 @@ class ScannedMedicinesScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
-                style:
-                    AppTextStyles.labelMedium.copyWith(color: AppColors.textSecondary)),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () {
               notifier.addManually(controller.text);
               Navigator.pop(context);
             },
-            child: Text('Add',
-                style:
-                    AppTextStyles.labelMedium.copyWith(color: AppColors.primary)),
+            child: Text(
+              'Add',
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
           ),
         ],
       ),
@@ -231,10 +225,78 @@ class ScannedMedicinesScreen extends ConsumerWidget {
   }
 }
 
-// ── Medicine Row ──────────────────────────────────────────────────────────────
+// ── Detection banner ──────────────────────────────────────────────────────────
 
-class _MedicineRow extends StatelessWidget {
-  const _MedicineRow({
+class _DetectedBanner extends StatelessWidget {
+  const _DetectedBanner({required this.count});
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s12,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(AppRadius.r12),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.30)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.check_circle_rounded,
+            color: AppColors.success,
+            size: 20,
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          Text(
+            '$count medicine${count == 1 ? '' : 's'} detected from prescription',
+            style: AppTextStyles.labelMedium.copyWith(color: AppColors.success),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Medicine entry (card + horizontal alternatives) ───────────────────────────
+
+class _MedicineEntry extends StatelessWidget {
+  const _MedicineEntry({
+    required this.medicine,
+    required this.onToggle,
+    required this.onEdit,
+  });
+
+  final ScannedMedicine medicine;
+  final VoidCallback onToggle;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _PrescriptionCard(
+          medicine: medicine,
+          onToggle: onToggle,
+          onEdit: onEdit,
+        ),
+        if (medicine.alternatives.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s12),
+          _AlternativesRow(alternatives: medicine.alternatives),
+        ],
+      ],
+    );
+  }
+}
+
+// ── Prescription card ─────────────────────────────────────────────────────────
+
+class _PrescriptionCard extends StatelessWidget {
+  const _PrescriptionCard({
     required this.medicine,
     required this.onToggle,
     required this.onEdit,
@@ -249,52 +311,52 @@ class _MedicineRow extends StatelessWidget {
     final isUnclear = medicine.isUnclear;
     final isIncluded = medicine.isIncluded;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+    final statusColor = isUnclear
+        ? const Color(0xFFF59E0B)
+        : isIncluded
+        ? AppColors.primary
+        : AppColors.danger;
+
+    final statusBg = isUnclear
+        ? const Color(0xFFFFFBEB)
+        : isIncluded
+        ? const Color(0xFFEBF8FE)
+        : const Color(0xFFFEF2F2);
+
+    final statusIcon = isUnclear
+        ? Icons.warning_amber_rounded
+        : isIncluded
+        ? Icons.medication_rounded
+        : Icons.close_rounded;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.r12),
+        border: Border.all(color: AppColors.border),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Toggle icon
+          // Status / toggle button
           GestureDetector(
             onTap: onToggle,
             child: Container(
-              width: 28,
-              height: 28,
-              margin: const EdgeInsets.only(top: 1),
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: isUnclear
-                    ? const Color(0xFFFFFBEB)
-                    : isIncluded
-                        ? const Color(0xFFF0FDF4)
-                        : const Color(0xFFFEF2F2),
+                color: statusBg,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: isUnclear
-                      ? const Color(0xFFF59E0B)
-                      : isIncluded
-                          ? AppColors.success
-                          : AppColors.danger,
-                ),
+                border: Border.all(color: statusColor),
               ),
-              child: Icon(
-                isUnclear
-                    ? Icons.warning_amber_rounded
-                    : isIncluded
-                        ? Icons.check_rounded
-                        : Icons.close_rounded,
-                size: 16,
-                color: isUnclear
-                    ? const Color(0xFFF59E0B)
-                    : isIncluded
-                        ? AppColors.success
-                        : AppColors.danger,
-              ),
+              child: Icon(statusIcon, size: 18, color: statusColor),
             ),
           ),
+
           const SizedBox(width: AppSpacing.s12),
 
-          // Name + generic label
+          // Medicine name + generic + form
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,31 +367,52 @@ class _MedicineRow extends StatelessWidget {
                     color: isIncluded
                         ? AppColors.textPrimary
                         : AppColors.textSecondary,
-                    decoration:
-                        isIncluded ? null : TextDecoration.lineThrough,
+                    decoration: isIncluded ? null : TextDecoration.lineThrough,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  medicine.genericLabel,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: isUnclear
-                        ? const Color(0xFFF59E0B)
-                        : AppColors.textSecondary,
-                    fontSize: 10,
+                if (medicine.genericLabel.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    medicine.genericLabel,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
+                ],
+                if (medicine.form.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.category_outlined,
+                        size: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        medicine.form,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
 
-          // Edit icon
+          // Edit
           GestureDetector(
             onTap: onEdit,
             child: const Padding(
               padding: EdgeInsets.only(left: AppSpacing.s8),
-              child: Icon(Icons.edit_outlined,
-                  size: 18, color: AppColors.textSecondary),
+              child: Icon(
+                Icons.edit_outlined,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
         ],
@@ -338,103 +421,156 @@ class _MedicineRow extends StatelessWidget {
   }
 }
 
-// ── Smart Analysis Card ───────────────────────────────────────────────────────
+// ── Alternatives row ──────────────────────────────────────────────────────────
 
-class _SmartAnalysisCard extends StatelessWidget {
-  const _SmartAnalysisCard({required this.state});
-  final MedicineState state;
+class _AlternativesRow extends StatelessWidget {
+  const _AlternativesRow({required this.alternatives});
+  final List<GenericAlternative> alternatives;
 
   @override
   Widget build(BuildContext context) {
-    final altCount =
-        state.scannedMedicines.where((m) => m.isIncluded && !m.isUnclear).length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header
+        Row(
+          children: [
+            const Icon(
+              Icons.swap_horiz_rounded,
+              size: 14,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Cheaper alternatives',
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              'scroll ▸',
+              style: AppTextStyles.bodySmall.copyWith(
+                fontSize: 10,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
 
+        const SizedBox(height: AppSpacing.s8),
+
+        // Horizontal card list
+        SizedBox(
+          height: 116,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.only(right: AppSpacing.s4),
+            itemCount: alternatives.length,
+            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s8),
+            itemBuilder: (_, i) => _AlternativeCard(alt: alternatives[i]),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Alternative card ──────────────────────────────────────────────────────────
+
+class _AlternativeCard extends StatelessWidget {
+  const _AlternativeCard({required this.alt});
+  final GenericAlternative alt;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.s16),
+      width: 136,
+      padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
-        color: const Color(0xFFEBF8FE),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.r12),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.20)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.insights_rounded,
-                  size: 16, color: AppColors.primary),
-              const SizedBox(width: AppSpacing.s8),
-              Text(
-                'SMART ANALYSIS',
-                style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.primary,
-                  letterSpacing: 1.0,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s8),
+          // Brand name
           Text(
-            "We've detected potential savings for $altCount of your "
-            'medications by switching to generics.',
-            style: AppTextStyles.bodySmall
-                .copyWith(color: AppColors.textPrimary, height: 1.5),
+            alt.brandName,
+            style: AppTextStyles.labelLarge,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: AppSpacing.s16),
-          Row(
-            children: [
-              Expanded(
-                child: _StatBox(
-                  label: 'Monthly Savings',
-                  value: '₨42.50',
-                  valueColor: AppColors.success,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: _StatBox(
-                  label: 'Alternatives',
-                  value: altCount.toString().padLeft(2, '0'),
-                  valueColor: AppColors.primary,
-                ),
-              ),
-            ],
+
+          const SizedBox(height: 2),
+
+          // Manufacturer
+          Text(
+            alt.manufacturer,
+            style: AppTextStyles.bodySmall.copyWith(
+              fontSize: 10,
+              color: AppColors.textSecondary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
+
+          const Spacer(),
+
+          // Price
+          Text(
+            'Rs ${alt.priceRs}',
+            style: AppTextStyles.h3.copyWith(color: AppColors.primary),
+          ),
+
+          // Saving note — shown only when present
+          if (alt.savingNote.isNotEmpty)
+            Text(
+              alt.savingNote,
+              style: AppTextStyles.bodySmall.copyWith(
+                fontSize: 10,
+                color: AppColors.success,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
         ],
       ),
     );
   }
 }
 
-class _StatBox extends StatelessWidget {
-  const _StatBox({
-    required this.label,
-    required this.value,
-    required this.valueColor,
-  });
+// ── Add manually tile ─────────────────────────────────────────────────────────
 
-  final String label;
-  final String value;
-  final Color valueColor;
+class _AddManuallyTile extends StatelessWidget {
+  const _AddManuallyTile({required this.onTap});
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.r8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: AppTextStyles.bodySmall),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: AppTextStyles.h2.copyWith(color: valueColor),
-          ),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.r12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.add_rounded, size: 18, color: AppColors.primary),
+            const SizedBox(width: AppSpacing.s8),
+            Text(
+              'Add Medicine Manually',
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

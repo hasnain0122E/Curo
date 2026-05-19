@@ -65,7 +65,10 @@
       "Bash(findstr /i \"FAILED\\\\|Error\\\\|failed\\\\|✗\")",
       "Bash(Select-String -Pattern \"FAILED|✗|Error:\")",
       "Bash(Select-Object -First 30)",
-      "PowerShell(flutter test *)"
+      "PowerShell(flutter test *)",
+      "Bash(git -C \"E:/SMIU/SE 7B/MAD/CURO - MAD + AI PROJECT/CURO - Low Cost HealthCare Near You/curo\" diff HEAD -- test/data/models/medicine_model_test.dart test/data/models/report_model_test.dart test/helpers/fake_document_snapshot.dart)",
+      "Bash(xargs grep -l \"const.*cloud\\\\|const.*upload\\\\|const.*api\\\\|final.*http\")",
+      "Bash(dart format *)"
     ]
   }
 }

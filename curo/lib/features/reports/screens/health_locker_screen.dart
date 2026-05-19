@@ -166,8 +166,7 @@ class _ReportContent extends StatelessWidget {
                     (_, i) => _GridReportCard(report: reports[i]),
                     childCount: reports.length,
                   ),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: AppSpacing.s12,
                     crossAxisSpacing: AppSpacing.s12,
@@ -198,66 +197,147 @@ class _ReportContent extends StatelessWidget {
   }
 }
 
+// ── Shared delete confirmation ────────────────────────────────────────────────
+
+Future<void> _confirmDelete(
+  BuildContext context,
+  WidgetRef ref,
+  LockerReport report,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('Delete Health Record'),
+      content: const Text(
+        'Are you sure you want to permanently delete this health record '
+        'from your locker? This action cannot be undone.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(
+            'Cancel',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(
+            'Delete',
+            style: TextStyle(
+              color: AppColors.danger,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed != true || !context.mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Deleting record…'),
+      duration: Duration(seconds: 1),
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
+
+  await ref.read(healthLockerProvider.notifier).deleteRecord(report);
+}
+
 // ── Grid Card ─────────────────────────────────────────────────────────────────
 
-class _GridReportCard extends StatelessWidget {
+class _GridReportCard extends ConsumerWidget {
   const _GridReportCard({required this.report});
 
   final LockerReport report;
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push(AppRoutes.reportUpload),
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.s12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.r16),
-          border: Border.all(color: AppColors.border),
-          boxShadow: AppShadows.sm,
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Stack(
+      children: [
+        // Tappable card body
+        GestureDetector(
+          onTap: () =>
+              context.push(AppRoutes.reportDetail, extra: report.sourceModel),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.s12),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.r16),
+              border: Border.all(color: AppColors.border),
+              boxShadow: AppShadows.sm,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: report.iconColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.r12),
+                  ),
+                  child: Icon(report.icon, color: report.iconColor, size: 24),
+                ),
+                const Spacer(),
+                Text(
+                  report.name,
+                  style: AppTextStyles.labelLarge,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.s4),
+                Text(report.date, style: AppTextStyles.bodySmall),
+                const SizedBox(height: AppSpacing.s8),
+                StatusChip(label: report.statusLabel, variant: report.status),
+              ],
+            ),
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
+
+        // Delete button — top-right corner
+        Positioned(
+          top: 6,
+          right: 6,
+          child: GestureDetector(
+            onTap: () => _confirmDelete(context, ref, report),
+            child: Container(
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
-                color: report.iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppRadius.r12),
+                color: AppColors.surface,
+                shape: BoxShape.circle,
+                boxShadow: AppShadows.sm,
+                border: Border.all(color: AppColors.border),
               ),
-              child: Icon(report.icon, color: report.iconColor, size: 24),
+              child: const Icon(
+                Icons.delete_outline,
+                size: 15,
+                color: AppColors.danger,
+              ),
             ),
-            const Spacer(),
-            Text(
-              report.name,
-              style: AppTextStyles.labelLarge,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: AppSpacing.s4),
-            Text(report.date, style: AppTextStyles.bodySmall),
-            const SizedBox(height: AppSpacing.s8),
-            StatusChip(label: report.statusLabel, variant: report.status),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
 
 // ── List Card ─────────────────────────────────────────────────────────────────
 
-class _ListReportCard extends StatelessWidget {
+class _ListReportCard extends ConsumerWidget {
   const _ListReportCard({required this.report});
 
   final LockerReport report;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
-      onTap: () => context.push(AppRoutes.reportUpload),
+      onTap: () =>
+          context.push(AppRoutes.reportDetail, extra: report.sourceModel),
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.s12),
         decoration: BoxDecoration(
@@ -290,10 +370,17 @@ class _ListReportCard extends StatelessWidget {
             ),
             StatusChip(label: report.statusLabel, variant: report.status),
             const SizedBox(width: AppSpacing.s8),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textSecondary,
-              size: 20,
+            // Delete button
+            IconButton(
+              icon: const Icon(
+                Icons.delete_outline,
+                size: 20,
+                color: AppColors.danger,
+              ),
+              onPressed: () => _confirmDelete(context, ref, report),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              tooltip: 'Delete record',
             ),
           ],
         ),
@@ -390,8 +477,9 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: AppSpacing.s8),
             Text(
               'Upload your first report.',
-              style: AppTextStyles.bodyMedium
-                  .copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
           ],

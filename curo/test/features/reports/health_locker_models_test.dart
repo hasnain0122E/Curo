@@ -1,4 +1,5 @@
 import 'package:curo/core/widgets/status_chip.dart';
+import 'package:curo/data/models/report_model.dart';
 import 'package:curo/features/reports/models/health_locker_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,6 +19,15 @@ void main() {
   // ── LockerReport construction ──────────────────────────────────────────────
 
   group('LockerReport', () {
+    final fakeModel = ReportModel(
+      id: 'r1',
+      userId: 'u1',
+      name: 'CBC Report',
+      category: 'Blood Test',
+      storageUrl: '',
+      uploadedAt: DateTime(2024, 5, 10),
+    );
+
     test('stores all fields correctly', () {
       final report = LockerReport(
         id: 'r1',
@@ -28,6 +38,7 @@ void main() {
         status: StatusVariant.success,
         icon: Icons.bloodtype_outlined,
         iconColor: Colors.red,
+        sourceModel: fakeModel,
       );
 
       expect(report.id, 'r1');
@@ -38,6 +49,7 @@ void main() {
       expect(report.status, StatusVariant.success);
       expect(report.icon, Icons.bloodtype_outlined);
       expect(report.iconColor, Colors.red);
+      expect(report.sourceModel, fakeModel);
     });
 
     test('two separately constructed instances are not the same object', () {
@@ -50,6 +62,7 @@ void main() {
             status: StatusVariant.warning,
             icon: Icons.description,
             iconColor: Colors.grey,
+            sourceModel: fakeModel,
           );
 
       expect(identical(make(), make()), isFalse);

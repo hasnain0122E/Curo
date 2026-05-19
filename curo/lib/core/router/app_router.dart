@@ -14,7 +14,9 @@ import '../../features/labs/screens/lab_map_screen.dart';
 import '../../features/labs/screens/lab_detail_screen.dart';
 import '../../features/labs/screens/lab_booking_screen.dart';
 import '../../features/labs/screens/my_bookings_screen.dart';
+import '../../data/models/report_model.dart';
 import '../../features/reports/screens/health_locker_screen.dart';
+import '../../features/reports/screens/report_detail_screen.dart';
 import '../../features/reports/screens/report_upload_screen.dart';
 import '../../features/medicines/screens/medicine_finder_screen.dart';
 import '../../features/medicines/screens/prescription_scanner_screen.dart';
@@ -38,6 +40,7 @@ abstract final class AppRoutes {
   static const myBookings = '/labs/bookings';
   static const reports = '/reports';
   static const reportUpload = '/reports/upload';
+  static const reportDetail = '/reports/detail';
   static const medicines = '/medicines';
   static const medicineScanner = '/medicines/scanner';
   static const medicineResults = '/medicines/results';
@@ -89,38 +92,22 @@ final appRouter = GoRouter(
   refreshListenable: _authNotifier,
   redirect: _authRedirect,
   routes: [
-    GoRoute(
-      path: AppRoutes.splash,
-      builder: (_, _) => const SplashScreen(),
-    ),
+    GoRoute(path: AppRoutes.splash, builder: (_, _) => const SplashScreen()),
     GoRoute(
       path: AppRoutes.onboarding,
       builder: (_, _) => const OnboardingScreen(),
     ),
-    GoRoute(
-      path: AppRoutes.signup,
-      builder: (_, _) => const SignupScreen(),
-    ),
-    GoRoute(
-      path: AppRoutes.login,
-      builder: (_, _) => const LoginScreen(),
-    ),
+    GoRoute(path: AppRoutes.signup, builder: (_, _) => const SignupScreen()),
+    GoRoute(path: AppRoutes.login, builder: (_, _) => const LoginScreen()),
     GoRoute(
       path: AppRoutes.otp,
       builder: (_, state) => OtpScreen(phone: state.extra as String? ?? ''),
     ),
-    GoRoute(
-      path: AppRoutes.home,
-      builder: (_, _) => const HomeScreen(),
-    ),
-    GoRoute(
-      path: AppRoutes.labs,
-      builder: (_, _) => const LabMapScreen(),
-    ),
+    GoRoute(path: AppRoutes.home, builder: (_, _) => const HomeScreen()),
+    GoRoute(path: AppRoutes.labs, builder: (_, _) => const LabMapScreen()),
     GoRoute(
       path: AppRoutes.labDetail,
-      builder: (_, state) =>
-          LabDetailScreen(lab: state.extra as LabLocation),
+      builder: (_, state) => LabDetailScreen(lab: state.extra as LabLocation),
     ),
     GoRoute(
       path: AppRoutes.labBooking,
@@ -143,6 +130,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.reportUpload,
       builder: (_, _) => const ReportUploadScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.reportDetail,
+      builder: (_, state) =>
+          ReportDetailScreen(report: state.extra as ReportModel),
     ),
     GoRoute(
       path: AppRoutes.medicines,
@@ -168,10 +160,7 @@ final appRouter = GoRouter(
       path: AppRoutes.notifications,
       builder: (_, _) => const NotificationsScreen(),
     ),
-    GoRoute(
-      path: AppRoutes.profile,
-      builder: (_, _) => const ProfileScreen(),
-    ),
+    GoRoute(path: AppRoutes.profile, builder: (_, _) => const ProfileScreen()),
     GoRoute(
       path: AppRoutes.medipoints,
       builder: (_, _) => const MedipointsScreen(),

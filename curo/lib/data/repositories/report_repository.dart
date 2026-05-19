@@ -8,8 +8,8 @@ class ReportRepository {
   ReportRepository({
     required FirebaseFirestore firestore,
     required CloudinaryService cloudinary,
-  })  : _firestore = firestore,
-        _cloudinary = cloudinary;
+  }) : _firestore = firestore,
+       _cloudinary = cloudinary;
 
   final FirebaseFirestore _firestore;
   final CloudinaryService _cloudinary;
@@ -117,8 +117,51 @@ class ReportRepository {
     await _reportsOf(userId).doc(reportId).update(update);
   }
 
-  Future<void> deleteReport(String userId, String reportId) async {
+  /// Parses the Cloudinary public_id from a secure URL.
+  /// Input:  https://res.cloudinary.com/[cloud]/image/upload/v1234/curo_reports/uid/file.jpg
+  /// Output: curo_reports/uid/file
+  static String? _extractCloudinaryPublicId(String url) {
+    try {
+      final uri = Uri.parse(url);
+      final segments = uri.pathSegments;
+      final uploadIdx = segments.indexOf('upload');
+      if (uploadIdx == -1 || uploadIdx + 1 >= segments.length) return null;
+      var start = uploadIdx + 1;
+      // Skip optional version segment (v12345)
+      if (start < segments.length &&
+          RegExp(r'^v\d+$').hasMatch(segments[start])) {
+        start++;
+      }
+      if (start >= segments.length) return null;
+      final last = segments.last;
+      final dot = last.lastIndexOf('.');
+      final lastNoExt = dot != -1 ? last.substring(0, dot) : last;
+      final pathSegments = [
+        ...segments.sublist(start, segments.length - 1),
+        lastNoExt,
+      ];
+      return pathSegments.join('/');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Dual-stage deletion: Cloudinary first (best-effort), then Firestore.
+  Future<void> deleteReport(
+    String userId,
+    String reportId, {
+    String? storageUrl,
+    String? cloudinaryPublicId,
+  }) async {
+    final publicId =
+        (cloudinaryPublicId != null && cloudinaryPublicId.isNotEmpty)
+        ? cloudinaryPublicId
+        : (storageUrl != null ? _extractCloudinaryPublicId(storageUrl) : null);
+    if (publicId != null) {
+      try {
+        await _cloudinary.delete(publicId);
+      } catch (_) {}
+    }
     await _reportsOf(userId).doc(reportId).delete();
-    // Cloudinary deletion requires signed request — handled server-side.
   }
 }

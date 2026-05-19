@@ -9,20 +9,16 @@ import '../../helpers/fake_document_snapshot.dart';
 void main() {
   final uploadedAt = DateTime(2024, 5, 10);
 
-  Map<String, dynamic> baseData({
-    dynamic analysisJson,
-    String? aiSummary,
-  }) =>
-      {
-        'userId': 'user_1',
-        'name': 'CBC Report',
-        'category': 'Blood Test',
-        'storageUrl': 'https://res.cloudinary.com/demo/cbc.pdf',
-        'cloudinaryPublicId': 'curo_reports/user_1/abc123',
-        'uploadedAt': Timestamp.fromDate(uploadedAt),
-        ?'aiSummary': aiSummary,
-        ?'analysisJson': analysisJson,
-      };
+  Map<String, dynamic> baseData({dynamic analysisJson, String? aiSummary}) => {
+    'userId': 'user_1',
+    'name': 'CBC Report',
+    'category': 'Blood Test',
+    'storageUrl': 'https://res.cloudinary.com/demo/cbc.pdf',
+    'cloudinaryPublicId': 'curo_reports/user_1/abc123',
+    'uploadedAt': Timestamp.fromDate(uploadedAt),
+    'aiSummary': aiSummary,
+    'analysisJson': analysisJson,
+  };
 
   // ── fromFirestore – analysisJson parsing ───────────────────────────────────
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/widgets/status_chip.dart';
 import '../../../data/models/report_model.dart';
+import '../../../providers/app_providers.dart';
 import '../../../providers/report_provider.dart';
 import '../models/health_locker_models.dart';
 
@@ -80,6 +81,7 @@ LockerReport _toLockerReport(ReportModel r) {
     status: variant,
     icon: icon,
     iconColor: iconColor,
+    sourceModel: r,
   );
 }
 
@@ -104,12 +106,11 @@ class HealthLockerState {
     ReportCategory? selectedCategory,
     bool? isGridView,
     List<LockerReport>? reports,
-  }) =>
-      HealthLockerState(
-        selectedCategory: selectedCategory ?? this.selectedCategory,
-        isGridView: isGridView ?? this.isGridView,
-        reports: reports ?? this.reports,
-      );
+  }) => HealthLockerState(
+    selectedCategory: selectedCategory ?? this.selectedCategory,
+    isGridView: isGridView ?? this.isGridView,
+    reports: reports ?? this.reports,
+  );
 }
 
 // ── Notifier ──────────────────────────────────────────────────────────────────
@@ -139,9 +140,24 @@ class HealthLockerNotifier extends Notifier<HealthLockerState> {
     _isGridView = !_isGridView;
     state = state.copyWith(isGridView: _isGridView);
   }
+
+  /// Dual-stage removal: purges the Cloudinary asset then removes the
+  /// Firestore document. The real-time stream auto-animates the card out.
+  Future<void> deleteRecord(LockerReport record) async {
+    final user = ref.read(authStateChangesProvider).asData?.value;
+    if (user == null) return;
+    await ref
+        .read(reportRepositoryProvider)
+        .deleteReport(
+          user.uid,
+          record.id,
+          storageUrl: record.sourceModel.storageUrl,
+          cloudinaryPublicId: record.sourceModel.cloudinaryPublicId,
+        );
+  }
 }
 
 final healthLockerProvider =
     NotifierProvider<HealthLockerNotifier, HealthLockerState>(
-  HealthLockerNotifier.new,
-);
+      HealthLockerNotifier.new,
+    );

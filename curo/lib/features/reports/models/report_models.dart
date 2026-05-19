@@ -99,19 +99,18 @@ class ReportState {
     ReportMeta? meta,
     String? error,
     Set<int>? expandedSet,
-  }) =>
-      ReportState(
-        phase: phase ?? this.phase,
-        fileName: fileName ?? this.fileName,
-        fileBytes: fileBytes ?? this.fileBytes,
-        mimeType: mimeType ?? this.mimeType,
-        processingStep: processingStep ?? this.processingStep,
-        results: results ?? this.results,
-        summary: summary ?? this.summary,
-        meta: meta ?? this.meta,
-        error: error ?? this.error,
-        expandedSet: expandedSet ?? this.expandedSet,
-      );
+  }) => ReportState(
+    phase: phase ?? this.phase,
+    fileName: fileName ?? this.fileName,
+    fileBytes: fileBytes ?? this.fileBytes,
+    mimeType: mimeType ?? this.mimeType,
+    processingStep: processingStep ?? this.processingStep,
+    results: results ?? this.results,
+    summary: summary ?? this.summary,
+    meta: meta ?? this.meta,
+    error: error ?? this.error,
+    expandedSet: expandedSet ?? this.expandedSet,
+  );
 }
 
 // ── JSON parsing ──────────────────────────────────────────────────────────────
@@ -137,8 +136,8 @@ class ReportAnalysisResult {
       final status = statusStr == 'high'
           ? LabStatus.high
           : statusStr == 'low'
-              ? LabStatus.low
-              : LabStatus.normal;
+          ? LabStatus.low
+          : LabStatus.normal;
       return LabResult(
         testName: r['testName'] as String? ?? '',
         value: value,
@@ -151,8 +150,9 @@ class ReportAnalysisResult {
       );
     }).toList();
 
-    final criticalAlerts =
-        results.where((r) => r.status != LabStatus.normal).length;
+    final criticalAlerts = results
+        .where((r) => r.status != LabStatus.normal)
+        .length;
 
     return ReportAnalysisResult(
       meta: ReportMeta(
@@ -168,6 +168,93 @@ class ReportAnalysisResult {
       ),
       results: results,
     );
+  }
+
+  /// Parses the Groq `parseLabReport` response envelope.
+  ///
+  /// Expected shape:
+  /// ```json
+  /// {
+  ///   "report_analysis": {
+  ///     "overall_status": "Normal|Requires Attention|Critical Alert",
+  ///     "metrics": [
+  ///       { "parameter": "...", "patient_value": "...",
+  ///         "reference_range": "...", "unit": "...",
+  ///         "flag": "Normal|High|Low", "patient_explanation": "..." }
+  ///     ]
+  ///   }
+  /// }
+  /// ```
+  factory ReportAnalysisResult.fromGroqJson(Map<String, dynamic> json) {
+    final analysis = (json['report_analysis'] as Map<String, dynamic>?) ?? {};
+    final rawMetrics = (analysis['metrics'] as List<dynamic>?) ?? [];
+
+    final results = rawMetrics.whereType<Map<String, dynamic>>().map((m) {
+      final flagStr = (m['flag'] as String? ?? 'Normal').toLowerCase();
+      final status = flagStr == 'high'
+          ? LabStatus.high
+          : flagStr == 'low'
+          ? LabStatus.low
+          : LabStatus.normal;
+
+      final value = double.tryParse(m['patient_value'] as String? ?? '') ?? 0.0;
+      final (low, high) = _parseRefRange(m['reference_range'] as String? ?? '');
+
+      return LabResult(
+        testName: m['parameter'] as String? ?? '',
+        value: value,
+        unit: m['unit'] as String? ?? '',
+        refRangeLow: low,
+        refRangeHigh: high,
+        status: status,
+        aiExplanation: m['patient_explanation'] as String?,
+      );
+    }).toList();
+
+    final overallStatus =
+        analysis['overall_status'] as String? ?? 'Analysis Complete';
+    final criticalAlerts = results
+        .where((r) => r.status != LabStatus.normal)
+        .length;
+
+    return ReportAnalysisResult(
+      meta: ReportMeta(
+        patientName: analysis['patient_name'] as String? ?? 'Patient',
+        labName: analysis['lab_name'] as String? ?? 'Lab',
+        date: analysis['report_date'] as String? ?? '',
+      ),
+      summary: AiSummary(
+        headline: overallStatus,
+        body:
+            analysis['patient_friendly_summary'] as String? ??
+            analysis['summary'] as String? ??
+            '',
+        testsAnalyzed: results.length,
+        criticalAlerts: criticalAlerts,
+      ),
+      results: results,
+    );
+  }
+
+  /// Parses strings like "4.0 - 11.0", "4–11", "<5.0", ">1.0"
+  /// into a (low, high) double pair for [LabResult.refRangeLow/High].
+  static (double, double) _parseRefRange(String raw) {
+    final dashMatch = RegExp(r'([\d.]+)\s*[-–]\s*([\d.]+)').firstMatch(raw);
+    if (dashMatch != null) {
+      return (
+        double.tryParse(dashMatch.group(1)!) ?? 0.0,
+        double.tryParse(dashMatch.group(2)!) ?? 0.0,
+      );
+    }
+    final ltMatch = RegExp(r'<\s*([\d.]+)').firstMatch(raw);
+    if (ltMatch != null) {
+      return (0.0, double.tryParse(ltMatch.group(1)!) ?? 0.0);
+    }
+    final gtMatch = RegExp(r'>\s*([\d.]+)').firstMatch(raw);
+    if (gtMatch != null) {
+      return (double.tryParse(gtMatch.group(1)!) ?? 0.0, 999.0);
+    }
+    return (0.0, 0.0);
   }
 
   // Strips markdown code fences and locates the first JSON object.

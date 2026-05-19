@@ -10,26 +10,25 @@ void main() {
     int discount = 20,
     String strength = '500mg',
     String packSize = '10 Tabs',
-  }) =>
-      MedicineModel(
-        id: 'm1',
-        name: 'Panadol',
-        nameLower: 'panadol',
-        genericName: 'Paracetamol',
-        manufacturer: 'GSK',
-        category: 'tablet',
-        description: 'Pain reliever',
-        strength: strength,
-        packSize: packSize,
-        available: true,
-        inStock: true,
-        prescriptionRequired: false,
-        priceBeforeRs: priceBefore,
-        priceAfterRs: priceAfter,
-        discountPercent: discount,
-        pharmacies: [],
-        usage: [],
-      );
+  }) => MedicineModel(
+    id: 'm1',
+    name: 'Panadol',
+    nameLower: 'panadol',
+    genericName: 'Paracetamol',
+    manufacturer: 'GSK',
+    category: 'tablet',
+    description: 'Pain reliever',
+    strength: strength,
+    packSize: packSize,
+    available: true,
+    inStock: true,
+    prescriptionRequired: false,
+    priceBeforeRs: priceBefore,
+    priceAfterRs: priceAfter,
+    discountPercent: discount,
+    pharmacies: [],
+    usage: [],
+  );
 
   // ── hasDiscount ────────────────────────────────────────────────────────────
 
@@ -43,13 +42,17 @@ void main() {
     });
 
     test('false when priceAfter equals priceBefore despite discount field', () {
-      expect(make(discount: 10, priceAfter: 100, priceBefore: 100).hasDiscount,
-          isFalse);
+      expect(
+        make(discount: 10, priceAfter: 100, priceBefore: 100).hasDiscount,
+        isFalse,
+      );
     });
 
     test('false when priceAfter is greater than priceBefore', () {
-      expect(make(discount: 5, priceAfter: 110, priceBefore: 100).hasDiscount,
-          isFalse);
+      expect(
+        make(discount: 5, priceAfter: 110, priceBefore: 100).hasDiscount,
+        isFalse,
+      );
     });
   });
 
@@ -57,8 +60,10 @@ void main() {
 
   group('MedicineModel.displayForm', () {
     test('joins strength and packSize with dot separator', () {
-      expect(make(strength: '500mg', packSize: '10 Tabs').displayForm,
-          '500mg · 10 Tabs');
+      expect(
+        make(strength: '500mg', packSize: '10 Tabs').displayForm,
+        '500mg · 10 Tabs',
+      );
     });
 
     test('returns only strength when packSize is empty', () {
@@ -113,11 +118,21 @@ void main() {
 
     test('defaults priceAfterRs to priceBeforeRs when missing', () {
       final doc = FakeDoc('med_002', {
-        'name': 'X', 'nameLower': 'x', 'genericName': '', 'manufacturer': '',
-        'category': 'tablet', 'description': '', 'strength': '',
-        'packSize': '', 'available': true, 'inStock': true,
-        'prescriptionRequired': false, 'priceBeforeRs': 200,
-        'discountPercent': 0, 'pharmacies': [], 'usage': [],
+        'name': 'X',
+        'nameLower': 'x',
+        'genericName': '',
+        'manufacturer': '',
+        'category': 'tablet',
+        'description': '',
+        'strength': '',
+        'packSize': '',
+        'available': true,
+        'inStock': true,
+        'prescriptionRequired': false,
+        'priceBeforeRs': 200,
+        'discountPercent': 0,
+        'pharmacies': [],
+        'usage': [],
       });
 
       final m = MedicineModel.fromFirestore(doc);
@@ -126,12 +141,22 @@ void main() {
 
     test('converts num prices to int', () {
       final doc = FakeDoc('med_003', {
-        'name': 'X', 'nameLower': 'x', 'genericName': '', 'manufacturer': '',
-        'category': 'tablet', 'description': '', 'strength': '',
-        'packSize': '', 'available': true, 'inStock': true,
-        'prescriptionRequired': false, 'priceBeforeRs': 150.0,
-        'priceAfterRs': 120.0, 'discountPercent': 20.0,
-        'pharmacies': [], 'usage': [],
+        'name': 'X',
+        'nameLower': 'x',
+        'genericName': '',
+        'manufacturer': '',
+        'category': 'tablet',
+        'description': '',
+        'strength': '',
+        'packSize': '',
+        'available': true,
+        'inStock': true,
+        'prescriptionRequired': false,
+        'priceBeforeRs': 150.0,
+        'priceAfterRs': 120.0,
+        'discountPercent': 20.0,
+        'pharmacies': [],
+        'usage': [],
       });
 
       final m = MedicineModel.fromFirestore(doc);
@@ -145,6 +170,7 @@ void main() {
 
   group('MedicineModel.toFirestore', () {
     test('adds genericNameLower derived field', () {
+      // call via instance since make returns MedicineModel directly
       final med = MedicineModel(
         id: 'x',
         name: 'Panadol',

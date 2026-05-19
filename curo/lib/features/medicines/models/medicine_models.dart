@@ -1,9 +1,35 @@
+/// A cost-effective market alternative for a given generic molecule,
+/// sourced from Firebase or the static Pakistani-market lookup table.
+class GenericAlternative {
+  const GenericAlternative({
+    required this.brandName,
+    required this.genericFormula,
+    required this.form,
+    required this.priceRs,
+    required this.manufacturer,
+    this.savingNote = '',
+  });
+
+  final String brandName;
+  final String genericFormula;
+  final String form;
+  final int priceRs;
+  final String manufacturer;
+  final String savingNote;
+}
+
+// ── Scanned medicine entry ─────────────────────────────────────────────────────
+
 class ScannedMedicine {
   ScannedMedicine({
     required this.id,
     required this.name,
     required this.genericLabel,
     this.frequency,
+    this.genericFormula = '',
+    this.dosage = '',
+    this.form = '',
+    this.alternatives = const [],
     this.isIncluded = true,
     this.isUnclear = false,
   });
@@ -12,6 +38,10 @@ class ScannedMedicine {
   final String name;
   final String genericLabel;
   final String? frequency;
+  final String genericFormula;
+  final String dosage;
+  final String form;
+  final List<GenericAlternative> alternatives;
   bool isIncluded;
   bool isUnclear;
 
@@ -20,16 +50,23 @@ class ScannedMedicine {
     String? genericLabel,
     bool? isIncluded,
     bool? isUnclear,
+    List<GenericAlternative>? alternatives,
   }) =>
       ScannedMedicine(
         id: id,
         name: name ?? this.name,
         genericLabel: genericLabel ?? this.genericLabel,
         frequency: frequency,
+        genericFormula: genericFormula,
+        dosage: dosage,
+        form: form,
+        alternatives: alternatives ?? this.alternatives,
         isIncluded: isIncluded ?? this.isIncluded,
         isUnclear: isUnclear ?? this.isUnclear,
       );
 }
+
+// ── Medicine comparison (search finder) ───────────────────────────────────────
 
 class MedicineComparison {
   const MedicineComparison({
@@ -67,6 +104,8 @@ class MedicineComparison {
       : 0;
 }
 
+// ── Provider state ─────────────────────────────────────────────────────────────
+
 class MedicineState {
   const MedicineState({
     this.scannedMedicines = const [],
@@ -98,8 +137,7 @@ class MedicineState {
   }) =>
       MedicineState(
         scannedMedicines: scannedMedicines ?? this.scannedMedicines,
-        comparison:
-            clearComparison ? null : (comparison ?? this.comparison),
+        comparison: clearComparison ? null : (comparison ?? this.comparison),
         recentSearches: recentSearches ?? this.recentSearches,
         searchQuery: searchQuery ?? this.searchQuery,
         hasTorch: hasTorch ?? this.hasTorch,

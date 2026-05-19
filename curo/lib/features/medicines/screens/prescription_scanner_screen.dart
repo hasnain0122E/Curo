@@ -1,15 +1,17 @@
+import 'dart:async';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/router/app_router.dart';
-import '../../../data/services/gemini_service.dart';
-import '../../../data/services/ml_kit_ocr_service.dart';
+import '../../../core/services/ai_vision_service.dart';
 import '../providers/medicine_provider.dart';
 
 class PrescriptionScannerScreen extends ConsumerStatefulWidget {
@@ -26,10 +28,20 @@ class _PrescriptionScannerScreenState
   late AnimationController _scanLine;
   late Animation<double> _scanAnim;
 
+  bool _isScanning = false;
+  String _processingLabel = '';
+  Timer? _labelTimer;
+
   static const _frameLeft = 0.08;
   static const _frameRight = 0.92;
   static const _frameTop = 0.20;
   static const _frameBottom = 0.72;
+
+  static const _kScanSteps = [
+    'Optimising image…',
+    'Reading prescription…',
+    'Identifying medicines…',
+  ];
 
   @override
   void initState() {
@@ -39,70 +51,105 @@ class _PrescriptionScannerScreenState
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
-    _scanAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _scanLine, curve: Curves.easeInOut),
-    );
+    _scanAnim = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _scanLine, curve: Curves.easeInOut));
   }
 
   @override
   void dispose() {
+    _labelTimer?.cancel();
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
     _scanLine.dispose();
     super.dispose();
   }
 
+  // ── Loading cycle ─────────────────────────────────────────────────────────────
+
+  void _startLoadingCycle() {
+    int idx = 0;
+    _processingLabel = _kScanSteps[idx];
+    _labelTimer?.cancel();
+    _labelTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (!mounted) return;
+      idx = (idx + 1) % _kScanSteps.length;
+      setState(() => _processingLabel = _kScanSteps[idx]);
+    });
+  }
+
+  void _stopLoadingCycle() {
+    _labelTimer?.cancel();
+    _labelTimer = null;
+  }
+
+  // ── Capture / pick ────────────────────────────────────────────────────────────
+
   Future<void> _capture() async {
-    final picked = await ImagePicker()
-        .pickImage(source: ImageSource.camera, imageQuality: 90);
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      imageQuality: 90,
+    );
     if (picked == null || !mounted) return;
     await _scanAndNavigate(picked.path);
   }
 
   Future<void> _pickFromGallery() async {
-    final picked = await ImagePicker()
-        .pickImage(source: ImageSource.gallery, imageQuality: 90);
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+    );
     if (picked == null || !mounted) return;
     await _scanAndNavigate(picked.path);
   }
 
-  bool _isScanning = false;
+  // ── Core scan pipeline ────────────────────────────────────────────────────────
 
   Future<void> _scanAndNavigate(String imagePath) async {
     if (!mounted || _isScanning) return;
+
+    _startLoadingCycle();
     setState(() => _isScanning = true);
 
     try {
-      // Step 1: On-device ML Kit OCR (no network needed)
-      final ocrNames = await MlKitOcrService.scanPrescription(imagePath);
+      // Groq vision: grayscale + contrast boost → analyzeMedicinePrescription.
+      final Map<String, dynamic> result = await AiVisionService.instance
+          .analyzeMedicinePrescription(File(imagePath));
+
+      // Extract medications array from JSON envelope.
+      final raw = (result['medications'] as List<dynamic>?) ?? [];
+      final medications = raw.whereType<Map<String, dynamic>>().toList();
 
       if (!mounted) return;
 
-      List<String> finalNames = ocrNames;
-
-      // Step 2: Gemini gives better structured extraction when API key present
-      if (kGeminiApiKey.isNotEmpty) {
-        try {
-          final bytes = await File(imagePath).readAsBytes();
-          final geminiNames = await GeminiService.scanPrescription(bytes);
-          if (geminiNames.isNotEmpty) finalNames = geminiNames;
-        } catch (_) {
-          // Gemini failed — use OCR result
-        }
-      }
-
-      if (!mounted) return;
-
-      // Step 3: Firebase medicines lookup
-      await ref
-          .read(medicineProvider.notifier)
-          .loadScannedFromFirebase(finalNames);
+      // Resolve alternatives + build ScannedMedicine list.
+      await ref.read(medicineProvider.notifier).loadFromGroqResult(medications);
 
       if (!mounted) return;
       context.push(AppRoutes.medicineResults);
+    } on AiVisionException catch (e) {
+      if (!mounted) return;
+      ref.read(medicineProvider.notifier).setScannedNames([]);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(AppSpacing.s16),
+        ),
+      );
+      context.push(AppRoutes.medicineResults);
+    } catch (_) {
+      if (!mounted) return;
+      ref.read(medicineProvider.notifier).setScannedNames([]);
+      context.push(AppRoutes.medicineResults);
     } finally {
+      _stopLoadingCycle();
       if (mounted) setState(() => _isScanning = false);
     }
   }
+
+  // ── Build ─────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -120,6 +167,7 @@ class _PrescriptionScannerScreenState
       backgroundColor: Colors.black,
       body: Stack(
         children: [
+          // Background gradient
           Container(
             decoration: const BoxDecoration(
               gradient: RadialGradient(
@@ -130,24 +178,7 @@ class _PrescriptionScannerScreenState
             ),
           ),
 
-          if (_isScanning)
-            Container(
-              color: Colors.black.withValues(alpha: 0.65),
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: AppColors.primary),
-                    SizedBox(height: 16),
-                    Text(
-                      'Scanning prescription…',
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
+          // Scan frame with animated line
           AnimatedBuilder(
             animation: _scanAnim,
             builder: (_, _) => CustomPaint(
@@ -159,22 +190,31 @@ class _PrescriptionScannerScreenState
             ),
           ),
 
+          // Top bar
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+                horizontal: AppSpacing.s16,
+                vertical: AppSpacing.s8,
+              ),
               child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => context.pop(),
                     child: Row(
                       children: [
-                        const Icon(Icons.arrow_back_ios_rounded,
-                            color: Colors.white, size: 16),
+                        const Icon(
+                          Icons.arrow_back_ios_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                         const SizedBox(width: 4),
-                        Text('CURO',
-                            style: AppTextStyles.labelLarge
-                                .copyWith(color: Colors.white)),
+                        Text(
+                          'CURO',
+                          style: AppTextStyles.labelLarge.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -191,6 +231,7 @@ class _PrescriptionScannerScreenState
             ),
           ),
 
+          // Hint above frame
           Positioned(
             top: frameRect.top - 44,
             left: 0,
@@ -198,7 +239,9 @@ class _PrescriptionScannerScreenState
             child: Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+                  horizontal: AppSpacing.s16,
+                  vertical: AppSpacing.s8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.60),
                   borderRadius: BorderRadius.circular(AppRadius.r24),
@@ -207,13 +250,17 @@ class _PrescriptionScannerScreenState
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.crop_free_rounded,
-                        color: Colors.white70, size: 14),
+                    const Icon(
+                      Icons.crop_free_rounded,
+                      color: Colors.white70,
+                      size: 14,
+                    ),
                     const SizedBox(width: AppSpacing.s8),
                     Text(
                       'Align prescription within the frame',
-                      style: AppTextStyles.bodySmall
-                          .copyWith(color: Colors.white70),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: Colors.white70,
+                      ),
                     ),
                   ],
                 ),
@@ -221,6 +268,7 @@ class _PrescriptionScannerScreenState
             ),
           ),
 
+          // Bottom controls
           Positioned(
             bottom: 0,
             left: 0,
@@ -232,14 +280,20 @@ class _PrescriptionScannerScreenState
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.s48, vertical: AppSpacing.s24),
+                      horizontal: AppSpacing.s48,
+                      vertical: AppSpacing.s24,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        // Torch toggle
                         GestureDetector(
-                          onTap: () =>
-                              ref.read(medicineProvider.notifier).toggleTorch(),
+                          onTap: _isScanning
+                              ? null
+                              : () => ref
+                                    .read(medicineProvider.notifier)
+                                    .toggleTorch(),
                           child: Container(
                             width: 48,
                             height: 48,
@@ -259,15 +313,15 @@ class _PrescriptionScannerScreenState
                           ),
                         ),
 
+                        // Shutter button
                         GestureDetector(
-                          onTap: _capture,
+                          onTap: _isScanning ? null : _capture,
                           child: Container(
                             width: 76,
                             height: 76,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(
-                                  color: Colors.white, width: 3),
+                              border: Border.all(color: Colors.white, width: 3),
                             ),
                             child: Center(
                               child: Container(
@@ -277,15 +331,19 @@ class _PrescriptionScannerScreenState
                                   color: Colors.white,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.camera_alt_rounded,
-                                    color: AppColors.primary, size: 28),
+                                child: const Icon(
+                                  Icons.camera_alt_rounded,
+                                  color: AppColors.primary,
+                                  size: 28,
+                                ),
                               ),
                             ),
                           ),
                         ),
 
+                        // Gallery picker
                         GestureDetector(
-                          onTap: _pickFromGallery,
+                          onTap: _isScanning ? null : _pickFromGallery,
                           child: Container(
                             width: 48,
                             height: 48,
@@ -293,27 +351,34 @@ class _PrescriptionScannerScreenState
                               color: Colors.white.withValues(alpha: 0.12),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.photo_library_outlined,
-                                color: Colors.white, size: 22),
+                            child: const Icon(
+                              Icons.photo_library_outlined,
+                              color: Colors.white,
+                              size: 22,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
 
+                  // Manual entry fallback
                   GestureDetector(
-                    onTap: () {
-                      // Clear scan state; user will add medicines manually
-                      ref.read(medicineProvider.notifier).setScannedNames([]);
-                      context.push(AppRoutes.medicineResults);
-                    },
+                    onTap: _isScanning
+                        ? null
+                        : () {
+                            ref
+                                .read(medicineProvider.notifier)
+                                .setScannedNames([]);
+                            context.push(AppRoutes.medicineResults);
+                          },
                     child: Padding(
-                      padding:
-                          const EdgeInsets.only(bottom: AppSpacing.s16),
+                      padding: const EdgeInsets.only(bottom: AppSpacing.s16),
                       child: RichText(
                         text: TextSpan(
-                          style: AppTextStyles.bodySmall
-                              .copyWith(color: Colors.white54),
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: Colors.white54,
+                          ),
                           children: [
                             const TextSpan(text: 'Having trouble? '),
                             TextSpan(
@@ -333,6 +398,56 @@ class _PrescriptionScannerScreenState
               ),
             ),
           ),
+
+          // Processing overlay — shown during API call
+          if (_isScanning)
+            Container(
+              color: Colors.black.withValues(alpha: 0.75),
+              child: Center(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s32,
+                  ),
+                  padding: const EdgeInsets.all(AppSpacing.s24),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D1A26),
+                    borderRadius: BorderRadius.circular(AppRadius.r16),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 52,
+                        height: 52,
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                          strokeWidth: 3,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.s16),
+                      Text(
+                        _processingLabel,
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: Colors.white,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.s8),
+                      Text(
+                        'AI-powered analysis in progress',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: Colors.white54,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -368,33 +483,59 @@ class _ScanOverlayPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    canvas.drawLine(frameRect.topLeft,
-        frameRect.topLeft + const Offset(cornerLen, 0), bracketPaint);
-    canvas.drawLine(frameRect.topLeft,
-        frameRect.topLeft + const Offset(0, cornerLen), bracketPaint);
-    canvas.drawLine(frameRect.topRight,
-        frameRect.topRight + const Offset(-cornerLen, 0), bracketPaint);
-    canvas.drawLine(frameRect.topRight,
-        frameRect.topRight + const Offset(0, cornerLen), bracketPaint);
-    canvas.drawLine(frameRect.bottomLeft,
-        frameRect.bottomLeft + const Offset(cornerLen, 0), bracketPaint);
-    canvas.drawLine(frameRect.bottomLeft,
-        frameRect.bottomLeft + const Offset(0, -cornerLen), bracketPaint);
-    canvas.drawLine(frameRect.bottomRight,
-        frameRect.bottomRight + const Offset(-cornerLen, 0), bracketPaint);
-    canvas.drawLine(frameRect.bottomRight,
-        frameRect.bottomRight + const Offset(0, -cornerLen), bracketPaint);
+    canvas.drawLine(
+      frameRect.topLeft,
+      frameRect.topLeft + const Offset(cornerLen, 0),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      frameRect.topLeft,
+      frameRect.topLeft + const Offset(0, cornerLen),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      frameRect.topRight,
+      frameRect.topRight + const Offset(-cornerLen, 0),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      frameRect.topRight,
+      frameRect.topRight + const Offset(0, cornerLen),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      frameRect.bottomLeft,
+      frameRect.bottomLeft + const Offset(cornerLen, 0),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      frameRect.bottomLeft,
+      frameRect.bottomLeft + const Offset(0, -cornerLen),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      frameRect.bottomRight,
+      frameRect.bottomRight + const Offset(-cornerLen, 0),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      frameRect.bottomRight,
+      frameRect.bottomRight + const Offset(0, -cornerLen),
+      bracketPaint,
+    );
 
     final scanY = frameRect.top + frameRect.height * scanProgress;
     final linePaint = Paint()
-      ..shader = LinearGradient(
-        colors: [
-          AppColors.primary.withValues(alpha: 0),
-          AppColors.primary.withValues(alpha: 0.7),
-          AppColors.primary.withValues(alpha: 0),
-        ],
-      ).createShader(Rect.fromLTWH(
-          frameRect.left, scanY - 1, frameRect.width, 2));
+      ..shader =
+          LinearGradient(
+            colors: [
+              AppColors.primary.withValues(alpha: 0),
+              AppColors.primary.withValues(alpha: 0.7),
+              AppColors.primary.withValues(alpha: 0),
+            ],
+          ).createShader(
+            Rect.fromLTWH(frameRect.left, scanY - 1, frameRect.width, 2),
+          );
     canvas.drawLine(
       Offset(frameRect.left + 4, scanY),
       Offset(frameRect.right - 4, scanY),

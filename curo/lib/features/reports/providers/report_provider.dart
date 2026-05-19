@@ -1,9 +1,11 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/services/ai_vision_service.dart';
 import '../../../providers/report_provider.dart' as global;
 import '../models/report_models.dart';
-import '../services/gemini_report_service.dart';
 
 class ReportNotifier extends Notifier<ReportState> {
   @override
@@ -55,22 +57,25 @@ class ReportNotifier extends Notifier<ReportState> {
       processingStep: 0,
     );
 
-    // Step 1 — uploading to Cloudinary
-    await Future.delayed(const Duration(milliseconds: 400));
-    state = state.copyWith(processingStep: 1);
+    // Write bytes to a temp file — AiVisionService requires a File handle.
+    final File tmpFile = File(
+      '${Directory.systemTemp.path}'
+      '/curo_report_${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
 
-    // Step 2 — reading values with Gemini
-    await Future.delayed(const Duration(milliseconds: 400));
-    state = state.copyWith(processingStep: 2);
-
-    // Step 3 — actual AI analysis
     try {
-      final result = await GeminiReportService.analyze(
-        fileBytes: state.fileBytes!,
-        mimeType: state.mimeType ?? 'image/jpeg',
-      );
+      await tmpFile.writeAsBytes(state.fileBytes!, flush: true);
 
-      // Step 4 — save to Cloudinary + Firestore in background
+      state = state.copyWith(processingStep: 1);
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      state = state.copyWith(processingStep: 2);
+
+      // Groq vision: grayscale + contrast boost → parseLabReport.
+      final raw = await AiVisionService.instance.parseLabReport(tmpFile);
+      final result = ReportAnalysisResult.fromGroqJson(raw);
+
+      // Save to Cloudinary + Firestore in background.
       _persistReport(result);
 
       state = state.copyWith(
@@ -86,6 +91,10 @@ class ReportNotifier extends Notifier<ReportState> {
         phase: ReportScreenPhase.error,
         error: _friendlyError(e),
       );
+    } finally {
+      try {
+        await tmpFile.delete();
+      } catch (_) {}
     }
   }
 
@@ -94,11 +103,44 @@ class ReportNotifier extends Notifier<ReportState> {
     final filename = state.fileName ?? 'report';
     if (bytes == null) return;
 
-    // Derive a human-readable category from the Gemini result
-    final name = result.meta.patientName != 'Patient'
-        ? '${result.meta.labName} – ${result.meta.date}'
-        : filename;
-    const category = 'Blood Test'; // default; UI can improve this
+    // ── Build a structural title from the AI payload ──────────────────────────
+    // Prefer the lab name returned by Groq; fall back to "Lab Report".
+    final labPrefix =
+        (result.meta.labName.isNotEmpty && result.meta.labName != 'Lab')
+        ? result.meta.labName
+        : 'Lab Report';
+
+    // Append up to 3 parameter names so the title is self-describing.
+    final paramPart = result.results.map((r) => r.testName).take(3).join(', ');
+    final name = paramPart.isNotEmpty
+        ? '$labPrefix — $paramPart'
+        : '$labPrefix — ${result.summary.headline}';
+
+    // ── Infer category from parameter names ───────────────────────────────────
+    final allParams = result.results
+        .map((r) => r.testName.toLowerCase())
+        .join(' ');
+    final String category;
+    if (allParams.contains('urine') ||
+        allParams.contains('urinalysis') ||
+        allParams.contains('urea creatinine')) {
+      category = 'Urine';
+    } else if (allParams.contains('ecg') ||
+        allParams.contains('ekg') ||
+        allParams.contains('cardiac')) {
+      category = 'ECG';
+    } else if (allParams.contains('x-ray') ||
+        allParams.contains('xray') ||
+        allParams.contains('mri')) {
+      category = 'X-Ray';
+    } else {
+      category = 'Blood Test';
+    }
+
+    // ── Use patient_friendly_summary as the stored aiSummary ─────────────────
+    final aiSummary = result.summary.body.isNotEmpty
+        ? result.summary.body
+        : result.summary.headline;
 
     final analysisJson = <String, dynamic>{
       'patientName': result.meta.patientName,
@@ -107,43 +149,52 @@ class ReportNotifier extends Notifier<ReportState> {
       'summaryHeadline': result.summary.headline,
       'summary': result.summary.body,
       'criticalAlerts': result.summary.criticalAlerts,
-      'results': result.results.map((r) => {
-        'testName': r.testName,
-        'value': r.value,
-        'unit': r.unit,
-        'refRangeLow': r.refRangeLow,
-        'refRangeHigh': r.refRangeHigh,
-        'status': r.status.name,
-        'aiExplanation': r.aiExplanation,
-        'learnMoreTopic': r.learnMoreTopic,
-      }).toList(),
+      'results': result.results
+          .map(
+            (r) => {
+              'testName': r.testName,
+              'value': r.value,
+              'unit': r.unit,
+              'refRangeLow': r.refRangeLow,
+              'refRangeHigh': r.refRangeHigh,
+              'status': r.status.name,
+              'aiExplanation': r.aiExplanation,
+              'learnMoreTopic': r.learnMoreTopic,
+            },
+          )
+          .toList(),
     };
 
-    ref.read(global.reportUploadProvider.notifier).uploadBytes(
-      bytes: bytes,
-      filename: filename,
-      name: name,
-      category: category,
-      aiSummary: result.summary.headline,
-      analysisJson: analysisJson,
-    );
+    ref
+        .read(global.reportUploadProvider.notifier)
+        .uploadBytes(
+          bytes: bytes,
+          filename: filename,
+          name: name,
+          category: category,
+          aiSummary: aiSummary,
+          analysisJson: analysisJson,
+        );
   }
 
   String _friendlyError(Object e) {
-    final msg = e.toString();
-    if (msg.contains('API key')) {
-      return 'AI service is not configured. Contact support.';
+    if (e is AiVisionException) {
+      final msg = e.message;
+      if (msg.contains('GROQ_API_KEY')) {
+        return 'AI service is not configured. Contact support.';
+      }
+      if (msg.contains('timed out')) {
+        return 'Analysis timed out. Please try again with a smaller file.';
+      }
+      if (msg.contains('Network error')) {
+        return 'No network connection. Please check your connection and try again.';
+      }
+      return msg;
     }
+    final msg = e.toString();
     if (msg.contains('timeout') || msg.contains('TimeoutException')) {
       return 'Analysis timed out. Please try again with a smaller file.';
     }
-    if (msg.contains('empty response') || msg.contains('Empty response')) {
-      return 'The AI could not read the document. Try a clearer, well-lit photo.';
-    }
-    if (msg.contains('Could not read') || msg.contains('Could not parse')) {
-      return 'The AI response was unexpected. Please try again.';
-    }
-    // Surface the real error message so issues are diagnosable.
     final clean = msg.replaceFirst('Exception: ', '');
     return clean.isNotEmpty ? clean : 'Analysis failed. Please try again.';
   }

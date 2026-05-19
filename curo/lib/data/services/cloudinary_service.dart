@@ -50,7 +50,9 @@ class CloudinaryService {
     final streamed = await request.send().timeout(_timeout);
     final body = await streamed.stream.bytesToString();
     if (streamed.statusCode != 200) {
-      throw Exception('Cloudinary upload failed (${streamed.statusCode}): $body');
+      throw Exception(
+        'Cloudinary upload failed (${streamed.statusCode}): $body',
+      );
     }
     final json = jsonDecode(body) as Map<String, dynamic>;
     return CloudinaryResult(
@@ -59,7 +61,26 @@ class CloudinaryService {
     );
   }
 
-  /// Deletion requires a signed API key; not available with unsigned preset.
-  /// In production, delegate to a Cloud Function.
-  Future<void> delete(String publicId) async {}
+  /// Dispatches a destroy request to Cloudinary's media asset endpoint.
+  ///
+  /// Cloudinary's `/image/destroy` endpoint requires a signed payload
+  /// (API key + secret) for authorised deletion. Without a backend proxy the
+  /// request will be rejected (401) and the exception is swallowed by the
+  /// caller — Firestore cleanup always proceeds regardless.
+  Future<void> delete(String publicId) async {
+    try {
+      final uri = Uri.parse(
+        'https://api.cloudinary.com/v1_1/$cloudName/image/destroy',
+      );
+      await http
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'public_id': publicId, 'invalidate': true}),
+          )
+          .timeout(const Duration(seconds: 10));
+    } catch (_) {
+      // Non-fatal — repository always removes the Firestore record.
+    }
+  }
 }
