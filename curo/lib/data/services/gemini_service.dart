@@ -130,7 +130,8 @@ class GeminiService {
       ),
       summary: AiSummary(
         headline: 'Review Required',
-        body: 'Your report shows mild anemia with low hemoglobin and slightly '
+        body:
+            'Your report shows mild anemia with low hemoglobin and slightly '
             'elevated creatinine levels. Other parameters including white blood '
             'cells and platelets are within normal range. Please consult your physician.',
         testsAnalyzed: results.length,
@@ -145,7 +146,12 @@ class GeminiService {
 
   static Future<List<String>> scanPrescription(Uint8List bytes) async {
     await Future.delayed(const Duration(milliseconds: 800));
-    return ['Augmentin 625mg', 'Panadol 500mg', 'Omeprazole 20mg', 'Brufen 400mg'];
+    return [
+      'Augmentin 625mg',
+      'Panadol 500mg',
+      'Omeprazole 20mg',
+      'Brufen 400mg',
+    ];
   }
 
   // ── 3. Scan lab test prescription — returns test names for lab lookup ────────
@@ -184,9 +190,9 @@ class GeminiService {
         'Patient Question: $question';
 
     return await _withRetry(() async {
-      final res = await _genModel(temperature: 0.7).generateContent([
-        Content.text(prompt),
-      ]);
+      final res = await _genModel(
+        temperature: 0.7,
+      ).generateContent([Content.text(prompt)]);
       final answer = res.text ?? '';
       return answer + (language == 'ur' ? _urduDisclaimer : _disclaimer);
     });

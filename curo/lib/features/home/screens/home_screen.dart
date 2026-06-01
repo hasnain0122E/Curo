@@ -32,7 +32,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header + risk card + quick actions — padded section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
                 child: Column(
@@ -48,19 +47,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ],
                 ),
               ),
-
-              // Nearby Labs — edge-to-edge with its own horizontal padding
               const _NearbyLabsSection(),
               const SizedBox(height: AppSpacing.s24),
-
-              // Cheapest Lab — full-width card
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
                 child: const _CheapestLabSection(),
               ),
               const SizedBox(height: AppSpacing.s24),
-
-              // Recent Reports — padded
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
                 child: const _RecentReportsSection(),
@@ -104,15 +97,22 @@ class _HomeHeader extends ConsumerWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Avatar
+        // Premium matte-teal avatar
         GestureDetector(
           onTap: () => context.go(AppRoutes.profile),
           child: Container(
-            width: 46,
-            height: 46,
-            decoration: const BoxDecoration(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
               color: AppColors.primary,
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.28),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Center(
               child: Text(
@@ -120,6 +120,7 @@ class _HomeHeader extends ConsumerWidget {
                 style: AppTextStyles.labelLarge.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
+                  fontSize: 15,
                 ),
               ),
             ),
@@ -127,32 +128,17 @@ class _HomeHeader extends ConsumerWidget {
         ),
         const SizedBox(width: AppSpacing.s12),
 
-        // Greeting + MediPoints
+        // Greeting + MediPoints capsule
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('${_greeting()}, $firstName 👋', style: AppTextStyles.h3),
-              const SizedBox(height: 4),
-              GestureDetector(
+              const SizedBox(height: 5),
+              _MedipointsCapsule(
+                points: points,
                 onTap: () => context.push(AppRoutes.medipoints),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _MedipointsBadge(points: points),
-                    const SizedBox(width: 4),
-                    Text(
-                      'View details',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: const Color(0xFFD97706),
-                        fontSize: 10,
-                        decoration: TextDecoration.underline,
-                        decorationColor: const Color(0xFFD97706),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),
@@ -165,31 +151,53 @@ class _HomeHeader extends ConsumerWidget {
   }
 }
 
-class _MedipointsBadge extends StatelessWidget {
-  const _MedipointsBadge({required this.points});
+class _MedipointsCapsule extends StatelessWidget {
+  const _MedipointsCapsule({required this.points, required this.onTap});
   final int points;
+  final VoidCallback onTap;
+
+  // Amber/gold tones — MediPoints brand identity
+  static const _bg = Color(0xFFFEF3C7);
+  static const _fg = Color(0xFFB45309);
+  static const _sep = Color(0x3DB45309); // 24% alpha divider
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7),
-        borderRadius: BorderRadius.circular(AppRadius.r24),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.star_rounded, size: 13, color: Color(0xFFD97706)),
-          const SizedBox(width: 4),
-          Text(
-            '${points}pts',
-            style: AppTextStyles.labelSmall.copyWith(
-              color: const Color(0xFFD97706),
-              fontWeight: FontWeight.w700,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: _bg,
+          borderRadius: BorderRadius.circular(AppRadius.r24),
+          border: Border.all(color: _fg.withValues(alpha: 0.22)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.star_rounded, size: 12, color: _fg),
+            const SizedBox(width: 4),
+            Text(
+              '$points pts',
+              style: AppTextStyles.labelSmall.copyWith(
+                color: _fg,
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 7),
+            Container(width: 1, height: 11, color: _sep),
+            const SizedBox(width: 7),
+            Text(
+              'Details',
+              style: AppTextStyles.labelSmall.copyWith(
+                color: _fg,
+                fontWeight: FontWeight.w500,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -224,7 +232,7 @@ class _NotificationBell extends StatelessWidget {
               width: 9,
               height: 9,
               decoration: BoxDecoration(
-                color: AppColors.danger,
+                color: AppColors.dangerForeground,
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.surface, width: 1.5),
               ),
@@ -241,50 +249,80 @@ class _NotificationBell extends StatelessWidget {
 class _HealthRiskCard extends ConsumerWidget {
   const _HealthRiskCard();
 
+  static Color _riskBg(HealthRiskLevel level) => switch (level) {
+    HealthRiskLevel.low => AppColors.successBackground,
+    HealthRiskLevel.medium => AppColors.warningBackground,
+    HealthRiskLevel.high => AppColors.dangerBackground,
+  };
+
+  static Color _riskFg(HealthRiskLevel level) => switch (level) {
+    HealthRiskLevel.low => AppColors.successForeground,
+    HealthRiskLevel.medium => AppColors.warningForeground,
+    HealthRiskLevel.high => AppColors.dangerForeground,
+  };
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final risk = ref.watch(healthRiskProvider);
+    final bg = _riskBg(risk.level);
+    final fg = _riskFg(risk.level);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary.withValues(alpha: 0.12),
+            AppColors.primaryDark.withValues(alpha: 0.04),
+          ],
+        ),
         borderRadius: BorderRadius.circular(AppRadius.r16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppShadows.sm,
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.20)),
+        boxShadow: AppShadows.md,
       ),
       child: Row(
         children: [
-          // Circular gauge
-          SizedBox(
-            width: 84,
-            height: 84,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CustomPaint(
-                  size: const Size(84, 84),
-                  painter: _GaugePainter(risk: risk),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
+          // Circular gauge with status badge center
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.s8),
+            child: SizedBox(
+              width: 84,
+              height: 84,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CustomPaint(
+                    size: const Size(84, 84),
+                    painter: _GaugePainter(risk: risk, arcColor: fg),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: bg,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
                       risk.label,
-                      style: AppTextStyles.labelMedium.copyWith(
-                        color: risk.color,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: fg,
                         fontWeight: FontWeight.w800,
-                        fontSize: 13,
+                        fontSize: 9,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(width: AppSpacing.s16),
+          const SizedBox(width: AppSpacing.s12),
 
-          // Title + subtitle
+          // Title + explicit status badge + description
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,39 +333,54 @@ class _HealthRiskCard extends ConsumerWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '${risk.label} ',
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: risk.color,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      TextSpan(
-                        text: 'Based on ${risk.reportCount}\nreports',
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 7),
+                // Distinct status badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
                   ),
+                  decoration: BoxDecoration(
+                    color: bg,
+                    borderRadius: BorderRadius.circular(AppRadius.r24),
+                  ),
+                  child: Text(
+                    risk.label,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: fg,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'Based on ${risk.reportCount} '
+                  'report${risk.reportCount == 1 ? '' : 's'}',
+                  style: AppTextStyles.bodySmall,
                 ),
               ],
             ),
           ),
 
-          // View Details
+          // View Details CTA
           GestureDetector(
             onTap: () => context.go(AppRoutes.reports),
-            child: Text(
-              'View\nDetails',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s12,
+                vertical: AppSpacing.s8,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(AppRadius.r8),
+              ),
+              child: Text(
+                'Details',
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -338,12 +391,12 @@ class _HealthRiskCard extends ConsumerWidget {
 }
 
 class _GaugePainter extends CustomPainter {
-  const _GaugePainter({required this.risk});
+  const _GaugePainter({required this.risk, required this.arcColor});
   final HealthRiskData risk;
+  final Color arcColor;
 
-  // Arc: starts at ~8 o'clock, sweeps 240° clockwise through top to ~4 o'clock
-  static const double _startAngle = 5 * pi / 6; // 150° from 3-o'clock = 8 o'clock area
-  static const double _totalSweep = 4 * pi / 3; // 240°
+  static const double _startAngle = 5 * pi / 6;
+  static const double _totalSweep = 4 * pi / 3;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -371,7 +424,7 @@ class _GaugePainter extends CustomPainter {
       _totalSweep * risk.gaugeProgress,
       false,
       Paint()
-        ..color = risk.color
+        ..color = arcColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = 7
         ..strokeCap = StrokeCap.round,
@@ -379,7 +432,8 @@ class _GaugePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GaugePainter old) => old.risk.level != risk.level;
+  bool shouldRepaint(_GaugePainter old) =>
+      old.risk.level != risk.level || old.arcColor != arcColor;
 }
 
 // ── Quick Actions ─────────────────────────────────────────────────────────────
@@ -387,11 +441,16 @@ class _GaugePainter extends CustomPainter {
 class _QuickActionsGrid extends StatelessWidget {
   const _QuickActionsGrid();
 
+  // Per-action color identities: Lab→accent, Report→success, Medicine→primary, LabTest→warning
   static const _actions = [
-    (Icons.science_outlined, 'Find Lab'),
-    (Icons.document_scanner_outlined, 'Scan Report'),
-    (Icons.medication_outlined, 'Find Medicine'),
-    (Icons.biotech_outlined, 'Scan Lab Test'),
+    (Icons.science_outlined, 'Find Lab', AppColors.accent),
+    (
+      Icons.document_scanner_outlined,
+      'Scan Report',
+      AppColors.successForeground,
+    ),
+    (Icons.medication_outlined, 'Find Medicine', AppColors.primary),
+    (Icons.biotech_outlined, 'Scan Lab Test', AppColors.warningForeground),
   ];
 
   @override
@@ -400,29 +459,45 @@ class _QuickActionsGrid extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: _QuickActionCard(
-              icon: _actions[0].$1, label: _actions[0].$2,
-              onTap: () => context.go(AppRoutes.labs),
-            )),
+            Expanded(
+              child: _QuickActionCard(
+                icon: _actions[0].$1,
+                label: _actions[0].$2,
+                color: _actions[0].$3,
+                onTap: () => context.go(AppRoutes.labs),
+              ),
+            ),
             const SizedBox(width: AppSpacing.s12),
-            Expanded(child: _QuickActionCard(
-              icon: _actions[1].$1, label: _actions[1].$2,
-              onTap: () => context.push(AppRoutes.reportUpload),
-            )),
+            Expanded(
+              child: _QuickActionCard(
+                icon: _actions[1].$1,
+                label: _actions[1].$2,
+                color: _actions[1].$3,
+                onTap: () => context.push(AppRoutes.reportUpload),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.s12),
         Row(
           children: [
-            Expanded(child: _QuickActionCard(
-              icon: _actions[2].$1, label: _actions[2].$2,
-              onTap: () => context.go(AppRoutes.medicines),
-            )),
+            Expanded(
+              child: _QuickActionCard(
+                icon: _actions[2].$1,
+                label: _actions[2].$2,
+                color: _actions[2].$3,
+                onTap: () => context.go(AppRoutes.medicines),
+              ),
+            ),
             const SizedBox(width: AppSpacing.s12),
-            Expanded(child: _QuickActionCard(
-              icon: _actions[3].$1, label: _actions[3].$2,
-              onTap: () => context.push(AppRoutes.labTestScanner),
-            )),
+            Expanded(
+              child: _QuickActionCard(
+                icon: _actions[3].$1,
+                label: _actions[3].$2,
+                color: _actions[3].$3,
+                onTap: () => context.push(AppRoutes.labTestScanner),
+              ),
+            ),
           ],
         ),
       ],
@@ -431,9 +506,15 @@ class _QuickActionsGrid extends StatelessWidget {
 }
 
 class _QuickActionCard extends StatelessWidget {
-  const _QuickActionCard({required this.icon, required this.label, this.onTap});
+  const _QuickActionCard({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.onTap,
+  });
   final IconData icon;
   final String label;
+  final Color color;
   final VoidCallback? onTap;
 
   @override
@@ -441,30 +522,33 @@ class _QuickActionCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 96,
+        padding: const EdgeInsets.all(AppSpacing.s16),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.r16),
           border: Border.all(color: AppColors.border),
-          boxShadow: AppShadows.sm,
+          boxShadow: AppShadows.md,
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: color.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(AppRadius.r12),
               ),
-              child: Icon(icon, color: AppColors.primary, size: 22),
+              child: Icon(icon, color: color, size: 20),
             ),
-            const SizedBox(height: AppSpacing.s8),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               label,
-              style: AppTextStyles.labelMedium,
-              textAlign: TextAlign.center,
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -473,7 +557,7 @@ class _QuickActionCard extends StatelessWidget {
   }
 }
 
-// ── Nearby Labs ───────────────────────────────────────────────────────────────
+// ── Nearby / Recently Visited Labs ────────────────────────────────────────────
 
 class _NearbyLabsSection extends ConsumerWidget {
   const _NearbyLabsSection();
@@ -498,7 +582,7 @@ class _NearbyLabsSection extends ConsumerWidget {
                 child: Text(
                   'See all',
                   style: AppTextStyles.labelMedium.copyWith(
-                    color: AppColors.primary,
+                    color: AppColors.accent,
                   ),
                 ),
               ),
@@ -507,15 +591,13 @@ class _NearbyLabsSection extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.s12),
         SizedBox(
-          height: 178,
+          height: 186,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
             itemCount: labs.length + 1,
             itemBuilder: (_, i) {
-              if (i < labs.length) {
-                return _LabCard(lab: labs[i]);
-              }
+              if (i < labs.length) return _LabCard(lab: labs[i]);
               return _MoreLabsCard();
             },
           ),
@@ -534,72 +616,110 @@ class _LabCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.go(AppRoutes.labs),
       child: Container(
-      width: 152,
-      margin: const EdgeInsets.only(right: AppSpacing.s12),
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.r16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppShadows.sm,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Avatar
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: lab.avatarColor,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.science_rounded, color: Colors.white, size: 24),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-
-          // Name
-          Text(
-            lab.name,
-            style: AppTextStyles.labelLarge,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-
-          // Rating row
-          Row(
-            children: [
-              const Icon(Icons.star_rounded, size: 13, color: Color(0xFFF59E0B)),
-              const SizedBox(width: 3),
-              Text(
-                lab.rating.toStringAsFixed(1),
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textPrimary,
-                  fontSize: 11,
+        width: 156,
+        margin: const EdgeInsets.only(right: AppSpacing.s12),
+        padding: const EdgeInsets.all(AppSpacing.s12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.r16),
+          border: Border.all(color: AppColors.border),
+          boxShadow: AppShadows.md,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Lab avatar circle
+            Container(
+              width: 48,
+              height: 48,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primary, AppColors.primaryDark],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: const Padding(
+                padding: EdgeInsets.all(10),
+                child: Icon(
+                  Icons.biotech_rounded,
+                  color: Colors.white,
+                  size: 20,
                 ),
               ),
-              Text(
-                ' · ${lab.distanceKm}km',
-                style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-
-          // Price
-          Text(
-            'From Rs. ${lab.fromPriceRs}',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w600,
-              fontSize: 11,
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.s8),
+
+            // Lab name — high-contrast w700
+            Text(
+              lab.name,
+              style: AppTextStyles.labelLarge.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+
+            // Star rating
+            Row(
+              children: [
+                const Icon(
+                  Icons.star_rounded,
+                  size: 12,
+                  color: AppColors.ratingGold,
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  lab.rating.toStringAsFixed(1),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textPrimary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 3),
+
+            // Distance — clear separation, muted
+            Row(
+              children: [
+                const Icon(
+                  Icons.near_me_rounded,
+                  size: 11,
+                  color: AppColors.textSecondary,
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  '${lab.distanceKm} km away',
+                  style: AppTextStyles.bodySmall.copyWith(fontSize: 10),
+                ),
+              ],
+            ),
+            const Spacer(),
+
+            // Price — soft green pill tag
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.successBackground,
+                borderRadius: BorderRadius.circular(AppRadius.r24),
+              ),
+              child: Text(
+                'Rs. ${lab.fromPriceRs}+',
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: AppColors.successForeground,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),   // closes Container
-  );     // closes GestureDetector
+    );
   }
 }
 
@@ -616,7 +736,7 @@ class _MoreLabsCard extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: const BoxDecoration(
-            color: AppColors.primary,
+            color: AppColors.accent,
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
@@ -647,7 +767,9 @@ class _CheapestLabSection extends ConsumerWidget {
               onTap: () => context.go(AppRoutes.labs),
               child: Text(
                 'See all',
-                style: AppTextStyles.labelMedium.copyWith(color: AppColors.primary),
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.accent,
+                ),
               ),
             ),
           ],
@@ -672,8 +794,10 @@ class _CheapestLabCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.r16),
-          border: Border.all(color: AppColors.success.withValues(alpha: 0.35)),
-          boxShadow: AppShadows.sm,
+          border: Border.all(
+            color: AppColors.successForeground.withValues(alpha: 0.25),
+          ),
+          boxShadow: AppShadows.md,
         ),
         child: Row(
           children: [
@@ -681,11 +805,14 @@ class _CheapestLabCard extends StatelessWidget {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.12),
+                color: AppColors.successBackground,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.science_rounded,
-                  color: AppColors.success, size: 24),
+              child: const Icon(
+                Icons.science_rounded,
+                color: AppColors.successForeground,
+                size: 24,
+              ),
             ),
             const SizedBox(width: AppSpacing.s12),
             Expanded(
@@ -694,18 +821,23 @@ class _CheapestLabCard extends StatelessWidget {
                 children: [
                   Text(
                     lab.name,
-                    style: AppTextStyles.labelLarge,
+                    style: AppTextStyles.labelLarge.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                      const Icon(Icons.star_rounded,
-                          size: 12, color: Color(0xFFF59E0B)),
+                      const Icon(
+                        Icons.star_rounded,
+                        size: 12,
+                        color: AppColors.ratingGold,
+                      ),
                       const SizedBox(width: 3),
                       Text(
-                        '${lab.rating.toStringAsFixed(1)} · ${lab.distanceKm}km away',
+                        '${lab.rating.toStringAsFixed(1)} · ${lab.distanceKm} km away',
                         style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
                       ),
                     ],
@@ -717,16 +849,18 @@ class _CheapestLabCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF0FDF4),
-                    borderRadius: BorderRadius.circular(AppRadius.r4),
+                    color: AppColors.successBackground,
+                    borderRadius: BorderRadius.circular(AppRadius.r24),
                   ),
                   child: Text(
                     'BEST VALUE',
                     style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.success,
+                      color: AppColors.successForeground,
                       fontWeight: FontWeight.w700,
                       fontSize: 10,
                     ),
@@ -736,7 +870,9 @@ class _CheapestLabCard extends StatelessWidget {
                 Text(
                   'From Rs. ${lab.fromPriceRs}',
                   style: AppTextStyles.labelLarge.copyWith(
-                      color: AppColors.success),
+                    color: AppColors.successForeground,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
@@ -768,7 +904,7 @@ class _RecentReportsSection extends ConsumerWidget {
               child: Text(
                 'View all',
                 style: AppTextStyles.labelMedium.copyWith(
-                  color: AppColors.primary,
+                  color: AppColors.accent,
                 ),
               ),
             ),
@@ -780,14 +916,18 @@ class _RecentReportsSection extends ConsumerWidget {
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(AppRadius.r16),
             border: Border.all(color: AppColors.border),
-            boxShadow: AppShadows.sm,
+            boxShadow: AppShadows.md,
           ),
           child: Column(
             children: [
               for (int i = 0; i < reports.length; i++) ...[
                 _ReportRow(report: reports[i]),
                 if (i < reports.length - 1)
-                  const Divider(height: 1, thickness: 1, color: AppColors.border),
+                  const Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: AppColors.border,
+                  ),
               ],
             ],
           ),
@@ -805,45 +945,46 @@ class _ReportRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => context.go(AppRoutes.reports),
+      borderRadius: BorderRadius.circular(AppRadius.r16),
       child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      child: Row(
-        children: [
-          // Icon circle
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: report.iconColor.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
+        padding: const EdgeInsets.all(AppSpacing.s12),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: report.iconColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(report.icon, color: report.iconColor, size: 20),
             ),
-            child: Icon(report.icon, color: report.iconColor, size: 20),
-          ),
-          const SizedBox(width: AppSpacing.s12),
-
-          // Name + date
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(report.name, style: AppTextStyles.labelLarge),
-                const SizedBox(height: 2),
-                Text(report.date, style: AppTextStyles.bodySmall),
-              ],
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    report.name,
+                    style: AppTextStyles.labelLarge.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(report.date, style: AppTextStyles.bodySmall),
+                ],
+              ),
             ),
-          ),
-
-          // Status chip
-          StatusChip(label: report.statusLabel, variant: report.status),
-          const SizedBox(width: AppSpacing.s8),
-          const Icon(
-            Icons.chevron_right_rounded,
-            color: AppColors.textSecondary,
-            size: 20,
-          ),
-        ],
+            StatusChip(label: report.statusLabel, variant: report.status),
+            const SizedBox(width: AppSpacing.s8),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSecondary,
+              size: 20,
+            ),
+          ],
+        ),
       ),
-    ),   // closes Padding
-  );     // closes InkWell
+    );
   }
 }

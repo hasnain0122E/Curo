@@ -20,13 +20,12 @@ class AuthState {
     String? error,
     String? phone,
     String? verificationId,
-  }) =>
-      AuthState(
-        isLoading: isLoading ?? this.isLoading,
-        error: error, // null clears the error
-        phone: phone ?? this.phone,
-        verificationId: verificationId ?? this.verificationId,
-      );
+  }) => AuthState(
+    isLoading: isLoading ?? this.isLoading,
+    error: error, // null clears the error
+    phone: phone ?? this.phone,
+    verificationId: verificationId ?? this.verificationId,
+  );
 }
 
 class AuthNotifier extends Notifier<AuthState> {
@@ -47,8 +46,7 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(isLoading: false);
       return true;
     } on FirebaseAuthException catch (e) {
-      state = state.copyWith(
-          isLoading: false, error: _friendlyEmailError(e));
+      state = state.copyWith(isLoading: false, error: _friendlyEmailError(e));
       return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -64,7 +62,9 @@ class AuthNotifier extends Notifier<AuthState> {
   }) async {
     state = state.copyWith(isLoading: true);
     try {
-      await ref.read(authRepositoryProvider).createAccountWithEmail(
+      await ref
+          .read(authRepositoryProvider)
+          .createAccountWithEmail(
             email: email,
             password: password,
             firstName: firstName,
@@ -73,8 +73,7 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(isLoading: false);
       return true;
     } on FirebaseAuthException catch (e) {
-      state = state.copyWith(
-          isLoading: false, error: _friendlyEmailError(e));
+      state = state.copyWith(isLoading: false, error: _friendlyEmailError(e));
       return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -114,10 +113,7 @@ class AuthNotifier extends Notifier<AuthState> {
         );
       },
       onFailed: (e) {
-        state = state.copyWith(
-          isLoading: false,
-          error: _friendlyPhoneError(e),
-        );
+        state = state.copyWith(isLoading: false, error: _friendlyPhoneError(e));
       },
       onAutoVerified: (_) {
         state = state.copyWith(isLoading: false);
@@ -137,8 +133,7 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(isLoading: false);
       return true;
     } on FirebaseAuthException catch (e) {
-      state = state.copyWith(
-          isLoading: false, error: _friendlyPhoneError(e));
+      state = state.copyWith(isLoading: false, error: _friendlyPhoneError(e));
       return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -187,5 +182,6 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 }
 
-final authProvider =
-    NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
+final authProvider = NotifierProvider<AuthNotifier, AuthState>(
+  AuthNotifier.new,
+);

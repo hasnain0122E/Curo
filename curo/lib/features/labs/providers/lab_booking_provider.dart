@@ -136,9 +136,7 @@ const _kTestCatalog = <String, LabTest>{
 /// Falls back to all catalog tests if the lab has no `tests` list.
 final labTestsProvider = Provider.family<List<LabTest>, String>((ref, labId) {
   final asyncLabs = ref.watch(labsStreamProvider);
-  final lab = asyncLabs.asData?.value
-      .where((l) => l.id == labId)
-      .firstOrNull;
+  final lab = asyncLabs.asData?.value.where((l) => l.id == labId).firstOrNull;
 
   if (lab == null) return [];
 
@@ -151,11 +149,8 @@ final labTestsProvider = Provider.family<List<LabTest>, String>((ref, labId) {
       .toList();
 });
 
-final labOpeningHoursProvider =
-    Provider.family<String, String>((ref, labId) {
+final labOpeningHoursProvider = Provider.family<String, String>((ref, labId) {
   final asyncLabs = ref.watch(labsStreamProvider);
-  final lab = asyncLabs.asData?.value
-      .where((l) => l.id == labId)
-      .firstOrNull;
+  final lab = asyncLabs.asData?.value.where((l) => l.id == labId).firstOrNull;
   return lab?.openingHours ?? 'Mon–Sat: 8AM–8PM';
 });

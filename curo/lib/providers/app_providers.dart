@@ -30,17 +30,13 @@ final firestoreProvider = Provider<FirebaseFirestore>((ref) {
   return db;
 });
 
-final googleSignInProvider = Provider<GoogleSignIn>(
-  (ref) => GoogleSignIn(),
-);
+final googleSignInProvider = Provider<GoogleSignIn>((ref) => GoogleSignIn());
 
 // ── Cloudinary ────────────────────────────────────────────────────────────────
 
 final cloudinaryProvider = Provider<CloudinaryService>(
-  (ref) => CloudinaryService(
-    cloudName: 'dzzeotvf7',
-    uploadPreset: 'curo_reports',
-  ),
+  (ref) =>
+      CloudinaryService(cloudName: 'dzzeotvf7', uploadPreset: 'curo_reports'),
 );
 
 // ── Repositories ──────────────────────────────────────────────────────────────

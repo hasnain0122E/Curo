@@ -156,11 +156,7 @@ class _OnboardingPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.s32),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.h1,
-          ),
+          Text(title, textAlign: TextAlign.center, style: AppTextStyles.h1),
           const SizedBox(height: AppSpacing.s12),
           Text(
             subtitle,
@@ -224,7 +220,11 @@ class _LabsIllustration extends StatelessWidget {
             width: 220,
             height: 150,
             decoration: BoxDecoration(
-              color: const Color(0xFF1E7FA0),
+              gradient: const LinearGradient(
+                colors: [AppColors.primaryDark, AppColors.primary],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(AppRadius.r16),
             ),
             child: Stack(
@@ -461,8 +461,11 @@ class _ReportsIllustration extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.auto_awesome,
-                      color: AppColors.primary, size: 15),
+                  const Icon(
+                    Icons.auto_awesome,
+                    color: AppColors.primary,
+                    size: 15,
+                  ),
                   const SizedBox(width: AppSpacing.s8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

@@ -37,12 +37,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (!_agreedToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please agree to the Terms of Service.')),
+        const SnackBar(content: Text('Please agree to the Terms of Service.')),
       );
       return;
     }
-    final ok = await ref.read(authProvider.notifier).signUpWithEmail(
+    final ok = await ref
+        .read(authProvider.notifier)
+        .signUpWithEmail(
           email: _emailController.text.trim(),
           password: _passwordController.text,
           firstName: _firstNameController.text.trim(),
@@ -61,8 +62,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding:
-              const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
           child: Form(
             key: _formKey,
             child: Column(
@@ -103,9 +103,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         keyboardType: TextInputType.name,
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.givenName],
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Required'
-                            : null,
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Required' : null,
                       ),
                     ),
                     const SizedBox(width: AppSpacing.s12),
@@ -117,9 +116,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         keyboardType: TextInputType.name,
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.familyName],
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Required'
-                            : null,
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Required' : null,
                       ),
                     ),
                   ],
@@ -163,19 +161,23 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 const SizedBox(height: AppSpacing.s8),
                 Row(
                   children: [
-                    const Icon(Icons.check_rounded,
-                        size: 14, color: AppColors.textSecondary),
+                    const Icon(
+                      Icons.check_rounded,
+                      size: 14,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 5),
-                    Text('Passwords must be 8+ characters',
-                        style: AppTextStyles.caption),
+                    Text(
+                      'Passwords must be 8+ characters',
+                      style: AppTextStyles.caption,
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.s20),
 
                 // Terms checkbox
                 GestureDetector(
-                  onTap: () =>
-                      setState(() => _agreedToTerms = !_agreedToTerms),
+                  onTap: () => setState(() => _agreedToTerms = !_agreedToTerms),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -191,7 +193,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           side: const BorderSide(
-                              color: AppColors.border, width: 1.5),
+                            color: AppColors.border,
+                            width: 1.5,
+                          ),
                           materialTapTargetSize:
                               MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,
@@ -234,11 +238,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.lock_outline_rounded,
-                        size: 13, color: AppColors.textSecondary),
+                    const Icon(
+                      Icons.lock_outline_rounded,
+                      size: 13,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 5),
-                    Text('Your data is encrypted and secure',
-                        style: AppTextStyles.caption),
+                    Text(
+                      'Your data is encrypted and secure',
+                      style: AppTextStyles.caption,
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.s24),
@@ -286,8 +295,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 // ── Shared auth widgets ────────────────────────────────────────────────────────
 
 class _AuthLogo extends StatelessWidget {
-  const _AuthLogo(
-      {required this.size, required this.radius, required this.fontSize});
+  const _AuthLogo({
+    required this.size,
+    required this.radius,
+    required this.fontSize,
+  });
   final double size;
   final double radius;
   final double fontSize;
@@ -329,23 +341,29 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s12,
+      ),
       decoration: BoxDecoration(
         color: AppColors.danger.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppRadius.r12),
         border: Border.all(
-            color: AppColors.danger.withValues(alpha: 0.3), width: 1),
+          color: AppColors.danger.withValues(alpha: 0.3),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded,
-              color: AppColors.danger, size: 18),
+          const Icon(
+            Icons.error_outline_rounded,
+            color: AppColors.danger,
+            size: 18,
+          ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: Text(
               message,
-              style:
-                  AppTextStyles.bodySmall.copyWith(color: AppColors.danger),
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.danger),
             ),
           ),
         ],

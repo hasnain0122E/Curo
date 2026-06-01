@@ -7,12 +7,8 @@ import 'status_chip.dart';
 enum LabResultStatus { normal, abnormal }
 
 class CuroCard extends StatelessWidget {
-  const CuroCard({
-    super.key,
-    required this.child,
-    this.padding,
-    this.onTap,
-  }) : _highlighted = false;
+  const CuroCard({super.key, required this.child, this.padding, this.onTap})
+    : _highlighted = false;
 
   const CuroCard.highlighted({
     super.key,
@@ -29,7 +25,7 @@ class CuroCard extends StatelessWidget {
   static const _decoration = BoxDecoration(
     color: AppColors.surface,
     borderRadius: BorderRadius.all(Radius.circular(AppRadius.r16)),
-    boxShadow: AppShadows.sm,
+    boxShadow: AppShadows.md,
     border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
   );
 
@@ -43,33 +39,29 @@ class CuroCard extends StatelessWidget {
   }
 
   Widget _standardCard() => Container(
-        decoration: _decoration,
-        padding: padding ?? const EdgeInsets.all(AppSpacing.s16),
-        child: child,
-      );
+    decoration: _decoration,
+    padding: padding ?? const EdgeInsets.all(AppSpacing.s16),
+    child: child,
+  );
 
   Widget _highlightedCard() => Container(
-        decoration: _decoration,
-        clipBehavior: Clip.antiAlias,
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const ColoredBox(
-                color: AppColors.primary,
-                child: SizedBox(width: 4),
-              ),
-              Expanded(
-                child: Padding(
-                  padding:
-                      padding ?? const EdgeInsets.all(AppSpacing.s16),
-                  child: child,
-                ),
-              ),
-            ],
+    decoration: _decoration,
+    clipBehavior: Clip.antiAlias,
+    child: IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ColoredBox(color: AppColors.primary, child: SizedBox(width: 4)),
+          Expanded(
+            child: Padding(
+              padding: padding ?? const EdgeInsets.all(AppSpacing.s16),
+              child: child,
+            ),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 }
 
 class LabResultCard extends StatelessWidget {
@@ -102,7 +94,7 @@ class LabResultCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0x1436BDF2),
+              color: AppColors.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(AppRadius.r12),
             ),
             child: Icon(icon, color: AppColors.primary, size: 22),

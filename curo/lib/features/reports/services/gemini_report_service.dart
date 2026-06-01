@@ -8,6 +8,5 @@ class GeminiReportService {
   static Future<ReportAnalysisResult> analyze({
     required Uint8List fileBytes,
     required String mimeType,
-  }) =>
-      GeminiService.analyzeReport(bytes: fileBytes, mimeType: mimeType);
+  }) => GeminiService.analyzeReport(bytes: fileBytes, mimeType: mimeType);
 }

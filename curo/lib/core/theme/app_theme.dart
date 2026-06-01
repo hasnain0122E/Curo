@@ -9,27 +9,31 @@ class AppTheme {
   static ThemeData get light {
     final colorScheme = ColorScheme(
       brightness: Brightness.light,
+      // Primary brand — Dark Slate/Teal
       primary: AppColors.primary,
-      onPrimary: Colors.white,
-      primaryContainer: AppColors.primary.withValues(alpha: 0.12),
-      onPrimaryContainer: AppColors.deep,
-      secondary: AppColors.deep,
-      onSecondary: Colors.white,
-      secondaryContainer: AppColors.deep.withValues(alpha: 0.12),
-      onSecondaryContainer: AppColors.deep,
-      error: AppColors.danger,
+      onPrimary: AppColors.textPrimary,
+      primaryContainer: AppColors.primary.withValues(alpha: 0.10),
+      onPrimaryContainer: AppColors.primary,
+      // Secondary / accent — Electric Blue
+      secondary: AppColors.accent,
+      onSecondary: AppColors.textPrimary,
+      secondaryContainer: AppColors.accent.withValues(alpha: 0.10),
+      onSecondaryContainer: AppColors.accent,
+      // Error maps to danger foreground
+      error: AppColors.dangerForeground,
       onError: Colors.white,
+      // Surface & canvas
       surface: AppColors.surface,
       onSurface: AppColors.textPrimary,
       onSurfaceVariant: AppColors.textSecondary,
       outline: AppColors.border,
       outlineVariant: AppColors.border,
-      scrim: Colors.black.withValues(alpha: 0.4),
+      scrim: Colors.black.withValues(alpha: 0.32),
       inverseSurface: AppColors.textPrimary,
       onInverseSurface: AppColors.surface,
-      inversePrimary: AppColors.primary,
-      shadow: Colors.black.withValues(alpha: 0.08),
-      surfaceTint: AppColors.primary,
+      inversePrimary: AppColors.accent,
+      shadow: const Color(0x0A000000),
+      surfaceTint: Colors.transparent, // suppress Material tint wash
     );
 
     return ThemeData(
@@ -49,6 +53,8 @@ class AppTheme {
         labelMedium: AppTextStyles.labelMedium,
         labelSmall: AppTextStyles.labelSmall,
       ),
+
+      // ── App Bar ──────────────────────────────────────────────────────────
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
@@ -58,16 +64,19 @@ class AppTheme {
         titleTextStyle: AppTextStyles.h2,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
+
+      // ── Buttons ──────────────────────────────────────────────────────────
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.textPrimary,
           textStyle: AppTextStyles.button,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 0,
+          shadowColor: Colors.transparent,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -83,10 +92,12 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: AppColors.accent,
           textStyle: AppTextStyles.labelLarge,
         ),
       ),
+
+      // ── Input ────────────────────────────────────────────────────────────
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
@@ -108,17 +119,22 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.danger),
+          borderSide: const BorderSide(color: AppColors.dangerForeground),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.dangerForeground,
+            width: 1.5,
+          ),
         ),
       ),
+
+      // ── Card ─────────────────────────────────────────────────────────────
       cardTheme: CardThemeData(
         color: AppColors.surface,
         surfaceTintColor: Colors.transparent,
@@ -129,21 +145,23 @@ class AppTheme {
         ),
         margin: EdgeInsets.zero,
       ),
+
+      // ── Divider ──────────────────────────────────────────────────────────
       dividerTheme: const DividerThemeData(
         color: AppColors.border,
         thickness: 1,
         space: 1,
       ),
+
+      // ── Chips ────────────────────────────────────────────────────────────
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-        labelStyle: AppTextStyles.labelMedium.copyWith(
-          color: AppColors.primary,
-        ),
+        backgroundColor: AppColors.accent.withValues(alpha: 0.08),
+        labelStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.accent),
         side: BorderSide.none,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
+
+      // ── Bottom Nav ───────────────────────────────────────────────────────
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
         selectedItemColor: AppColors.primary,
@@ -151,27 +169,29 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
         elevation: 0,
       ),
+
+      // ── FAB ──────────────────────────────────────────────────────────────
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.textPrimary,
         elevation: 2,
       ),
+
+      // ── Snack Bar ────────────────────────────────────────────────────────
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.textPrimary,
         contentTextStyle: AppTextStyles.bodyMedium.copyWith(
           color: Colors.white,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         behavior: SnackBarBehavior.floating,
       ),
+
+      // ── Dialog ───────────────────────────────────────────────────────────
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         titleTextStyle: AppTextStyles.h2,
         contentTextStyle: AppTextStyles.bodyMedium,
       ),

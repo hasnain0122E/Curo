@@ -91,7 +91,11 @@ class _HealthLockerScreenState extends ConsumerState<HealthLockerScreen>
         onPressed: () => context.go(AppRoutes.reportUpload),
         backgroundColor: AppColors.primary,
         elevation: 6,
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+        child: const Icon(
+          Icons.add_rounded,
+          color: AppColors.textPrimary,
+          size: 28,
+        ),
       ),
       bottomNavigationBar: CuroBottomNavBar(
         currentIndex: 2,
@@ -254,6 +258,14 @@ class _GridReportCard extends ConsumerWidget {
 
   final LockerReport report;
 
+  Color get _statusBorderColor => switch (report.status) {
+    StatusVariant.danger => AppColors.dangerForeground.withValues(alpha: 0.20),
+    StatusVariant.warning => AppColors.warningForeground.withValues(
+      alpha: 0.20,
+    ),
+    _ => AppColors.border,
+  };
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Stack(
@@ -267,56 +279,70 @@ class _GridReportCard extends ConsumerWidget {
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(AppRadius.r16),
-              border: Border.all(color: AppColors.border),
-              boxShadow: AppShadows.sm,
+              border: Border.all(color: _statusBorderColor),
+              boxShadow: AppShadows.md,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: report.iconColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(AppRadius.r12),
-                  ),
-                  child: Icon(report.icon, color: report.iconColor, size: 24),
+                // Icon + status chip row
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: report.iconColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.r12),
+                      ),
+                      child: Icon(
+                        report.icon,
+                        color: report.iconColor,
+                        size: 22,
+                      ),
+                    ),
+                    const Spacer(),
+                    StatusChip(
+                      label: report.statusLabel,
+                      variant: report.status,
+                    ),
+                  ],
                 ),
-                const Spacer(),
+                const SizedBox(height: AppSpacing.s12),
                 Text(
                   report.name,
                   style: AppTextStyles.labelLarge,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: AppSpacing.s4),
+                const SizedBox(height: 3),
                 Text(report.date, style: AppTextStyles.bodySmall),
-                const SizedBox(height: AppSpacing.s8),
-                StatusChip(label: report.statusLabel, variant: report.status),
               ],
             ),
           ),
         ),
 
-        // Delete button — top-right corner
+        // Delete button — top-right corner (behind chip, so inset more)
         Positioned(
-          top: 6,
-          right: 6,
+          bottom: AppSpacing.s12,
+          right: AppSpacing.s12,
           child: GestureDetector(
             onTap: () => _confirmDelete(context, ref, report),
             child: Container(
-              width: 28,
-              height: 28,
+              width: 26,
+              height: 26,
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: AppColors.dangerBackground,
                 shape: BoxShape.circle,
-                boxShadow: AppShadows.sm,
-                border: Border.all(color: AppColors.border),
+                border: Border.all(
+                  color: AppColors.dangerForeground.withValues(alpha: 0.25),
+                ),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.delete_outline,
-                size: 15,
-                color: AppColors.danger,
+                size: 14,
+                color: AppColors.dangerForeground,
               ),
             ),
           ),
@@ -399,8 +425,9 @@ class _AiTrendCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0A5F7A),
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(AppRadius.r16),
+        boxShadow: AppShadows.md,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -408,18 +435,22 @@ class _AiTrendCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.18),
+              color: AppColors.textPrimary.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(AppRadius.r24),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.bolt_rounded, color: Colors.white, size: 14),
+                const Icon(
+                  Icons.bolt_rounded,
+                  color: AppColors.textPrimary,
+                  size: 14,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   'HEALTH AI',
                   style: AppTextStyles.labelSmall.copyWith(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
                     fontSize: 11,
                   ),
@@ -430,14 +461,14 @@ class _AiTrendCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           Text(
             'Trend Detected',
-            style: AppTextStyles.h3.copyWith(color: Colors.white),
+            style: AppTextStyles.h3.copyWith(color: AppColors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.s4),
           Text(
             'Your iron levels have improved by 12% since your last CBC in '
             'August. Keep up the dietary plan.',
             style: AppTextStyles.bodyMedium.copyWith(
-              color: Colors.white.withValues(alpha: 0.82),
+              color: AppColors.textPrimary.withValues(alpha: 0.70),
             ),
           ),
         ],

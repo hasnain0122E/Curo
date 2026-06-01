@@ -25,7 +25,8 @@ class ReportModel {
   final DateTime uploadedAt;
 
   factory ReportModel.fromFirestore(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final data = doc.data()!;
     final rawAnalysis = data['analysisJson'];
     final Map<String, dynamic>? analysis = rawAnalysis is String
@@ -46,29 +47,28 @@ class ReportModel {
   }
 
   Map<String, dynamic> toFirestore() => {
-        'userId': userId,
-        'name': name,
-        'category': category,
-        'storageUrl': storageUrl,
-        if (cloudinaryPublicId != null) 'cloudinaryPublicId': cloudinaryPublicId,
-        if (aiSummary != null) 'aiSummary': aiSummary,
-        if (analysisJson != null) 'analysisJson': analysisJson,
-        'uploadedAt': Timestamp.fromDate(uploadedAt),
-      };
+    'userId': userId,
+    'name': name,
+    'category': category,
+    'storageUrl': storageUrl,
+    if (cloudinaryPublicId != null) 'cloudinaryPublicId': cloudinaryPublicId,
+    if (aiSummary != null) 'aiSummary': aiSummary,
+    if (analysisJson != null) 'analysisJson': analysisJson,
+    'uploadedAt': Timestamp.fromDate(uploadedAt),
+  };
 
   ReportModel copyWith({
     String? aiSummary,
     Map<String, dynamic>? analysisJson,
-  }) =>
-      ReportModel(
-        id: id,
-        userId: userId,
-        name: name,
-        category: category,
-        storageUrl: storageUrl,
-        cloudinaryPublicId: cloudinaryPublicId,
-        aiSummary: aiSummary ?? this.aiSummary,
-        analysisJson: analysisJson ?? this.analysisJson,
-        uploadedAt: uploadedAt,
-      );
+  }) => ReportModel(
+    id: id,
+    userId: userId,
+    name: name,
+    category: category,
+    storageUrl: storageUrl,
+    cloudinaryPublicId: cloudinaryPublicId,
+    aiSummary: aiSummary ?? this.aiSummary,
+    analysisJson: analysisJson ?? this.analysisJson,
+    uploadedAt: uploadedAt,
+  );
 }

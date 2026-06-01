@@ -28,7 +28,8 @@ class BookingModel {
   bool get isUpcoming => status == 'upcoming';
 
   factory BookingModel.fromFirestore(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final data = doc.data()!;
     return BookingModel(
       id: doc.id,
@@ -40,20 +41,19 @@ class BookingModel {
       timeSlot: data['timeSlot'] as String? ?? '',
       priceRs: data['priceRs'] as int? ?? 0,
       status: data['status'] as String? ?? 'upcoming',
-      createdAt:
-          (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
   Map<String, dynamic> toFirestore() => {
-        'userId': userId,
-        'labId': labId,
-        'labName': labName,
-        'testName': testName,
-        'date': Timestamp.fromDate(date),
-        'timeSlot': timeSlot,
-        'priceRs': priceRs,
-        'status': status,
-        'createdAt': Timestamp.fromDate(createdAt),
-      };
+    'userId': userId,
+    'labId': labId,
+    'labName': labName,
+    'testName': testName,
+    'date': Timestamp.fromDate(date),
+    'timeSlot': timeSlot,
+    'priceRs': priceRs,
+    'status': status,
+    'createdAt': Timestamp.fromDate(createdAt),
+  };
 }

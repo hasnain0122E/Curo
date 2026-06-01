@@ -34,39 +34,40 @@ class PharmacyModel {
   final List<String> services;
 
   factory PharmacyModel.fromFirestore(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final data = doc.data()!;
     return PharmacyModel(
-      id:           doc.id,
-      name:         data['name']         as String? ?? '',
-      address:      data['address']      as String? ?? '',
-      lat:          (data['lat']         as num?)?.toDouble() ?? 0,
-      lng:          (data['lng']         as num?)?.toDouble() ?? 0,
-      rating:       (data['rating']      as num?)?.toDouble() ?? 0,
-      reviewCount:  (data['reviewCount'] as num?)?.toInt() ?? 0,
+      id: doc.id,
+      name: data['name'] as String? ?? '',
+      address: data['address'] as String? ?? '',
+      lat: (data['lat'] as num?)?.toDouble() ?? 0,
+      lng: (data['lng'] as num?)?.toDouble() ?? 0,
+      rating: (data['rating'] as num?)?.toDouble() ?? 0,
+      reviewCount: (data['reviewCount'] as num?)?.toInt() ?? 0,
       openingHours: data['openingHours'] as String? ?? '',
-      city:         data['city']         as String? ?? '',
-      area:         data['area']         as String? ?? '',
-      phone:        data['phone']        as String? ?? '',
-      website:      data['website']      as String? ?? '',
-      is24Hours:    data['is24Hours']    as bool?   ?? false,
-      services:     List<String>.from(data['services'] as List? ?? []),
+      city: data['city'] as String? ?? '',
+      area: data['area'] as String? ?? '',
+      phone: data['phone'] as String? ?? '',
+      website: data['website'] as String? ?? '',
+      is24Hours: data['is24Hours'] as bool? ?? false,
+      services: List<String>.from(data['services'] as List? ?? []),
     );
   }
 
   Map<String, dynamic> toFirestore() => {
-        'name':         name,
-        'address':      address,
-        'area':         area,
-        'city':         city,
-        'lat':          lat,
-        'lng':          lng,
-        'rating':       rating,
-        'reviewCount':  reviewCount,
-        'openingHours': openingHours,
-        'phone':        phone,
-        'website':      website,
-        'is24Hours':    is24Hours,
-        'services':     services,
-      };
+    'name': name,
+    'address': address,
+    'area': area,
+    'city': city,
+    'lat': lat,
+    'lng': lng,
+    'rating': rating,
+    'reviewCount': reviewCount,
+    'openingHours': openingHours,
+    'phone': phone,
+    'website': website,
+    'is24Hours': is24Hours,
+    'services': services,
+  };
 }

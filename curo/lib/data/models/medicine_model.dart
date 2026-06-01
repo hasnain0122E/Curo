@@ -48,52 +48,53 @@ class MedicineModel {
       [strength, packSize].where((s) => s.isNotEmpty).join(' · ');
 
   factory MedicineModel.fromFirestore(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final d = doc.data()!;
     final priceBefore = (d['priceBeforeRs'] as num?)?.toInt() ?? 0;
-    final priceAfter  = (d['priceAfterRs']  as num?)?.toInt() ?? priceBefore;
+    final priceAfter = (d['priceAfterRs'] as num?)?.toInt() ?? priceBefore;
     return MedicineModel(
-      id:                  doc.id,
-      name:                d['name']                as String? ?? '',
-      nameLower:           d['nameLower']           as String? ?? '',
-      genericName:         d['genericName']         as String? ?? '',
-      manufacturer:        d['manufacturer']        as String? ?? '',
-      category:            d['category']            as String? ?? 'tablet',
-      description:         d['description']         as String? ?? '',
-      strength:            d['strength']            as String? ?? '',
-      packSize:            d['packSize']            as String? ?? '',
-      available:           d['available']           as bool?   ?? true,
-      inStock:             d['inStock']             as bool?   ?? true,
+      id: doc.id,
+      name: d['name'] as String? ?? '',
+      nameLower: d['nameLower'] as String? ?? '',
+      genericName: d['genericName'] as String? ?? '',
+      manufacturer: d['manufacturer'] as String? ?? '',
+      category: d['category'] as String? ?? 'tablet',
+      description: d['description'] as String? ?? '',
+      strength: d['strength'] as String? ?? '',
+      packSize: d['packSize'] as String? ?? '',
+      available: d['available'] as bool? ?? true,
+      inStock: d['inStock'] as bool? ?? true,
       prescriptionRequired: d['prescriptionRequired'] as bool? ?? false,
-      priceBeforeRs:       priceBefore,
-      priceAfterRs:        priceAfter,
-      discountPercent:     (d['discountPercent']   as num?)?.toInt() ?? 0,
-      pharmacies:          List<String>.from(d['pharmacies'] as List? ?? []),
-      usage:               List<String>.from(d['usage']      as List? ?? []),
-      city:                d['city']    as String? ?? 'Karachi',
-      country:             d['country'] as String? ?? 'Pakistan',
+      priceBeforeRs: priceBefore,
+      priceAfterRs: priceAfter,
+      discountPercent: (d['discountPercent'] as num?)?.toInt() ?? 0,
+      pharmacies: List<String>.from(d['pharmacies'] as List? ?? []),
+      usage: List<String>.from(d['usage'] as List? ?? []),
+      city: d['city'] as String? ?? 'Karachi',
+      country: d['country'] as String? ?? 'Pakistan',
     );
   }
 
   Map<String, dynamic> toFirestore() => {
-        'name':                name,
-        'nameLower':           nameLower,
-        'genericName':         genericName,
-        'genericNameLower':    genericName.toLowerCase(),
-        'manufacturer':        manufacturer,
-        'category':            category,
-        'description':         description,
-        'strength':            strength,
-        'packSize':            packSize,
-        'available':           available,
-        'inStock':             inStock,
-        'prescriptionRequired': prescriptionRequired,
-        'priceBeforeRs':       priceBeforeRs,
-        'priceAfterRs':        priceAfterRs,
-        'discountPercent':     discountPercent,
-        'pharmacies':          pharmacies,
-        'usage':               usage,
-        'city':                city,
-        'country':             country,
-      };
+    'name': name,
+    'nameLower': nameLower,
+    'genericName': genericName,
+    'genericNameLower': genericName.toLowerCase(),
+    'manufacturer': manufacturer,
+    'category': category,
+    'description': description,
+    'strength': strength,
+    'packSize': packSize,
+    'available': available,
+    'inStock': inStock,
+    'prescriptionRequired': prescriptionRequired,
+    'priceBeforeRs': priceBeforeRs,
+    'priceAfterRs': priceAfterRs,
+    'discountPercent': discountPercent,
+    'pharmacies': pharmacies,
+    'usage': usage,
+    'city': city,
+    'country': country,
+  };
 }

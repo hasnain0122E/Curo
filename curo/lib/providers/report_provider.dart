@@ -5,8 +5,9 @@ import '../data/models/report_model.dart';
 import 'app_providers.dart';
 
 /// Live stream of the signed-in user's reports from their subcollection.
-final userReportsProvider =
-    StreamProvider.autoDispose<List<ReportModel>>((ref) {
+final userReportsProvider = StreamProvider.autoDispose<List<ReportModel>>((
+  ref,
+) {
   final authAsync = ref.watch(authStateChangesProvider);
   final user = authAsync.asData?.value;
   if (user == null) return Stream.value([]);
@@ -46,16 +47,17 @@ class ReportUploadNotifier extends Notifier<ReportUploadState> {
     }
     state = const ReportUploadState(isUploading: true);
     try {
-      final report =
-          await ref.read(reportRepositoryProvider).uploadReportBytes(
-                userId: user.uid,
-                bytes: bytes,
-                filename: filename,
-                name: name,
-                category: category,
-                aiSummary: aiSummary,
-                analysisJson: analysisJson,
-              );
+      final report = await ref
+          .read(reportRepositoryProvider)
+          .uploadReportBytes(
+            userId: user.uid,
+            bytes: bytes,
+            filename: filename,
+            name: name,
+            category: category,
+            aiSummary: aiSummary,
+            analysisJson: analysisJson,
+          );
       state = ReportUploadState(lastUploaded: report);
       return report;
     } catch (e) {
@@ -79,7 +81,9 @@ class ReportUploadNotifier extends Notifier<ReportUploadState> {
     }
     state = const ReportUploadState(isUploading: true);
     try {
-      final report = await ref.read(reportRepositoryProvider).uploadReport(
+      final report = await ref
+          .read(reportRepositoryProvider)
+          .uploadReport(
             userId: user.uid,
             file: file,
             name: name,
@@ -98,4 +102,5 @@ class ReportUploadNotifier extends Notifier<ReportUploadState> {
 
 final reportUploadProvider =
     NotifierProvider<ReportUploadNotifier, ReportUploadState>(
-        ReportUploadNotifier.new);
+      ReportUploadNotifier.new,
+    );

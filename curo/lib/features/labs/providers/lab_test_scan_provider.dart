@@ -15,5 +15,6 @@ class LabTestScanNotifier extends Notifier<List<String>> {
   void clear() => state = [];
 }
 
-final labTestScanProvider =
-    NotifierProvider<LabTestScanNotifier, List<String>>(LabTestScanNotifier.new);
+final labTestScanProvider = NotifierProvider<LabTestScanNotifier, List<String>>(
+  LabTestScanNotifier.new,
+);

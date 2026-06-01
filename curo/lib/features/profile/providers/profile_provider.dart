@@ -57,8 +57,16 @@ String _buildInitials(String first, String last, String fallbackName) {
     return '${first[0]}${last[0]}'.toUpperCase();
   }
   if (first.isNotEmpty) return first[0].toUpperCase();
-  final parts = fallbackName.trim().split(' ').where((s) => s.isNotEmpty).toList();
-  if (parts.length >= 2) return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-  if (parts.isNotEmpty) return parts.first[0].toUpperCase();
+  final parts = fallbackName
+      .trim()
+      .split(' ')
+      .where((s) => s.isNotEmpty)
+      .toList();
+  if (parts.length >= 2) {
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+  if (parts.isNotEmpty) {
+    return parts.first[0].toUpperCase();
+  }
   return 'U';
 }

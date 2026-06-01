@@ -22,8 +22,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   static const _otpLength = 6;
   static const _resendSeconds = 45;
 
-  final _controllers =
-      List.generate(_otpLength, (_) => TextEditingController());
+  final _controllers = List.generate(
+    _otpLength,
+    (_) => TextEditingController(),
+  );
   final _focusNodes = List.generate(_otpLength, (_) => FocusNode());
 
   late Timer _timer;
@@ -34,8 +36,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   void initState() {
     super.initState();
     _startTimer();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _focusNodes[0].requestFocus());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _focusNodes[0].requestFocus(),
+    );
   }
 
   void _startTimer() {
@@ -116,8 +119,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               // Back button
               GestureDetector(
                 onTap: () => context.pop(),
-                child: const Icon(Icons.arrow_back_ios_new_rounded,
-                    size: 20, color: AppColors.textPrimary),
+                child: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 20,
+                  color: AppColors.textPrimary,
+                ),
               ),
               const SizedBox(height: AppSpacing.s24),
 
@@ -127,8 +133,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               Text.rich(
                 TextSpan(
                   text: 'We sent a 6-digit code to ',
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.textSecondary),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                   children: [
                     TextSpan(
                       text: phone,
@@ -181,13 +188,17 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     : Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.access_time_rounded,
-                              size: 15, color: AppColors.textSecondary),
+                          const Icon(
+                            Icons.access_time_rounded,
+                            size: 15,
+                            color: AppColors.textSecondary,
+                          ),
                           const SizedBox(width: 5),
                           Text(
                             'Resend in $_timerLabel',
-                            style: AppTextStyles.bodyMedium
-                                .copyWith(color: AppColors.textSecondary),
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
@@ -257,9 +268,9 @@ class _OtpBox extends StatelessWidget {
   final bool isFilled;
 
   OutlineInputBorder _border(Color color) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.r12),
-        borderSide: BorderSide(color: color, width: 1.5),
-      );
+    borderRadius: BorderRadius.circular(AppRadius.r12),
+    borderSide: BorderSide(color: color, width: 1.5),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -286,11 +297,13 @@ class _OtpBox extends StatelessWidget {
             counterText: '',
             contentPadding: EdgeInsets.zero,
             filled: true,
-            fillColor:
-                isFilled ? AppColors.primary.withValues(alpha: 0.07) : AppColors.surface,
+            fillColor: isFilled
+                ? AppColors.primary.withValues(alpha: 0.07)
+                : AppColors.surface,
             border: _border(AppColors.border),
             enabledBorder: _border(
-                isFilled ? AppColors.primary : AppColors.border),
+              isFilled ? AppColors.primary : AppColors.border,
+            ),
             focusedBorder: _border(AppColors.primary),
             errorBorder: _border(AppColors.danger),
           ),
@@ -319,16 +332,16 @@ class _OtpIllustration extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           // Faint ECG line
-          CustomPaint(
-            size: Size(double.infinity, 160),
-            painter: _EcgPainter(),
-          ),
+          CustomPaint(size: Size(double.infinity, 160), painter: _EcgPainter()),
           // Phone + lock icon
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.phone_android_rounded,
-                  color: Colors.white, size: 48),
+              const Icon(
+                Icons.phone_android_rounded,
+                color: Colors.white,
+                size: 48,
+              ),
               const SizedBox(width: 4),
               Container(
                 padding: const EdgeInsets.all(AppSpacing.s8),
@@ -336,8 +349,11 @@ class _OtpIllustration extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.25),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.lock_rounded,
-                    color: Colors.white, size: 26),
+                child: const Icon(
+                  Icons.lock_rounded,
+                  color: Colors.white,
+                  size: 26,
+                ),
               ),
             ],
           ),
@@ -371,4 +387,3 @@ class _EcgPainter extends CustomPainter {
   @override
   bool shouldRepaint(_EcgPainter old) => false;
 }
-

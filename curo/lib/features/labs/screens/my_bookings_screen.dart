@@ -45,16 +45,17 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen>
         backgroundColor: AppColors.background,
         appBar: CuroAppBar(title: 'My Bookings'),
         body: Center(
-          child: Text('Could not load bookings.',
-              style: AppTextStyles.bodyMedium
-                  .copyWith(color: AppColors.textSecondary)),
+          child: Text(
+            'Could not load bookings.',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
         ),
       ),
       data: (all) {
-        final upcoming =
-            all.where((b) => b.status == 'upcoming').toList();
-        final past =
-            all.where((b) => b.status != 'upcoming').toList();
+        final upcoming = all.where((b) => b.status == 'upcoming').toList();
+        final past = all.where((b) => b.status != 'upcoming').toList();
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -68,16 +69,20 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen>
               indicatorSize: TabBarIndicatorSize.label,
               labelStyle: AppTextStyles.labelLarge,
               unselectedLabelStyle: AppTextStyles.labelLarge,
-              tabs: const [Tab(text: 'Upcoming'), Tab(text: 'Past')],
+              tabs: const [
+                Tab(text: 'Upcoming'),
+                Tab(text: 'Past'),
+              ],
             ),
           ),
           body: TabBarView(
             controller: _tabController,
             children: [
               _BookingsList(
-                  bookings: upcoming, emptyMessage: 'No upcoming bookings'),
-              _BookingsList(
-                  bookings: past, emptyMessage: 'No past bookings'),
+                bookings: upcoming,
+                emptyMessage: 'No upcoming bookings',
+              ),
+              _BookingsList(bookings: past, emptyMessage: 'No past bookings'),
             ],
           ),
         );
@@ -89,8 +94,7 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen>
 // ── Bookings List ─────────────────────────────────────────────────────────────
 
 class _BookingsList extends StatelessWidget {
-  const _BookingsList(
-      {required this.bookings, required this.emptyMessage});
+  const _BookingsList({required this.bookings, required this.emptyMessage});
 
   final List<BookingModel> bookings;
   final String emptyMessage;
@@ -102,12 +106,18 @@ class _BookingsList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.calendar_today_outlined,
-                size: 52, color: AppColors.border),
+            const Icon(
+              Icons.calendar_today_outlined,
+              size: 52,
+              color: AppColors.border,
+            ),
             const SizedBox(height: AppSpacing.s16),
-            Text(emptyMessage,
-                style: AppTextStyles.bodyMedium
-                    .copyWith(color: AppColors.textSecondary)),
+            Text(
+              emptyMessage,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ],
         ),
       );
@@ -126,36 +136,21 @@ class _BookingCard extends StatelessWidget {
   const _BookingCard({required this.booking});
   final BookingModel booking;
 
-  static const _labColors = [
-    Color(0xFF1A5276),
-    Color(0xFF154360),
-    Color(0xFF0B5345),
-    Color(0xFF4A235A),
-    Color(0xFF1B4F72),
-    Color(0xFF6E2F0A),
-  ];
-
-  Color _labColor() {
-    final index = booking.labId.hashCode.abs() % _labColors.length;
-    return _labColors[index];
-  }
-
   Color _statusColor() => switch (booking.status) {
-        'upcoming' => AppColors.primary,
-        'completed' => AppColors.success,
-        _ => AppColors.textSecondary,
-      };
+    'upcoming' => AppColors.primary,
+    'completed' => AppColors.success,
+    _ => AppColors.textSecondary,
+  };
 
   String _statusLabel() => switch (booking.status) {
-        'upcoming' => 'Upcoming',
-        'completed' => 'Completed',
-        _ => 'Cancelled',
-      };
+    'upcoming' => 'Upcoming',
+    'completed' => 'Completed',
+    _ => 'Cancelled',
+  };
 
   @override
   Widget build(BuildContext context) {
     final dateFmt = DateFormat('EEE, d MMM yyyy');
-    final color = _labColor();
     final statusColor = _statusColor();
 
     return Container(
@@ -175,12 +170,22 @@ class _BookingCard extends StatelessWidget {
               Container(
                 width: 48,
                 height: 48,
-                decoration: BoxDecoration(
-                  color: color,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.primary, AppColors.primaryDark],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.science_rounded,
-                    color: Colors.white, size: 22),
+                child: const Padding(
+                  padding: EdgeInsets.all(10),
+                  child: Icon(
+                    Icons.biotech_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
               ),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
@@ -189,15 +194,20 @@ class _BookingCard extends StatelessWidget {
                   children: [
                     Text(booking.labName, style: AppTextStyles.labelLarge),
                     const SizedBox(height: 2),
-                    Text(booking.testName,
-                        style: AppTextStyles.bodySmall
-                            .copyWith(color: AppColors.textSecondary)),
+                    Text(
+                      booking.testName,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppRadius.r24),

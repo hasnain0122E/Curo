@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../data/models/lab_model.dart';
 import '../../../data/models/pharmacy_model.dart';
 import '../../../data/services/location_service.dart';
@@ -12,8 +13,9 @@ import '../../../providers/pharmacy_provider.dart';
 
 enum MapMode { labs, pharmacies }
 
-final mapModeProvider =
-    NotifierProvider<_MapModeNotifier, MapMode>(_MapModeNotifier.new);
+final mapModeProvider = NotifierProvider<_MapModeNotifier, MapMode>(
+  _MapModeNotifier.new,
+);
 
 class _MapModeNotifier extends Notifier<MapMode> {
   @override
@@ -23,8 +25,9 @@ class _MapModeNotifier extends Notifier<MapMode> {
 
 // ── Search query (shared across modes) ────────────────────────────────────────
 
-final labSearchProvider =
-    NotifierProvider<_SearchNotifier, String>(_SearchNotifier.new);
+final labSearchProvider = NotifierProvider<_SearchNotifier, String>(
+  _SearchNotifier.new,
+);
 
 class _SearchNotifier extends Notifier<String> {
   @override
@@ -35,12 +38,12 @@ class _SearchNotifier extends Notifier<String> {
 // ── Avatar colors (deterministic by id) ───────────────────────────────────────
 
 const _avatarColors = [
-  Color(0xFF1A5276),
-  Color(0xFF154360),
-  Color(0xFF0B5345),
-  Color(0xFF4A235A),
-  Color(0xFF1B4F72),
-  Color(0xFF6E2F0A),
+  AppColors.primary,
+  AppColors.primaryDark,
+  AppColors.primary,
+  AppColors.primaryDark,
+  AppColors.primary,
+  AppColors.primaryDark,
 ];
 
 Color _avatarColor(String id) =>
@@ -99,8 +102,9 @@ class LabLocation {
 
 enum LabFilter { all, nearest, cheapest, highestRated }
 
-final labFilterProvider =
-    NotifierProvider<_LabFilterNotifier, LabFilter>(_LabFilterNotifier.new);
+final labFilterProvider = NotifierProvider<_LabFilterNotifier, LabFilter>(
+  _LabFilterNotifier.new,
+);
 
 class _LabFilterNotifier extends Notifier<LabFilter> {
   @override
@@ -117,28 +121,29 @@ class _LabTestNamesNotifier extends Notifier<List<String>> {
 
 final labTestNamesFilterProvider =
     NotifierProvider<_LabTestNamesNotifier, List<String>>(
-        _LabTestNamesNotifier.new);
+      _LabTestNamesNotifier.new,
+    );
 
 LabLocation _toLabLocation(LabModel lab, double userLat, double userLng) {
   final dist = LocationService.distanceKm(userLat, userLng, lab.lat, lab.lng);
   return LabLocation(
-    id:              lab.id,
-    name:            lab.name,
-    address:         lab.address,
-    lat:             lab.lat,
-    lng:             lab.lng,
-    distanceKm:      double.parse(dist.toStringAsFixed(1)),
-    rating:          lab.rating,
-    reviewCount:     '${lab.reviewCount}+',
+    id: lab.id,
+    name: lab.name,
+    address: lab.address,
+    lat: lab.lat,
+    lng: lab.lng,
+    distanceKm: double.parse(dist.toStringAsFixed(1)),
+    rating: lab.rating,
+    reviewCount: '${lab.reviewCount}+',
     startingPriceRs: lab.startingPriceRs,
-    avatarColor:     _avatarColor(lab.id),
-    city:            lab.city,
-    area:            lab.area,
-    phone:           lab.phone,
-    website:         lab.website,
-    is24Hours:       lab.is24Hours,
-    openingHours:    lab.openingHours,
-    tests:           lab.tests,
+    avatarColor: _avatarColor(lab.id),
+    city: lab.city,
+    area: lab.area,
+    phone: lab.phone,
+    website: lab.website,
+    is24Hours: lab.is24Hours,
+    openingHours: lab.openingHours,
+    tests: lab.tests,
   );
 }
 
@@ -160,12 +165,14 @@ final filteredLabsProvider = Provider<List<LabLocation>>((ref) {
   var searched = query.isEmpty
       ? labs
       : labs
-          .where((l) =>
-              l.name.toLowerCase().contains(query) ||
-              l.address.toLowerCase().contains(query) ||
-              l.city.toLowerCase().contains(query) ||
-              l.area.toLowerCase().contains(query))
-          .toList();
+            .where(
+              (l) =>
+                  l.name.toLowerCase().contains(query) ||
+                  l.address.toLowerCase().contains(query) ||
+                  l.city.toLowerCase().contains(query) ||
+                  l.area.toLowerCase().contains(query),
+            )
+            .toList();
 
   // When coming from lab test scan, narrow to labs that offer those tests.
   if (testNames.isNotEmpty) {
@@ -173,7 +180,8 @@ final filteredLabsProvider = Provider<List<LabLocation>>((ref) {
     final matched = searched.where((lab) {
       final labTests = lab.tests.map((t) => t.toLowerCase()).toList();
       return lowerTests.any(
-          (test) => labTests.any((lt) => lt.contains(test) || test.contains(lt)));
+        (test) => labTests.any((lt) => lt.contains(test) || test.contains(lt)),
+      );
     }).toList();
     if (matched.isNotEmpty) searched = matched;
   }
@@ -185,8 +193,10 @@ final filteredLabsProvider = Provider<List<LabLocation>>((ref) {
       final sorted = [...searched]
         ..sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
       if (hasGps && query.isEmpty) {
-        final nearby =
-            sorted.where((l) => l.distanceKm <= _kNearbyKm).take(_kMaxFiltered).toList();
+        final nearby = sorted
+            .where((l) => l.distanceKm <= _kNearbyKm)
+            .take(_kMaxFiltered)
+            .toList();
         return nearby.isEmpty ? sorted.take(_kMaxFiltered).toList() : nearby;
       }
       return sorted.take(_kMaxFiltered).toList();
@@ -246,7 +256,8 @@ enum PharmacyFilter { all, nearest, open24h, highestRated }
 
 final pharmacyFilterProvider =
     NotifierProvider<_PharmacyFilterNotifier, PharmacyFilter>(
-        _PharmacyFilterNotifier.new);
+      _PharmacyFilterNotifier.new,
+    );
 
 class _PharmacyFilterNotifier extends Notifier<PharmacyFilter> {
   @override
@@ -255,25 +266,28 @@ class _PharmacyFilterNotifier extends Notifier<PharmacyFilter> {
 }
 
 PharmacyLocation _toPharmacyLocation(
-    PharmacyModel p, double userLat, double userLng) {
+  PharmacyModel p,
+  double userLat,
+  double userLng,
+) {
   final dist = LocationService.distanceKm(userLat, userLng, p.lat, p.lng);
   return PharmacyLocation(
-    id:           p.id,
-    name:         p.name,
-    address:      p.address,
-    lat:          p.lat,
-    lng:          p.lng,
-    distanceKm:   double.parse(dist.toStringAsFixed(1)),
-    rating:       p.rating,
-    reviewCount:  p.reviewCount,
+    id: p.id,
+    name: p.name,
+    address: p.address,
+    lat: p.lat,
+    lng: p.lng,
+    distanceKm: double.parse(dist.toStringAsFixed(1)),
+    rating: p.rating,
+    reviewCount: p.reviewCount,
     openingHours: p.openingHours,
-    phone:        p.phone,
-    is24Hours:    p.is24Hours,
-    avatarColor:  _avatarColor(p.id),
-    city:         p.city,
-    area:         p.area,
-    website:      p.website,
-    services:     p.services,
+    phone: p.phone,
+    is24Hours: p.is24Hours,
+    avatarColor: _avatarColor(p.id),
+    city: p.city,
+    area: p.area,
+    website: p.website,
+    services: p.services,
   );
 }
 
@@ -294,12 +308,14 @@ final filteredPharmaciesProvider = Provider<List<PharmacyLocation>>((ref) {
   final searched = query.isEmpty
       ? pharmacies
       : pharmacies
-          .where((p) =>
-              p.name.toLowerCase().contains(query) ||
-              p.address.toLowerCase().contains(query) ||
-              p.city.toLowerCase().contains(query) ||
-              p.area.toLowerCase().contains(query))
-          .toList();
+            .where(
+              (p) =>
+                  p.name.toLowerCase().contains(query) ||
+                  p.address.toLowerCase().contains(query) ||
+                  p.city.toLowerCase().contains(query) ||
+                  p.area.toLowerCase().contains(query),
+            )
+            .toList();
 
   switch (filter) {
     case PharmacyFilter.all:
@@ -308,8 +324,10 @@ final filteredPharmaciesProvider = Provider<List<PharmacyLocation>>((ref) {
       final sorted = [...searched]
         ..sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
       if (hasGps && query.isEmpty) {
-        final nearby =
-            sorted.where((p) => p.distanceKm <= _kNearbyKm).take(_kMaxFiltered).toList();
+        final nearby = sorted
+            .where((p) => p.distanceKm <= _kNearbyKm)
+            .take(_kMaxFiltered)
+            .toList();
         return nearby.isEmpty ? sorted.take(_kMaxFiltered).toList() : nearby;
       }
       return sorted.take(_kMaxFiltered).toList();
@@ -328,8 +346,9 @@ final filteredPharmaciesProvider = Provider<List<PharmacyLocation>>((ref) {
 // ── Real-time OSM places (Overpass API) ───────────────────────────────────────
 // Fetches nearby healthcare POIs from OpenStreetMap when user location is known.
 // Fails silently — Firebase markers always take precedence.
-final osmPlacesProvider =
-    FutureProvider.autoDispose<List<OsmPlace>>((ref) async {
+final osmPlacesProvider = FutureProvider.autoDispose<List<OsmPlace>>((
+  ref,
+) async {
   final pos = await ref.watch(userLocationProvider.future);
   if (pos == null) return [];
   return OverpassService.fetchNearby(

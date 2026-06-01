@@ -3,7 +3,7 @@ import '../models/medicine_model.dart';
 
 class MedicineRepository {
   MedicineRepository({required FirebaseFirestore firestore})
-      : _firestore = firestore;
+    : _firestore = firestore;
 
   final FirebaseFirestore _firestore;
 
@@ -35,9 +35,7 @@ class MedicineRepository {
     final batch = lower.take(10).toList();
 
     // Try brand name first
-    final byBrand = await _medicines
-        .where('nameLower', whereIn: batch)
-        .get();
+    final byBrand = await _medicines.where('nameLower', whereIn: batch).get();
     final results = <String, MedicineModel>{};
     for (final d in byBrand.docs) {
       results[d.id] = d.data();
@@ -62,7 +60,9 @@ class MedicineRepository {
     final seen = <String>{};
     for (final name in batch.take(5)) {
       for (final m in await searchMedicines(name)) {
-        if (seen.add(m.id)) { fuzzy.add(m); }
+        if (seen.add(m.id)) {
+          fuzzy.add(m);
+        }
       }
       if (fuzzy.length >= 10) break;
     }

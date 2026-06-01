@@ -27,13 +27,13 @@ class OsmPlace {
   final String city;
 
   String get amenityLabel => switch (amenity) {
-        OsmAmenity.pharmacy => 'Pharmacy',
-        OsmAmenity.hospital => 'Hospital',
-        OsmAmenity.clinic => 'Clinic',
-        OsmAmenity.laboratory => 'Laboratory',
-        OsmAmenity.doctors => 'Doctor / GP',
-        OsmAmenity.other => 'Healthcare',
-      };
+    OsmAmenity.pharmacy => 'Pharmacy',
+    OsmAmenity.hospital => 'Hospital',
+    OsmAmenity.clinic => 'Clinic',
+    OsmAmenity.laboratory => 'Laboratory',
+    OsmAmenity.doctors => 'Doctor / GP',
+    OsmAmenity.other => 'Healthcare',
+  };
 }
 
 /// Fetches nearby healthcare places from the OpenStreetMap Overpass API.
@@ -46,7 +46,8 @@ class OverpassService {
     double radiusMeters = 4000,
   }) async {
     // Overpass QL: nodes and ways with healthcare amenity tags near [lat,lng]
-    final query = '''
+    final query =
+        '''
 [out:json][timeout:25];
 (
   node["amenity"~"pharmacy|hospital|clinic|laboratory|doctors"](around:$radiusMeters,$lat,$lng);
@@ -75,10 +76,9 @@ out center;
         final tags = (map['tags'] as Map<String, dynamic>?) ?? {};
 
         // Prefer English name then any name
-        final name = (tags['name:en'] as String? ??
-                tags['name'] as String? ??
-                '')
-            .trim();
+        final name =
+            (tags['name:en'] as String? ?? tags['name'] as String? ?? '')
+                .trim();
         if (name.isEmpty) continue;
 
         // Coordinates: node → direct, way → center object
@@ -103,22 +103,27 @@ out center;
           _ => OsmAmenity.other,
         };
 
-        final phone = (tags['phone'] ??
-                tags['contact:phone'] ??
-                tags['contact:mobile'] ??
-                '') as String;
+        final phone =
+            (tags['phone'] ??
+                    tags['contact:phone'] ??
+                    tags['contact:mobile'] ??
+                    '')
+                as String;
 
-        places.add(OsmPlace(
-          id: '${map['type']}_${map['id']}',
-          name: name,
-          lat: pLat,
-          lng: pLng,
-          amenity: amenity,
-          phone: phone.trim(),
-          openingHours: (tags['opening_hours'] as String? ?? '').trim(),
-          website: (tags['website'] ?? tags['contact:website'] ?? '') as String,
-          city: (tags['addr:city'] as String? ?? '').trim(),
-        ));
+        places.add(
+          OsmPlace(
+            id: '${map['type']}_${map['id']}',
+            name: name,
+            lat: pLat,
+            lng: pLng,
+            amenity: amenity,
+            phone: phone.trim(),
+            openingHours: (tags['opening_hours'] as String? ?? '').trim(),
+            website:
+                (tags['website'] ?? tags['contact:website'] ?? '') as String,
+            city: (tags['addr:city'] as String? ?? '').trim(),
+          ),
+        );
 
         if (places.length >= 60) break; // cap for performance
       }

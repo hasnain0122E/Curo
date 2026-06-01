@@ -8,13 +8,14 @@ final labsStreamProvider = StreamProvider<List<LabModel>>((ref) {
 });
 
 /// One-shot fetch (used on pages that don't need live updates).
-final nearbyLabsFutureProvider =
-    FutureProvider<List<LabModel>>((ref) async {
+final nearbyLabsFutureProvider = FutureProvider<List<LabModel>>((ref) async {
   return ref.watch(labRepositoryProvider).getLabsNearby();
 });
 
 /// Single lab by id.
-final labByIdProvider =
-    FutureProvider.family<LabModel?, String>((ref, labId) async {
+final labByIdProvider = FutureProvider.family<LabModel?, String>((
+  ref,
+  labId,
+) async {
   return ref.watch(labRepositoryProvider).getLabById(labId);
 });

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/constants/app_colors.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/widgets/status_chip.dart';
@@ -18,22 +19,22 @@ class HealthRiskData {
   final int reportCount;
 
   String get label => switch (level) {
-        HealthRiskLevel.low => 'LOW',
-        HealthRiskLevel.medium => 'MEDIUM',
-        HealthRiskLevel.high => 'HIGH',
-      };
+    HealthRiskLevel.low => 'LOW',
+    HealthRiskLevel.medium => 'MEDIUM',
+    HealthRiskLevel.high => 'HIGH',
+  };
 
   Color get color => switch (level) {
-        HealthRiskLevel.low => const Color(0xFF22C55E),
-        HealthRiskLevel.medium => const Color(0xFFF59E0B),
-        HealthRiskLevel.high => const Color(0xFFEF4444),
-      };
+    HealthRiskLevel.low => AppColors.successForeground,
+    HealthRiskLevel.medium => AppColors.warningForeground,
+    HealthRiskLevel.high => AppColors.dangerForeground,
+  };
 
   double get gaugeProgress => switch (level) {
-        HealthRiskLevel.low => 0.26,
-        HealthRiskLevel.medium => 0.55,
-        HealthRiskLevel.high => 0.85,
-      };
+    HealthRiskLevel.low => 0.26,
+    HealthRiskLevel.medium => 0.55,
+    HealthRiskLevel.high => 0.85,
+  };
 }
 
 class NearbyLab {
@@ -75,11 +76,11 @@ class RecentReport {
 // ── Avatar colors (deterministic, not positional) ────────────────────────────
 
 const _avatarColors = [
-  Color(0xFF1A5276),
-  Color(0xFF154360),
-  Color(0xFF0B5345),
-  Color(0xFF4A235A),
-  Color(0xFF1B4F72),
+  AppColors.primary,
+  AppColors.primaryDark,
+  AppColors.primary,
+  AppColors.primaryDark,
+  AppColors.primary,
 ];
 
 Color _avatarColor(String labId) =>
@@ -132,10 +133,10 @@ RecentReport _toRecentReport(ReportModel r) {
     case 'blood test':
     case 'blood':
       icon = Icons.bloodtype_outlined;
-      iconColor = const Color(0xFF36BDF2);
+      iconColor = AppColors.primary;
     default:
       icon = Icons.assignment_outlined;
-      iconColor = const Color(0xFF36BDF2);
+      iconColor = AppColors.primary;
   }
 
   return RecentReport(
@@ -174,7 +175,8 @@ class RecentlyViewedLabsNotifier extends Notifier<List<String>> {
 
 final recentlyViewedLabsProvider =
     NotifierProvider<RecentlyViewedLabsNotifier, List<String>>(
-        RecentlyViewedLabsNotifier.new);
+      RecentlyViewedLabsNotifier.new,
+    );
 
 // ── Providers ──────────────────────────────────────────────────────────────────
 
@@ -184,8 +186,8 @@ final healthRiskProvider = Provider<HealthRiskData>((ref) {
   final level = count >= 5
       ? HealthRiskLevel.low
       : count >= 2
-          ? HealthRiskLevel.medium
-          : HealthRiskLevel.high;
+      ? HealthRiskLevel.medium
+      : HealthRiskLevel.high;
   return HealthRiskData(level: level, reportCount: count);
 });
 

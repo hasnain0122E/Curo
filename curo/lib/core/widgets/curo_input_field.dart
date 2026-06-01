@@ -57,9 +57,9 @@ class _CuroInputFieldState extends State<CuroInputField> {
   }
 
   OutlineInputBorder _border(Color color) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.r12),
-        borderSide: BorderSide(color: color, width: 1.5),
-      );
+    borderRadius: BorderRadius.circular(AppRadius.r12),
+    borderSide: BorderSide(color: color, width: 1.5),
+  );
 
   Widget? _suffix() {
     if (widget.obscureText) {
@@ -121,8 +121,7 @@ class _CuroInputFieldState extends State<CuroInputField> {
             ),
             prefixIcon: widget.prefixIcon != null
                 ? Padding(
-                    padding:
-                        const EdgeInsets.only(left: 14, right: 10),
+                    padding: const EdgeInsets.only(left: 14, right: 10),
                     child: Icon(
                       widget.prefixIcon,
                       color: AppColors.textSecondary,
@@ -130,28 +129,31 @@ class _CuroInputFieldState extends State<CuroInputField> {
                     ),
                   )
                 : null,
-            prefixIconConstraints:
-                const BoxConstraints(minWidth: 0, minHeight: 0),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 0,
+              minHeight: 0,
+            ),
             suffixIcon: _suffix(),
-            suffixIconConstraints:
-                const BoxConstraints(minWidth: 0, minHeight: 0),
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 0,
+              minHeight: 0,
+            ),
             constraints: const BoxConstraints(minHeight: 52),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.s16,
               vertical: 14,
             ),
             filled: true,
-            fillColor:
-                widget.enabled ? AppColors.surface : AppColors.background,
+            fillColor: widget.enabled
+                ? AppColors.surface
+                : AppColors.background,
             border: _border(AppColors.border),
             enabledBorder: _border(AppColors.border),
             focusedBorder: _border(AppColors.primary),
             errorBorder: _border(AppColors.danger),
             focusedErrorBorder: _border(AppColors.danger),
             disabledBorder: _border(AppColors.border),
-            errorStyle: AppTextStyles.caption.copyWith(
-              color: AppColors.danger,
-            ),
+            errorStyle: AppTextStyles.caption.copyWith(color: AppColors.danger),
           ),
           validator: widget.validator,
           onChanged: widget.onChanged,

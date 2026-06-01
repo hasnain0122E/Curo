@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/app_colors.dart';
 
 class LabTest {
   const LabTest({
@@ -51,16 +52,16 @@ enum BookingStatus { upcoming, completed, cancelled }
 
 extension BookingStatusX on BookingStatus {
   String get label => switch (this) {
-        BookingStatus.upcoming => 'Upcoming',
-        BookingStatus.completed => 'Completed',
-        BookingStatus.cancelled => 'Cancelled',
-      };
+    BookingStatus.upcoming => 'Upcoming',
+    BookingStatus.completed => 'Completed',
+    BookingStatus.cancelled => 'Cancelled',
+  };
 
   Color get color => switch (this) {
-        BookingStatus.upcoming => const Color(0xFF36BDF2),
-        BookingStatus.completed => const Color(0xFF22C55E),
-        BookingStatus.cancelled => const Color(0xFFEF4444),
-      };
+    BookingStatus.upcoming => AppColors.primary,
+    BookingStatus.completed => const Color(0xFF22C55E),
+    BookingStatus.cancelled => const Color(0xFFEF4444),
+  };
 }
 
 class MyBooking {

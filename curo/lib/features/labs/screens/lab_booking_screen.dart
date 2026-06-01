@@ -13,11 +13,7 @@ import '../models/lab_booking_models.dart';
 import '../providers/lab_map_provider.dart';
 
 class LabBookingScreen extends ConsumerStatefulWidget {
-  const LabBookingScreen({
-    super.key,
-    required this.lab,
-    required this.test,
-  });
+  const LabBookingScreen({super.key, required this.lab, required this.test});
 
   final LabLocation lab;
   final LabTest test;
@@ -41,21 +37,29 @@ class _LabBookingScreenState extends ConsumerState<LabBookingScreen> {
   Future<void> _confirmBooking() async {
     if (_selectedSlot == null || _isBookingLoading) return;
     setState(() => _isBookingLoading = true);
-    final booking = await ref.read(bookingCreateProvider.notifier).createBooking(
-      labId: widget.lab.id,
-      labName: widget.lab.name,
-      testName: widget.test.name,
-      date: _selectedDate,
-      timeSlot: _selectedSlot!.label,
-      priceRs: widget.test.priceRs,
-    );
+    final booking = await ref
+        .read(bookingCreateProvider.notifier)
+        .createBooking(
+          labId: widget.lab.id,
+          labName: widget.lab.name,
+          testName: widget.test.name,
+          date: _selectedDate,
+          timeSlot: _selectedSlot!.label,
+          priceRs: widget.test.priceRs,
+        );
     if (!mounted) return;
     if (booking != null) {
-      setState(() { _isBookingLoading = false; _isConfirmed = true; });
+      setState(() {
+        _isBookingLoading = false;
+        _isConfirmed = true;
+      });
     } else {
       setState(() => _isBookingLoading = false);
-      final error = ref.read(bookingCreateProvider).error ?? 'Booking failed. Try again.';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      final error =
+          ref.read(bookingCreateProvider).error ?? 'Booking failed. Try again.';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
     }
   }
 
@@ -63,9 +67,7 @@ class _LabBookingScreenState extends ConsumerState<LabBookingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: _isConfirmed
-          ? null
-          : CuroAppBar(title: 'Book Test'),
+      appBar: _isConfirmed ? null : CuroAppBar(title: 'Book Test'),
       body: _isConfirmed
           ? _SuccessView(
               lab: widget.lab,
@@ -108,8 +110,11 @@ class _LabBookingScreenState extends ConsumerState<LabBookingScreen> {
                   top: false,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.s16, AppSpacing.s12,
-                        AppSpacing.s16, AppSpacing.s16),
+                      AppSpacing.s16,
+                      AppSpacing.s12,
+                      AppSpacing.s16,
+                      AppSpacing.s16,
+                    ),
                     child: CuroButton(
                       label: _selectedSlot == null
                           ? 'Select a Time Slot'
@@ -142,24 +147,24 @@ class _SummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF36BDF2), Color(0xFF0D7AB5)],
-        ),
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(AppRadius.r16),
         boxShadow: AppShadows.md,
       ),
       child: Row(
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.25),
+              color: Colors.white.withValues(alpha: 0.14),
               shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
             ),
-            child: const Icon(Icons.science_rounded, color: Colors.white, size: 26),
+            child: const Padding(
+              padding: EdgeInsets.all(10),
+              child: Icon(Icons.biotech_rounded, color: Colors.white, size: 20),
+            ),
           ),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
@@ -173,8 +178,9 @@ class _SummaryCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   test.name,
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: Colors.white.withValues(alpha: 0.85)),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: Colors.white.withValues(alpha: 0.75),
+                  ),
                 ),
               ],
             ),
@@ -239,7 +245,7 @@ class _DateRow extends StatelessWidget {
                     i == 0 ? 'Today' : dayLabel,
                     style: AppTextStyles.labelSmall.copyWith(
                       color: isSelected
-                          ? Colors.white.withValues(alpha: 0.85)
+                          ? Colors.white70
                           : AppColors.textSecondary,
                       fontSize: 10,
                     ),
@@ -272,22 +278,30 @@ class _TimeGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.s8,
-      runSpacing: AppSpacing.s8,
-      children: kBookingTimeSlots
-          .map((slot) => _TimeChip(
-                slot: slot,
-                isSelected: selected?.id == slot.id,
-                onTap: slot.isAvailable ? () => onSelect(slot) : null,
-              ))
-          .toList(),
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: AppSpacing.s8,
+        mainAxisSpacing: AppSpacing.s8,
+        childAspectRatio: 2.6,
+      ),
+      itemCount: kBookingTimeSlots.length,
+      itemBuilder: (_, i) {
+        final slot = kBookingTimeSlots[i];
+        return _TimeSlotCell(
+          slot: slot,
+          isSelected: selected?.id == slot.id,
+          onTap: slot.isAvailable ? () => onSelect(slot) : null,
+        );
+      },
     );
   }
 }
 
-class _TimeChip extends StatelessWidget {
-  const _TimeChip({
+class _TimeSlotCell extends StatelessWidget {
+  const _TimeSlotCell({
     required this.slot,
     required this.isSelected,
     required this.onTap,
@@ -303,31 +317,31 @@ class _TimeChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+        duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary
-              : unavailable
-                  ? AppColors.background
-                  : AppColors.surface,
+          color: isSelected ? AppColors.primary : AppColors.background,
           borderRadius: BorderRadius.circular(AppRadius.r12),
           border: Border.all(
             color: isSelected
                 ? AppColors.primary
+                : unavailable
+                ? AppColors.border.withValues(alpha: 0.50)
                 : AppColors.border,
             width: isSelected ? 1.5 : 1,
           ),
+          boxShadow: isSelected ? AppShadows.md : const [],
         ),
-        child: Text(
-          slot.label,
-          style: AppTextStyles.labelMedium.copyWith(
-            color: isSelected
-                ? Colors.white
-                : unavailable
-                    ? AppColors.textSecondary.withValues(alpha: 0.45)
-                    : AppColors.textPrimary,
+        child: Center(
+          child: Text(
+            slot.label,
+            style: AppTextStyles.labelMedium.copyWith(
+              color: isSelected
+                  ? Colors.white
+                  : unavailable
+                  ? AppColors.textSecondary.withValues(alpha: 0.40)
+                  : AppColors.textSecondary,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            ),
           ),
         ),
       ),
@@ -353,82 +367,255 @@ class _SuccessView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.s24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 88,
-                height: 88,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFDCFCE7),
-                  shape: BoxShape.circle,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s24,
+          vertical: AppSpacing.s32,
+        ),
+        child: Column(
+          children: [
+            // ── Success Banner — concentric ring vector ──────────────────────
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                // Outer pulse ring
+                Container(
+                  width: 116,
+                  height: 116,
+                  decoration: BoxDecoration(
+                    color: AppColors.successForeground.withValues(alpha: 0.07),
+                    shape: BoxShape.circle,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.check_circle_outline_rounded,
-                  color: AppColors.success,
-                  size: 44,
+                // Middle ring
+                Container(
+                  width: 88,
+                  height: 88,
+                  decoration: BoxDecoration(
+                    color: AppColors.successForeground.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.s24),
-              Text('Booking Confirmed!', style: AppTextStyles.h2),
-              const SizedBox(height: AppSpacing.s8),
-              Text(
-                'Your test has been scheduled successfully.',
-                style: AppTextStyles.bodyMedium
-                    .copyWith(color: AppColors.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.s32),
+                // Inner filled circle + check icon
+                Container(
+                  width: 62,
+                  height: 62,
+                  decoration: const BoxDecoration(
+                    color: AppColors.successBackground,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: AppColors.successForeground,
+                    size: 28,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s24),
 
-              // Booking detail card
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.r16),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: AppShadows.sm,
-                ),
-                child: Column(
-                  children: [
-                    _ConfirmRow(Icons.science_rounded, 'Lab', lab.name),
-                    const Divider(height: 1, color: AppColors.border),
-                    _ConfirmRow(Icons.biotech_rounded, 'Test', test.name),
-                    const Divider(height: 1, color: AppColors.border),
-                    _ConfirmRow(
-                      Icons.calendar_today_outlined,
-                      'Date',
-                      DateFormat('EEE, d MMM yyyy').format(date),
+            Text(
+              'Booking Confirmed!',
+              style: AppTextStyles.h2.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            Text(
+              'Your test has been scheduled successfully.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.s32),
+
+            // ── Transaction Invoice Block ────────────────────────────────────
+            Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.r16),
+                boxShadow: AppShadows.md,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Receipt header strip
+                  Container(
+                    color: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s16,
+                      vertical: AppSpacing.s12,
                     ),
-                    if (slot != null) ...[
-                      const Divider(height: 1, color: AppColors.border),
-                      _ConfirmRow(
-                          Icons.access_time_rounded, 'Time', slot!.label),
-                    ],
-                    const Divider(height: 1, color: AppColors.border),
-                    _ConfirmRow(
-                        Icons.payments_outlined, 'Price', '₨ ${test.priceRs}'),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.receipt_long_outlined,
+                          color: Colors.white,
+                          size: 15,
+                        ),
+                        const SizedBox(width: AppSpacing.s8),
+                        Text(
+                          'BOOKING RECEIPT',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Itemised data rows
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s16,
+                      AppSpacing.s8,
+                      AppSpacing.s16,
+                      AppSpacing.s8,
+                    ),
+                    child: Column(
+                      children: [
+                        _ConfirmRow(Icons.science_rounded, 'Lab', lab.name),
+                        const Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: AppColors.border,
+                        ),
+                        _ConfirmRow(Icons.biotech_rounded, 'Test', test.name),
+                        const Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: AppColors.border,
+                        ),
+                        _ConfirmRow(
+                          Icons.calendar_today_outlined,
+                          'Date',
+                          DateFormat('EEE, d MMM yyyy').format(date),
+                        ),
+                        if (slot != null) ...[
+                          const Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: AppColors.border,
+                          ),
+                          _ConfirmRow(
+                            Icons.access_time_rounded,
+                            'Time',
+                            slot!.label,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  // Price footer — success-tinted, full-width
+                  Container(
+                    color: AppColors.successBackground,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s16,
+                      vertical: AppSpacing.s16,
+                    ),
+                    child: Row(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Total Amount',
+                              style: AppTextStyles.labelMedium.copyWith(
+                                color: AppColors.successForeground,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Payable at lab',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.successForeground.withValues(
+                                  alpha: 0.60,
+                                ),
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        Text(
+                          '₨ ${test.priceRs}',
+                          style: AppTextStyles.h2.copyWith(
+                            color: AppColors.successForeground,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s24),
+
+            // ── Action Triggers ──────────────────────────────────────────────
+
+            // Primary — full-width accent CTA
+            GestureDetector(
+              onTap: () => context.push(AppRoutes.myBookings),
+              child: Container(
+                height: 52,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(AppRadius.r12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.accent.withValues(alpha: 0.30),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.calendar_month_outlined,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: AppSpacing.s8),
+                    Text(
+                      'View My Bookings',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.s24),
+            ),
 
-              CuroButton(
-                label: 'View My Bookings',
-                onPressed: () => context.push(AppRoutes.myBookings),
+            // Secondary — minimalist text link
+            TextButton(
+              onPressed: () => context.go(AppRoutes.home),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.textSecondary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s16,
+                  vertical: AppSpacing.s12,
+                ),
+                minimumSize: const Size(double.infinity, 44),
               ),
-              const SizedBox(height: AppSpacing.s12),
-              CuroButton(
-                label: 'Back to Home',
-                variant: CuroButtonVariant.secondary,
-                onPressed: () => context.go(AppRoutes.home),
+              child: Text(
+                'Back to Home',
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -448,15 +635,30 @@ class _ConfirmRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: AppColors.textSecondary),
+          Icon(icon, size: 14, color: AppColors.textSecondary),
           const SizedBox(width: AppSpacing.s8),
-          Text(
-            label,
-            style:
-                AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
-          const Spacer(),
-          Text(value, style: AppTextStyles.labelMedium),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.end,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );

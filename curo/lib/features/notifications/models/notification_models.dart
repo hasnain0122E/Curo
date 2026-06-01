@@ -20,13 +20,13 @@ class AppNotification {
   final bool isRead;
 
   AppNotification copyWith({bool? isRead}) => AppNotification(
-        id: id,
-        type: type,
-        title: title,
-        body: body,
-        time: time,
-        isRead: isRead ?? this.isRead,
-      );
+    id: id,
+    type: type,
+    title: title,
+    body: body,
+    time: time,
+    isRead: isRead ?? this.isRead,
+  );
 
   /// Converts an FCM [RemoteMessage] into an [AppNotification].
   ///
@@ -35,23 +35,23 @@ class AppNotification {
   /// { "type": "labResult" | "booking" | "aiTrend" | "medicine" }
   /// ```
   factory AppNotification.fromRemoteMessage(RemoteMessage message) {
-    final data  = message.data;
+    final data = message.data;
     final notif = message.notification;
 
     final typeStr = data['type'] as String? ?? '';
     final type = switch (typeStr) {
-      'booking'   => NotifType.booking,
-      'aiTrend'   => NotifType.aiTrend,
-      'medicine'  => NotifType.medicine,
-      _           => NotifType.labResult,
+      'booking' => NotifType.booking,
+      'aiTrend' => NotifType.aiTrend,
+      'medicine' => NotifType.medicine,
+      _ => NotifType.labResult,
     };
 
     return AppNotification(
-      id:    message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      type:  type,
+      id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      type: type,
       title: notif?.title ?? data['title'] as String? ?? 'CURO',
-      body:  notif?.body  ?? data['body']  as String? ?? '',
-      time:  message.sentTime ?? DateTime.now(),
+      body: notif?.body ?? data['body'] as String? ?? '',
+      time: message.sentTime ?? DateTime.now(),
       isRead: false,
     );
   }

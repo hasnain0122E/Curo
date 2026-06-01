@@ -27,7 +27,9 @@ class NotificationsScreen extends ConsumerWidget {
                   onTap: notifier.markAllRead,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
+                      horizontal: AppSpacing.s12,
+                      vertical: AppSpacing.s8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppRadius.r8),
@@ -60,13 +62,17 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.notifications_off_outlined,
-              size: 56, color: AppColors.border),
+          const Icon(
+            Icons.notifications_off_outlined,
+            size: 56,
+            color: AppColors.border,
+          ),
           const SizedBox(height: AppSpacing.s16),
           Text(
             'No notifications yet',
-            style: AppTextStyles.bodyMedium
-                .copyWith(color: AppColors.textSecondary),
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -77,10 +83,7 @@ class _EmptyState extends StatelessWidget {
 // ── Grouped List ──────────────────────────────────────────────────────────────
 
 class _NotificationsList extends StatelessWidget {
-  const _NotificationsList({
-    required this.notifications,
-    required this.ref,
-  });
+  const _NotificationsList({required this.notifications, required this.ref});
 
   final List<AppNotification> notifications;
   final WidgetRef ref;
@@ -122,9 +125,8 @@ class _NotificationsList extends StatelessWidget {
         if (item is String) return _DateHeader(text: item);
         return _NotifItem(
           notification: item as AppNotification,
-          onTap: () => ref
-              .read(notificationsProvider.notifier)
-              .markRead((item).id),
+          onTap: () =>
+              ref.read(notificationsProvider.notifier).markRead((item).id),
         );
       },
     );
@@ -141,8 +143,7 @@ class _DateHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(
-          top: AppSpacing.s8, bottom: AppSpacing.s8),
+      padding: const EdgeInsets.only(top: AppSpacing.s8, bottom: AppSpacing.s8),
       child: Text(
         text.toUpperCase(),
         style: AppTextStyles.labelSmall.copyWith(
@@ -164,18 +165,18 @@ class _NotifItem extends StatelessWidget {
   final VoidCallback onTap;
 
   static Color _typeColor(NotifType type) => switch (type) {
-        NotifType.labResult => AppColors.primary,
-        NotifType.booking => AppColors.success,
-        NotifType.aiTrend => const Color(0xFF8B5CF6),
-        NotifType.medicine => const Color(0xFFF59E0B),
-      };
+    NotifType.labResult => AppColors.primary,
+    NotifType.booking => AppColors.success,
+    NotifType.aiTrend => const Color(0xFF8B5CF6),
+    NotifType.medicine => AppColors.ratingGold,
+  };
 
   static IconData _typeIcon(NotifType type) => switch (type) {
-        NotifType.labResult => Icons.description_outlined,
-        NotifType.booking => Icons.calendar_month_outlined,
-        NotifType.aiTrend => Icons.auto_awesome_rounded,
-        NotifType.medicine => Icons.medication_outlined,
-      };
+    NotifType.labResult => Icons.description_outlined,
+    NotifType.booking => Icons.calendar_month_outlined,
+    NotifType.aiTrend => Icons.auto_awesome_rounded,
+    NotifType.medicine => Icons.medication_outlined,
+  };
 
   static String _formatTime(DateTime time) {
     final diff = DateTime.now().difference(time);
@@ -197,7 +198,7 @@ class _NotifItem extends StatelessWidget {
         decoration: BoxDecoration(
           color: notification.isRead
               ? AppColors.surface
-              : const Color(0xFFEBF8FE),
+              : AppColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(AppRadius.r16),
           border: Border.all(
             color: notification.isRead
@@ -225,8 +226,10 @@ class _NotifItem extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(notification.title,
-                            style: AppTextStyles.labelLarge),
+                        child: Text(
+                          notification.title,
+                          style: AppTextStyles.labelLarge,
+                        ),
                       ),
                       if (!notification.isRead)
                         Container(

@@ -25,15 +25,18 @@ class MedipointsScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
-          // ── Gradient App Bar / Hero ────────────────────────────────────────
+          // ── Wallet Passport Hero ──────────────────────────────────────────
           SliverAppBar(
-            expandedHeight: 220,
+            expandedHeight: 252,
             pinned: true,
-            backgroundColor: const Color(0xFF0B6B9E),
+            backgroundColor: AppColors.primary,
             surfaceTintColor: Colors.transparent,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                  size: 18, color: Colors.white),
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 18,
+                color: Colors.white,
+              ),
               onPressed: () => context.pop(),
             ),
             title: Text(
@@ -41,7 +44,7 @@ class MedipointsScreen extends ConsumerWidget {
               style: AppTextStyles.h3.copyWith(color: Colors.white),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              background: _HeroBanner(points: points, name: profile.name),
+              background: _WalletHero(points: points, name: profile.name),
             ),
           ),
 
@@ -49,66 +52,67 @@ class MedipointsScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(AppSpacing.s16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // ── How to Earn ──────────────────────────────────────────────
+                // ── How to Earn — Timeline ────────────────────────────────
                 Text('How to Earn', style: AppTextStyles.h3),
-                const SizedBox(height: AppSpacing.s12),
-                _EarnCard(
+                const SizedBox(height: AppSpacing.s16),
+                _EarnTimelineItem(
                   icon: Icons.upload_file_rounded,
-                  iconColor: AppColors.primary,
-                  iconBg: AppColors.primary.withValues(alpha: 0.10),
+                  iconColor: AppColors.accent,
+                  iconBg: AppColors.accent.withValues(alpha: 0.10),
                   title: 'Upload a Lab Report',
                   subtitle: 'Scan or upload any medical report',
                   pts: '+50 pts',
+                  isLast: false,
                 ),
-                const SizedBox(height: AppSpacing.s8),
-                _EarnCard(
+                _EarnTimelineItem(
                   icon: Icons.science_rounded,
-                  iconColor: AppColors.success,
-                  iconBg: AppColors.success.withValues(alpha: 0.10),
+                  iconColor: AppColors.successForeground,
+                  iconBg: AppColors.successBackground,
                   title: 'Book a Lab Test',
                   subtitle: 'Book any test through CURO',
                   pts: '+30 pts',
+                  isLast: false,
                 ),
-                const SizedBox(height: AppSpacing.s8),
-                _EarnCard(
+                _EarnTimelineItem(
                   icon: Icons.person_add_rounded,
-                  iconColor: const Color(0xFF8B5CF6),
-                  iconBg: const Color(0xFF8B5CF6).withValues(alpha: 0.10),
+                  iconColor: const Color(0xFF7C3AED),
+                  iconBg: const Color(0xFF7C3AED).withValues(alpha: 0.08),
                   title: 'Refer a Friend',
                   subtitle: 'Invite friends to join CURO',
                   pts: '+100 pts',
+                  isLast: true,
                   comingSoon: true,
                 ),
 
                 const SizedBox(height: AppSpacing.s24),
 
-                // ── Benefits ─────────────────────────────────────────────────
+                // ── Benefits ──────────────────────────────────────────────
                 Text('Your Benefits', style: AppTextStyles.h3),
                 const SizedBox(height: AppSpacing.s12),
-                _BenefitCard(
+                _BenefitRow(
                   icon: Icons.local_offer_rounded,
                   title: 'Rs 50 off any lab booking',
-                  subtitle: 'Redeem 100 MediPoints',
+                  subtitle: 'Requires 100 MediPoints',
                   unlocked: points >= 100,
                 ),
                 const SizedBox(height: AppSpacing.s8),
-                _BenefitCard(
+                _BenefitRow(
                   icon: Icons.discount_rounded,
                   title: '10% off lab tests',
-                  subtitle: 'Redeem 300 MediPoints',
+                  subtitle: 'Requires 300 MediPoints',
                   unlocked: points >= 300,
                 ),
                 const SizedBox(height: AppSpacing.s8),
-                _BenefitCard(
+                _BenefitRow(
                   icon: Icons.support_agent_rounded,
                   title: 'Priority Support',
-                  subtitle: 'Redeem 500 MediPoints',
+                  subtitle: 'Requires 500 MediPoints',
                   unlocked: points >= 500,
                 ),
 
                 const SizedBox(height: AppSpacing.s24),
 
-                // ── Activity ─────────────────────────────────────────────────
+                // ── Recent Activity ───────────────────────────────────────
                 Text('Recent Activity', style: AppTextStyles.h3),
                 const SizedBox(height: AppSpacing.s12),
 
@@ -120,6 +124,7 @@ class MedipointsScreen extends ConsumerWidget {
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(AppRadius.r12),
                       border: Border.all(color: AppColors.border),
+                      boxShadow: AppShadows.md,
                     ),
                     child: Column(
                       children: [
@@ -130,7 +135,7 @@ class MedipointsScreen extends ConsumerWidget {
                             icon: Icons.upload_file_rounded,
                             label: 'Report Uploaded',
                             pts: '+50 pts',
-                            color: AppColors.primary,
+                            color: AppColors.accent,
                           ),
                         ],
                         for (int i = 0; i < bookingCount; i++) ...[
@@ -140,7 +145,7 @@ class MedipointsScreen extends ConsumerWidget {
                             icon: Icons.science_rounded,
                             label: 'Lab Test Booked',
                             pts: '+30 pts',
-                            color: AppColors.success,
+                            color: AppColors.successForeground,
                           ),
                         ],
                       ],
@@ -149,20 +154,24 @@ class MedipointsScreen extends ConsumerWidget {
 
                 const SizedBox(height: AppSpacing.s24),
 
-                // ── Info note ────────────────────────────────────────────────
+                // ── Info note ─────────────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.s12),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(AppRadius.r12),
                     border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.15)),
+                      color: AppColors.primary.withValues(alpha: 0.14),
+                    ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.info_outline_rounded,
-                          size: 16, color: AppColors.primary),
+                      const Icon(
+                        Icons.info_outline_rounded,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
                       const SizedBox(width: AppSpacing.s8),
                       Expanded(
                         child: Text(
@@ -188,102 +197,256 @@ class MedipointsScreen extends ConsumerWidget {
   }
 }
 
-// ── Hero Banner ───────────────────────────────────────────────────────────────
+// ── Wallet Hero ───────────────────────────────────────────────────────────────
 
-class _HeroBanner extends StatelessWidget {
-  const _HeroBanner({required this.points, required this.name});
+class _WalletHero extends StatelessWidget {
+  const _WalletHero({required this.points, required this.name});
   final int points;
   final String name;
+
+  String get _tier {
+    if (points >= 500) return 'Gold Member';
+    if (points >= 200) return 'Silver Member';
+    return 'Member';
+  }
+
+  Color get _tierAccent {
+    if (points >= 500) return const Color(0xFFFCD34D);
+    if (points >= 200) return const Color(0xFFCBD5E1);
+    return Colors.white54;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF0B4F72), Color(0xFF1184B8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s20, 56, AppSpacing.s20, AppSpacing.s24),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Your Balance',
-                      style: AppTextStyles.bodyMedium
-                          .copyWith(color: Colors.white70),
-                    ),
-                    const SizedBox(height: AppSpacing.s4),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '$points',
-                          style: AppTextStyles.h1.copyWith(
-                            color: Colors.white,
-                            fontSize: 48,
-                            fontWeight: FontWeight.w800,
+      color: AppColors.primary,
+      child: Stack(
+        children: [
+          // ── Decorative depth circles ───────────────────────────────────
+          Positioned(
+            top: -40,
+            right: -40,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.04),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 16,
+            right: 24,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.accent.withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -16,
+            left: -24,
+            child: Container(
+              width: 110,
+              height: 110,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.03),
+              ),
+            ),
+          ),
+
+          // ── Content ───────────────────────────────────────────────────
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s20,
+                56,
+                AppSpacing.s20,
+                0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Balance label + points + star seal
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'YOUR BALANCE',
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: Colors.white.withValues(alpha: 0.50),
+                                fontSize: 10,
+                                letterSpacing: 1.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '$points',
+                                  style: AppTextStyles.h1.copyWith(
+                                    color: Colors.white,
+                                    fontSize: 52,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -1.5,
+                                    height: 1.0,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Text(
+                                    'pts',
+                                    style: AppTextStyles.labelLarge.copyWith(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.58,
+                                      ),
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Star seal
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.14),
+                            width: 1.5,
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.s8),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Text(
-                            'pts',
-                            style: AppTextStyles.labelLarge
-                                .copyWith(color: Colors.white70),
-                          ),
+                        child: const Icon(
+                          Icons.star_rounded,
+                          color: Color(0xFFFCD34D),
+                          size: 28,
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Muted tracking chip — distinct background
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
                     ),
-                    const SizedBox(height: AppSpacing.s4),
-                    Text(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.09),
+                      borderRadius: BorderRadius.circular(AppRadius.r24),
+                    ),
+                    child: Text(
                       points == 0
                           ? 'Upload a report to earn your first points!'
                           : 'Keep earning to unlock rewards',
-                      style: AppTextStyles.bodySmall
-                          .copyWith(color: Colors.white60),
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: Colors.white.withValues(alpha: 0.70),
+                        fontSize: 11,
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Electric-blue accent divider
+                  Container(
+                    height: 1,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.accent.withValues(alpha: 0.55),
+                          AppColors.accent.withValues(alpha: 0.05),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // Holder name + tier badge row
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.person_rounded,
+                        size: 13,
+                        color: Colors.white54,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        name,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: Colors.white.withValues(alpha: 0.80),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(AppRadius.r24),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.18),
+                          ),
+                        ),
+                        child: Text(
+                          _tier,
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: _tierAccent,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+                ],
               ),
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.star_rounded,
-                    color: Color(0xFFFCD34D), size: 36),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-// ── Earn Card ─────────────────────────────────────────────────────────────────
+// ── Earn Timeline Item ────────────────────────────────────────────────────────
 
-class _EarnCard extends StatelessWidget {
-  const _EarnCard({
+class _EarnTimelineItem extends StatelessWidget {
+  const _EarnTimelineItem({
     required this.icon,
     required this.iconColor,
     required this.iconBg,
     required this.title,
     required this.subtitle,
     required this.pts,
+    required this.isLast,
     this.comingSoon = false,
   });
 
@@ -293,76 +456,142 @@ class _EarnCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String pts;
+  final bool isLast;
   final bool comingSoon;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      decoration: BoxDecoration(
-        color: comingSoon
-            ? AppColors.surface.withValues(alpha: 0.6)
-            : AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.r12),
-        border: Border.all(color: AppColors.border),
-      ),
+    return IntrinsicHeight(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: iconBg,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: iconColor, size: 22),
+          // ── Timeline spine ─────────────────────────────────────────────
+          Column(
+            children: [
+              // Icon node
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: comingSoon
+                      ? AppColors.border.withValues(alpha: 0.6)
+                      : iconBg,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: comingSoon
+                        ? AppColors.border
+                        : iconColor.withValues(alpha: 0.28),
+                    width: 1.5,
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: comingSoon ? AppColors.textSecondary : iconColor,
+                ),
+              ),
+              // Connector line (not shown on last item)
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(width: AppSpacing.s12),
+
+          const SizedBox(width: AppSpacing.s16),
+
+          // ── Content ────────────────────────────────────────────────────
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: AppTextStyles.labelLarge.copyWith(
-                      color: comingSoon
-                          ? AppColors.textSecondary
-                          : AppColors.textPrimary,
-                    )),
-                const SizedBox(height: 2),
-                Text(subtitle, style: AppTextStyles.bodySmall),
-              ],
+            child: Padding(
+              padding: EdgeInsets.only(
+                top: 8,
+                bottom: isLast ? 0 : AppSpacing.s24,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: AppTextStyles.labelLarge.copyWith(
+                            color: comingSoon
+                                ? AppColors.textSecondary
+                                : AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(subtitle, style: AppTextStyles.bodySmall),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
+                  // Pts pill — tinted to match action color
+                  if (comingSoon)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.border.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(AppRadius.r24),
+                      ),
+                      child: Text(
+                        'Soon',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: iconBg,
+                        borderRadius: BorderRadius.circular(AppRadius.r24),
+                        border: Border.all(
+                          color: iconColor.withValues(alpha: 0.22),
+                        ),
+                      ),
+                      child: Text(
+                        pts,
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: iconColor,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-          if (comingSoon)
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(AppRadius.r4),
-              ),
-              child: Text(
-                'Soon',
-                style: AppTextStyles.labelSmall
-                    .copyWith(color: AppColors.textSecondary, fontSize: 10),
-              ),
-            )
-          else
-            Text(
-              pts,
-              style: AppTextStyles.labelLarge
-                  .copyWith(color: AppColors.success),
-            ),
         ],
       ),
     );
   }
 }
 
-// ── Benefit Card ──────────────────────────────────────────────────────────────
+// ── Benefit Row ───────────────────────────────────────────────────────────────
 
-class _BenefitCard extends StatelessWidget {
-  const _BenefitCard({
+class _BenefitRow extends StatelessWidget {
+  const _BenefitRow({
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -377,53 +606,69 @@ class _BenefitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.s16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: 14,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.r12),
         border: Border.all(
           color: unlocked
-              ? AppColors.success.withValues(alpha: 0.35)
+              ? AppColors.accent.withValues(alpha: 0.28)
               : AppColors.border,
         ),
+        boxShadow: AppShadows.md,
       ),
       child: Row(
         children: [
+          // Icon circle
           Container(
-            width: 44,
-            height: 44,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
               color: unlocked
-                  ? AppColors.success.withValues(alpha: 0.10)
-                  : AppColors.border.withValues(alpha: 0.5),
+                  ? AppColors.accent.withValues(alpha: 0.08)
+                  : AppColors.border.withValues(alpha: 0.55),
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: unlocked ? AppColors.success : AppColors.textSecondary,
-              size: 22,
+              size: 20,
+              color: unlocked ? AppColors.accent : AppColors.textSecondary,
             ),
           ),
           const SizedBox(width: AppSpacing.s12),
+
+          // Title + subtitle
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: AppTextStyles.labelLarge.copyWith(
-                      color: unlocked
-                          ? AppColors.textPrimary
-                          : AppColors.textSecondary,
-                    )),
+                Text(
+                  title,
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: unlocked
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Text(subtitle, style: AppTextStyles.bodySmall),
               ],
             ),
           ),
-          Icon(
-            unlocked ? Icons.lock_open_rounded : Icons.lock_rounded,
-            size: 18,
-            color: unlocked ? AppColors.success : AppColors.textSecondary,
+
+          const SizedBox(width: AppSpacing.s12),
+
+          // Redeem text action — no button box, clean color weight
+          Text(
+            'Redeem',
+            style: AppTextStyles.labelMedium.copyWith(
+              color: unlocked ? AppColors.accent : AppColors.textSecondary,
+              fontWeight: unlocked ? FontWeight.w600 : FontWeight.w400,
+            ),
           ),
         ],
       ),
@@ -450,7 +695,9 @@ class _ActivityRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s12,
+      ),
       child: Row(
         children: [
           Container(
@@ -463,12 +710,23 @@ class _ActivityRow extends StatelessWidget {
             child: Icon(icon, size: 18, color: color),
           ),
           const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Text(label, style: AppTextStyles.labelMedium),
+          Expanded(child: Text(label, style: AppTextStyles.labelMedium)),
+          // Pts pill
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(AppRadius.r24),
+            ),
+            child: Text(
+              pts,
+              style: AppTextStyles.labelSmall.copyWith(
+                color: color,
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
+              ),
+            ),
           ),
-          Text(pts,
-              style: AppTextStyles.labelMedium
-                  .copyWith(color: AppColors.success)),
         ],
       ),
     );
@@ -486,11 +744,15 @@ class _EmptyActivity extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.r12),
         border: Border.all(color: AppColors.border),
+        boxShadow: AppShadows.md,
       ),
       child: Column(
         children: [
-          const Icon(Icons.star_outline_rounded,
-              size: 40, color: AppColors.border),
+          const Icon(
+            Icons.star_outline_rounded,
+            size: 40,
+            color: AppColors.border,
+          ),
           const SizedBox(height: AppSpacing.s12),
           Text('No activity yet', style: AppTextStyles.labelLarge),
           const SizedBox(height: AppSpacing.s4),

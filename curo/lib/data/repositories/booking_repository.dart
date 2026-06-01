@@ -3,7 +3,7 @@ import '../models/booking_model.dart';
 
 class BookingRepository {
   BookingRepository({required FirebaseFirestore firestore})
-      : _firestore = firestore;
+    : _firestore = firestore;
 
   final FirebaseFirestore _firestore;
 

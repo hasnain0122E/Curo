@@ -164,7 +164,7 @@ class _UploadView extends ConsumerWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEBF8FE),
+                      color: AppColors.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(AppRadius.r8),
                     ),
                     child: const Icon(
@@ -253,7 +253,7 @@ class _DropZonePrompt extends StatelessWidget {
           width: 64,
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFEBF8FE),
+            color: AppColors.primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(AppRadius.r16),
           ),
           child: const Icon(
@@ -288,7 +288,7 @@ class _FilePreview extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: const Color(0xFFEBF8FE),
+            color: AppColors.primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(AppRadius.r8),
           ),
           child: const Icon(
@@ -436,7 +436,7 @@ class _ProcessingViewState extends ConsumerState<_ProcessingView>
                 width: 96,
                 height: 96,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEBF8FE),
+                  color: AppColors.primary.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -488,7 +488,7 @@ class _ProcessingViewState extends ConsumerState<_ProcessingView>
                       child: Icon(
                         done ? Icons.check_rounded : icon,
                         size: 18,
-                        color: Colors.white,
+                        color: active ? AppColors.textPrimary : Colors.white,
                       ),
                     ),
                     const SizedBox(width: AppSpacing.s12),
@@ -550,8 +550,8 @@ class _ResultsView extends ConsumerWidget {
                 Container(
                   width: 52,
                   height: 52,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFEBF8FE),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -579,7 +579,7 @@ class _ResultsView extends ConsumerWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEBF8FE),
+                    color: AppColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(AppRadius.r24),
                   ),
                   child: Row(
@@ -616,7 +616,7 @@ class _ResultsView extends ConsumerWidget {
             padding: const EdgeInsets.all(AppSpacing.s20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0F4C6B), Color(0xFF1A6A94)],
+                colors: [AppColors.primaryDark, AppColors.primary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -629,14 +629,14 @@ class _ResultsView extends ConsumerWidget {
                   children: [
                     const Icon(
                       Icons.auto_awesome_rounded,
-                      color: Colors.white70,
+                      color: AppColors.textPrimary,
                       size: 16,
                     ),
                     const SizedBox(width: AppSpacing.s8),
                     Text(
                       'AI Summary',
                       style: AppTextStyles.labelMedium.copyWith(
-                        color: Colors.white70,
+                        color: AppColors.textPrimary.withValues(alpha: 0.65),
                       ),
                     ),
                   ],
@@ -644,13 +644,15 @@ class _ResultsView extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.s12),
                 Text(
                   summary.headline,
-                  style: AppTextStyles.h2.copyWith(color: Colors.white),
+                  style: AppTextStyles.h2.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.s8),
                 Text(
                   summary.body,
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: Colors.white.withValues(alpha: 0.85),
+                    color: AppColors.textPrimary.withValues(alpha: 0.75),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.s16),
@@ -758,8 +760,8 @@ class _SummaryChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: highlight
-            ? Colors.orange.withValues(alpha: 0.20)
-            : Colors.white.withValues(alpha: 0.15),
+            ? AppColors.warningForeground.withValues(alpha: 0.18)
+            : AppColors.textPrimary.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(AppRadius.r24),
       ),
       child: Row(
@@ -768,13 +770,17 @@ class _SummaryChip extends StatelessWidget {
           Icon(
             icon,
             size: 13,
-            color: highlight ? Colors.orange.shade300 : Colors.white70,
+            color: highlight
+                ? AppColors.warningForeground
+                : AppColors.textPrimary.withValues(alpha: 0.65),
           ),
           const SizedBox(width: 4),
           Text(
             label,
             style: AppTextStyles.labelSmall.copyWith(
-              color: highlight ? Colors.orange.shade300 : Colors.white70,
+              color: highlight
+                  ? AppColors.warningForeground
+                  : AppColors.textPrimary.withValues(alpha: 0.65),
             ),
           ),
         ],
@@ -801,15 +807,19 @@ class _LabResultCard extends StatelessWidget {
     final hasExplanation = result.aiExplanation?.isNotEmpty == true;
 
     final (statusColor, statusBg, statusLabel) = switch (result.status) {
-      LabStatus.high => (AppColors.danger, const Color(0xFFFEF2F2), 'HIGH'),
+      LabStatus.high => (
+        AppColors.dangerForeground,
+        AppColors.dangerBackground,
+        'HIGH',
+      ),
       LabStatus.low => (
-        const Color(0xFFF59E0B),
-        const Color(0xFFFFFBEB),
+        AppColors.warningForeground,
+        AppColors.warningBackground,
         'LOW',
       ),
       LabStatus.normal => (
-        AppColors.success,
-        const Color(0xFFF0FDF4),
+        AppColors.successForeground,
+        AppColors.successBackground,
         'NORMAL',
       ),
     };
@@ -1007,10 +1017,10 @@ class _DisclaimerBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
+        color: AppColors.warningBackground,
         borderRadius: BorderRadius.circular(AppRadius.r12),
         border: Border.all(
-          color: const Color(0xFFF59E0B).withValues(alpha: 0.40),
+          color: AppColors.warningForeground.withValues(alpha: 0.40),
         ),
       ),
       child: Row(
@@ -1019,7 +1029,7 @@ class _DisclaimerBanner extends StatelessWidget {
           const Icon(
             Icons.info_outline_rounded,
             size: 18,
-            color: Color(0xFFF59E0B),
+            color: AppColors.warningForeground,
           ),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
@@ -1029,7 +1039,7 @@ class _DisclaimerBanner extends StatelessWidget {
                 Text(
                   'Medical Disclaimer',
                   style: AppTextStyles.labelMedium.copyWith(
-                    color: Color(0xFF92400E),
+                    color: AppColors.warningForeground,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1039,7 +1049,7 @@ class _DisclaimerBanner extends StatelessWidget {
                   'diagnosis, or treatment. Always consult a qualified healthcare '
                   'professional before making any health decisions.',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: Color(0xFF92400E),
+                    color: AppColors.warningForeground,
                     height: 1.5,
                   ),
                 ),

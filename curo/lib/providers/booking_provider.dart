@@ -5,8 +5,9 @@ import 'app_providers.dart';
 
 // ── Live bookings stream ──────────────────────────────────────────────────────
 
-final userBookingsProvider =
-    StreamProvider.autoDispose<List<BookingModel>>((ref) {
+final userBookingsProvider = StreamProvider.autoDispose<List<BookingModel>>((
+  ref,
+) {
   final user = ref.watch(authStateChangesProvider).asData?.value;
   if (user == null) return Stream.value([]);
   return ref.watch(bookingRepositoryProvider).watchUserBookings(user.uid);
@@ -15,11 +16,7 @@ final userBookingsProvider =
 // ── Create booking state ──────────────────────────────────────────────────────
 
 class BookingCreateState {
-  const BookingCreateState({
-    this.isLoading = false,
-    this.error,
-    this.created,
-  });
+  const BookingCreateState({this.isLoading = false, this.error, this.created});
   final bool isLoading;
   final String? error;
   final BookingModel? created;
@@ -44,7 +41,9 @@ class BookingCreateNotifier extends Notifier<BookingCreateState> {
     }
     state = const BookingCreateState(isLoading: true);
     try {
-      final booking = await ref.read(bookingRepositoryProvider).createBooking(
+      final booking = await ref
+          .read(bookingRepositoryProvider)
+          .createBooking(
             userId: user.uid,
             labId: labId,
             labName: labName,
@@ -67,10 +66,13 @@ class BookingCreateNotifier extends Notifier<BookingCreateState> {
   Future<void> cancel(String bookingId) async {
     final user = ref.read(authStateChangesProvider).asData?.value;
     if (user == null) return;
-    await ref.read(bookingRepositoryProvider).cancelBooking(user.uid, bookingId);
+    await ref
+        .read(bookingRepositoryProvider)
+        .cancelBooking(user.uid, bookingId);
   }
 }
 
 final bookingCreateProvider =
     NotifierProvider<BookingCreateNotifier, BookingCreateState>(
-        BookingCreateNotifier.new);
+      BookingCreateNotifier.new,
+    );

@@ -18,10 +18,10 @@ class UserModel {
   final DateTime createdAt;
 
   String get name {
-    final parts = [firstName, lastName]
-        .whereType<String>()
-        .where((s) => s.isNotEmpty)
-        .toList();
+    final parts = [
+      firstName,
+      lastName,
+    ].whereType<String>().where((s) => s.isNotEmpty).toList();
     return parts.isNotEmpty ? parts.join(' ') : '';
   }
 
@@ -38,26 +38,25 @@ class UserModel {
   }
 
   Map<String, dynamic> toFirestore() => {
-        'uid': uid,
-        if (firstName != null) 'firstName': firstName,
-        if (lastName != null) 'lastName': lastName,
-        if (phone != null) 'phone': phone,
-        if (email != null) 'email': email,
-        'createdAt': Timestamp.fromDate(createdAt),
-      };
+    'uid': uid,
+    if (firstName != null) 'firstName': firstName,
+    if (lastName != null) 'lastName': lastName,
+    if (phone != null) 'phone': phone,
+    if (email != null) 'email': email,
+    'createdAt': Timestamp.fromDate(createdAt),
+  };
 
   UserModel copyWith({
     String? firstName,
     String? lastName,
     String? phone,
     String? email,
-  }) =>
-      UserModel(
-        uid: uid,
-        firstName: firstName ?? this.firstName,
-        lastName: lastName ?? this.lastName,
-        phone: phone ?? this.phone,
-        email: email ?? this.email,
-        createdAt: createdAt,
-      );
+  }) => UserModel(
+    uid: uid,
+    firstName: firstName ?? this.firstName,
+    lastName: lastName ?? this.lastName,
+    phone: phone ?? this.phone,
+    email: email ?? this.email,
+    createdAt: createdAt,
+  );
 }

@@ -66,9 +66,7 @@ class _LabMapScreenState extends ConsumerState<LabMapScreen> {
   void _moveToItem(double lat, double lng) =>
       _mapController.move(LatLng(lat, lng), 14.5);
 
-  /// Shows the detail modal for a tapped OSM POI.
   void _showOsmSheet(OsmPlace place) {
-    // Find the closest Firebase lab/pharmacy to this OSM place (< 1 km = bookable)
     final allLabs = ref.read(allLabsProvider);
     final allPharmacies = ref.read(allPharmaciesProvider);
 
@@ -121,34 +119,38 @@ class _LabMapScreenState extends ConsumerState<LabMapScreen> {
     final osmAsync = ref.watch(osmPlacesProvider);
     final osmPlaces = osmAsync.asData?.value ?? [];
 
-    final isLoading =
-        mode == MapMode.labs ? labsAsync.isLoading : pharmaciesAsync.isLoading;
-    final hasError =
-        mode == MapMode.labs ? labsAsync.hasError : pharmaciesAsync.hasError;
+    final isLoading = mode == MapMode.labs
+        ? labsAsync.isLoading
+        : pharmaciesAsync.isLoading;
+    final hasError = mode == MapMode.labs
+        ? labsAsync.hasError
+        : pharmaciesAsync.hasError;
 
-    // Clear selection when mode changes
     ref.listen<MapMode>(mapModeProvider, (prev, next) {
       if (prev != next) setState(() => _selectedId = null);
     });
 
-    // Animate map to top result when filter changes (non-All filters)
     ref.listen<LabFilter>(labFilterProvider, (prev, next) {
       if (prev != next && next != LabFilter.all) {
         final filtered = ref.read(filteredLabsProvider);
-        if (filtered.isNotEmpty) _moveToItem(filtered.first.lat, filtered.first.lng);
+        if (filtered.isNotEmpty) {
+          _moveToItem(filtered.first.lat, filtered.first.lng);
+        }
       }
     });
     ref.listen<PharmacyFilter>(pharmacyFilterProvider, (prev, next) {
       if (prev != next && next != PharmacyFilter.all) {
         final filtered = ref.read(filteredPharmaciesProvider);
-        if (filtered.isNotEmpty) _moveToItem(filtered.first.lat, filtered.first.lng);
+        if (filtered.isNotEmpty) {
+          _moveToItem(filtered.first.lat, filtered.first.lng);
+        }
       }
     });
 
     return Scaffold(
       body: Stack(
         children: [
-          // ── Map ────────────────────────────────────────────────────────────
+          // ── Map ──────────────────────────────────────────────────────────
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -162,88 +164,90 @@ class _LabMapScreenState extends ConsumerState<LabMapScreen> {
                 userAgentPackageName: 'com.curo.healthcare.pk',
                 maxZoom: 19,
               ),
-
-              // ── Layer 1: OSM real-world places (background, smaller) ────────
-              // Shown beneath Firebase markers so our bookable labs stay on top.
-              // Filtered by mode: labs mode shows hospitals/clinics/labs;
-              // pharmacies mode shows OSM pharmacies.
               MarkerLayer(
                 markers: osmPlaces
-                    .where((p) => mode == MapMode.labs
-                        ? p.amenity != OsmAmenity.pharmacy
-                        : p.amenity == OsmAmenity.pharmacy)
-                    .map((place) => Marker(
-                          point: LatLng(place.lat, place.lng),
-                          width: 34,
-                          height: 34,
-                          child: _OsmMarker(
-                            place: place,
-                            onTap: () => _showOsmSheet(place),
-                          ),
-                        ))
+                    .where(
+                      (p) => mode == MapMode.labs
+                          ? p.amenity != OsmAmenity.pharmacy
+                          : p.amenity == OsmAmenity.pharmacy,
+                    )
+                    .map(
+                      (place) => Marker(
+                        point: LatLng(place.lat, place.lng),
+                        width: 34,
+                        height: 34,
+                        child: _OsmMarker(
+                          place: place,
+                          onTap: () => _showOsmSheet(place),
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
-
-              // ── Layer 2: Firebase bookable markers (foreground, larger) ─────
               if (mode == MapMode.labs)
                 MarkerLayer(
                   markers: labs
-                      .map((lab) => Marker(
-                            point: LatLng(lab.lat, lab.lng),
-                            width: 88,
-                            height: 52,
-                            alignment: Alignment.bottomCenter,
-                            child: _PriceMarker(
-                              price: lab.startingPriceRs,
-                              selected: lab.id == _selectedId,
-                              onTap: () {
-                                setState(() => _selectedId = lab.id);
-                                _sheetController.animateTo(0.48,
-                                    duration:
-                                        const Duration(milliseconds: 320),
-                                    curve: Curves.easeOut);
-                              },
-                            ),
-                          ))
+                      .map(
+                        (lab) => Marker(
+                          point: LatLng(lab.lat, lab.lng),
+                          width: 88,
+                          height: 52,
+                          alignment: Alignment.bottomCenter,
+                          child: _PriceMarker(
+                            price: lab.startingPriceRs,
+                            selected: lab.id == _selectedId,
+                            onTap: () {
+                              setState(() => _selectedId = lab.id);
+                              _sheetController.animateTo(
+                                0.48,
+                                duration: const Duration(milliseconds: 320),
+                                curve: Curves.easeOut,
+                              );
+                            },
+                          ),
+                        ),
+                      )
                       .toList(),
                 )
               else
                 MarkerLayer(
                   markers: pharmacies
-                      .map((p) => Marker(
-                            point: LatLng(p.lat, p.lng),
-                            width: 44,
-                            height: 52,
-                            alignment: Alignment.bottomCenter,
-                            child: _PharmacyMarker(
-                              selected: p.id == _selectedId,
-                              is24h: p.is24Hours,
-                              onTap: () {
-                                setState(() => _selectedId = p.id);
-                                _sheetController.animateTo(0.48,
-                                    duration:
-                                        const Duration(milliseconds: 320),
-                                    curve: Curves.easeOut);
-                              },
-                            ),
-                          ))
+                      .map(
+                        (p) => Marker(
+                          point: LatLng(p.lat, p.lng),
+                          width: 44,
+                          height: 52,
+                          alignment: Alignment.bottomCenter,
+                          child: _PharmacyMarker(
+                            selected: p.id == _selectedId,
+                            is24h: p.is24Hours,
+                            onTap: () {
+                              setState(() => _selectedId = p.id);
+                              _sheetController.animateTo(
+                                0.48,
+                                duration: const Duration(milliseconds: 320),
+                                curve: Curves.easeOut,
+                              );
+                            },
+                          ),
+                        ),
+                      )
                       .toList(),
                 ),
             ],
           ),
 
-          // ── Loading overlay ────────────────────────────────────────────────
-          if (isLoading)
-            const Center(child: CircularProgressIndicator()),
+          // ── Loading overlay ───────────────────────────────────────────────
+          if (isLoading) const Center(child: CircularProgressIndicator()),
 
-          // ── Error banner ───────────────────────────────────────────────────
+          // ── Error banner ──────────────────────────────────────────────────
           if (hasError)
             Positioned(
               top: 80,
               left: AppSpacing.s16,
               right: AppSpacing.s16,
               child: Material(
-                color: Colors.redAccent,
+                color: AppColors.dangerForeground,
                 borderRadius: BorderRadius.circular(AppRadius.r12),
                 child: const Padding(
                   padding: EdgeInsets.all(AppSpacing.s12),
@@ -255,14 +259,18 @@ class _LabMapScreenState extends ConsumerState<LabMapScreen> {
               ),
             ),
 
-          // ── Search bar + filter pills ──────────────────────────────────────
+          // ── Search bar + filter capsules ──────────────────────────────────
           SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, 0),
+                    AppSpacing.s16,
+                    AppSpacing.s12,
+                    AppSpacing.s16,
+                    0,
+                  ),
                   child: const _SearchBar(),
                 ),
                 const SizedBox(height: AppSpacing.s8),
@@ -271,7 +279,7 @@ class _LabMapScreenState extends ConsumerState<LabMapScreen> {
             ),
           ),
 
-          // ── Draggable bottom sheet ─────────────────────────────────────────
+          // ── Draggable bottom sheet ────────────────────────────────────────
           DraggableScrollableSheet(
             controller: _sheetController,
             initialChildSize: 0.40,
@@ -287,10 +295,10 @@ class _LabMapScreenState extends ConsumerState<LabMapScreen> {
             ),
           ),
 
-          // ── My-location FAB (after sheet so it renders on top) ────────────
+          // ── My-location FAB — anchored below search bar, above list sheet ──
           Positioned(
+            top: MediaQuery.of(context).padding.top + 120,
             right: AppSpacing.s16,
-            bottom: MediaQuery.of(context).size.height * 0.43,
             child: GestureDetector(
               onTap: _goToMyLocation,
               child: Container(
@@ -299,10 +307,14 @@ class _LabMapScreenState extends ConsumerState<LabMapScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.border),
                   boxShadow: AppShadows.md,
                 ),
-                child: const Icon(Icons.my_location_rounded,
-                    size: 20, color: AppColors.primary),
+                child: const Icon(
+                  Icons.my_location_rounded,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
               ),
             ),
           ),
@@ -327,21 +339,20 @@ class _PriceMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? const Color(0xFF1A9AD4) : AppColors.primary;
+    final color = selected ? AppColors.accent : AppColors.primary;
     return GestureDetector(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: color,
               borderRadius: BorderRadius.circular(17),
               boxShadow: [
                 BoxShadow(
-                  color: color.withValues(alpha: 0.4),
+                  color: color.withValues(alpha: 0.40),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -350,7 +361,7 @@ class _PriceMarker extends StatelessWidget {
             child: Text(
               'Rs $price',
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
               ),
@@ -380,7 +391,9 @@ class _PharmacyMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? const Color(0xFF0F9B58) : const Color(0xFF22C55E);
+    final color = selected
+        ? AppColors.successForeground
+        : const Color(0xFF22C55E);
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -397,14 +410,17 @@ class _PharmacyMarker extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: color.withValues(alpha: 0.4),
+                      color: color.withValues(alpha: 0.40),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: const Icon(Icons.local_pharmacy_rounded,
-                    color: Colors.white, size: 18),
+                child: const Icon(
+                  Icons.local_pharmacy_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
               if (is24h)
                 Positioned(
@@ -412,16 +428,21 @@ class _PharmacyMarker extends StatelessWidget {
                   right: -6,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 4, vertical: 1),
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B),
+                      color: AppColors.warningForeground,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text('24H',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 7,
-                            fontWeight: FontWeight.w800)),
+                    child: const Text(
+                      '24H',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 7,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -482,7 +503,6 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    // Sync external resets (e.g. mode toggle clears labSearchProvider)
     ref.listen<String>(labSearchProvider, (_, next) {
       if (next.isEmpty && _controller.text.isNotEmpty) {
         _controller.clear();
@@ -495,27 +515,31 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
         : 'Search pharmacies, cities...';
 
     return Container(
-      height: 48,
+      height: 50,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.r24),
+        border: Border.all(color: AppColors.border),
         boxShadow: AppShadows.md,
       ),
       child: Row(
         children: [
           const SizedBox(width: AppSpacing.s16),
-          const Icon(Icons.search_rounded,
-              size: 20, color: AppColors.textSecondary),
+          const Icon(
+            Icons.search_rounded,
+            size: 20,
+            color: AppColors.textSecondary,
+          ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: TextField(
               controller: _controller,
-              onChanged: (v) =>
-                  ref.read(labSearchProvider.notifier).set(v),
+              onChanged: (v) => ref.read(labSearchProvider.notifier).set(v),
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: AppTextStyles.bodyMedium
-                    .copyWith(color: AppColors.textSecondary),
+                hintStyle: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
@@ -531,22 +555,38 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
               },
               child: const Padding(
                 padding: EdgeInsets.symmetric(horizontal: AppSpacing.s8),
-                child: Icon(Icons.close_rounded,
-                    size: 18, color: AppColors.textSecondary),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 18,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
+          // Separator
           Container(width: 1, height: 24, color: AppColors.border),
-          const SizedBox(width: AppSpacing.s12),
-          const Icon(Icons.tune_rounded,
-              size: 20, color: AppColors.textPrimary),
-          const SizedBox(width: AppSpacing.s16),
+          const SizedBox(width: AppSpacing.s8),
+          // Filter settings button — smooth accent visual element
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppColors.accent.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(AppRadius.r8),
+            ),
+            child: const Icon(
+              Icons.tune_rounded,
+              size: 17,
+              color: AppColors.accent,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s8),
         ],
       ),
     );
   }
 }
 
-// ── Filter pills (mode-aware) ─────────────────────────────────────────────────
+// ── Filter capsule row (mode-aware) ──────────────────────────────────────────
 
 class _FilterRow extends ConsumerWidget {
   const _FilterRow();
@@ -554,9 +594,7 @@ class _FilterRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(mapModeProvider);
-    return mode == MapMode.labs
-        ? _LabFilterPills()
-        : _PharmacyFilterPills();
+    return mode == MapMode.labs ? _LabFilterPills() : _PharmacyFilterPills();
   }
 }
 
@@ -612,11 +650,9 @@ class _FilterPillRow<T> extends StatelessWidget {
       height: 36,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding:
-            const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
         itemCount: items.length,
-        separatorBuilder: (_, _) =>
-            const SizedBox(width: AppSpacing.s8),
+        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s8),
         itemBuilder: (_, i) {
           final (filter, label, icon) = items[i];
           final active = current == filter;
@@ -625,33 +661,37 @@ class _FilterPillRow<T> extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
+                horizontal: AppSpacing.s12,
+                vertical: AppSpacing.s8,
+              ),
               decoration: BoxDecoration(
-                color: active
-                    ? const Color(0xFFEBF8FE)
-                    : AppColors.surface,
+                // Active: solid brand inversion; Inactive: muted border only
+                color: active ? AppColors.primary : AppColors.surface,
                 borderRadius: BorderRadius.circular(AppRadius.r24),
                 border: Border.all(
                   color: active ? AppColors.primary : AppColors.border,
-                  width: active ? 1.5 : 1,
+                  width: 1.5,
                 ),
-                boxShadow: active ? null : AppShadows.sm,
+                boxShadow: active ? AppShadows.sm : null,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon,
-                      size: 13,
-                      color: active
-                          ? AppColors.primary
-                          : AppColors.textSecondary),
+                  Icon(
+                    icon,
+                    size: 13,
+                    color: active
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     label,
                     style: AppTextStyles.labelMedium.copyWith(
                       color: active
-                          ? AppColors.primary
+                          ? AppColors.textPrimary
                           : AppColors.textSecondary,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                 ],
@@ -664,7 +704,7 @@ class _FilterPillRow<T> extends StatelessWidget {
   }
 }
 
-// ── Bottom sheet ──────────────────────────────────────────────────────────────
+// ── Bottom drawer sheet ───────────────────────────────────────────────────────
 
 class _ListSheet extends ConsumerWidget {
   const _ListSheet({
@@ -688,7 +728,6 @@ class _ListSheet extends ConsumerWidget {
     final count = isLabs ? labs.length : pharmacies.length;
     final isEmpty = count == 0;
 
-    // When selected, bubble that item to the top
     final sortedLabs = selectedId != null && isLabs
         ? [
             ...labs.where((l) => l.id == selectedId),
@@ -702,7 +741,6 @@ class _ListSheet extends ConsumerWidget {
           ]
         : pharmacies;
 
-    // Badge label for top item
     String? topBadge;
     if (!isEmpty && selectedId == null) {
       if (isLabs) {
@@ -728,9 +766,10 @@ class _ListSheet extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-              color: Color(0x1A000000),
-              blurRadius: 20,
-              offset: Offset(0, -4)),
+            color: Color(0x0A000000),
+            blurRadius: 20,
+            offset: Offset(0, -4),
+          ),
         ],
       ),
       child: CustomScrollView(
@@ -741,7 +780,7 @@ class _ListSheet extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: AppSpacing.s12),
-                // Handle bar
+                // Drag handle
                 Center(
                   child: Container(
                     width: 40,
@@ -753,13 +792,12 @@ class _ListSheet extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.s12),
-                // Labs / Pharmacies toggle
                 const _MapModeToggle(),
                 const SizedBox(height: AppSpacing.s12),
-                // Count heading
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s16),
+                    horizontal: AppSpacing.s16,
+                  ),
                   child: Text(
                     isEmpty
                         ? 'No ${isLabs ? 'labs' : 'pharmacies'} found'
@@ -792,8 +830,9 @@ class _ListSheet extends ConsumerWidget {
                           ? 'No labs found. Try a different search or filter.'
                           : 'No pharmacies found. Try a different search or filter.',
                       textAlign: TextAlign.center,
-                      style: AppTextStyles.bodyMedium
-                          .copyWith(color: AppColors.textSecondary),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -828,7 +867,7 @@ class _ListSheet extends ConsumerWidget {
   }
 }
 
-// ── Map mode toggle (inside sheet) ────────────────────────────────────────────
+// ── Map mode toggle ───────────────────────────────────────────────────────────
 
 class _MapModeToggle extends ConsumerWidget {
   const _MapModeToggle();
@@ -840,8 +879,9 @@ class _MapModeToggle extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
       height: 40,
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F4F8),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
       ),
       padding: const EdgeInsets.all(3),
       child: Row(
@@ -880,8 +920,7 @@ class _MapModeToggle extends ConsumerWidget {
                         color: active
                             ? AppColors.primary
                             : AppColors.textSecondary,
-                        fontWeight:
-                            active ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                       ),
                     ),
                   ],
@@ -895,118 +934,194 @@ class _MapModeToggle extends ConsumerWidget {
   }
 }
 
-// ── Lab list card ─────────────────────────────────────────────────────────────
+// ── Lab list card (high-fidelity block) ───────────────────────────────────────
 
 class _LabListCard extends ConsumerWidget {
-  const _LabListCard({
-    required this.lab,
-    required this.isSelected,
-    this.badge,
-  });
+  const _LabListCard({required this.lab, required this.isSelected, this.badge});
   final LabLocation lab;
   final bool isSelected;
   final String? badge;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? AppColors.primary.withValues(alpha: 0.04)
-            : Colors.transparent,
-        border: isSelected
-            ? const Border(
-                left: BorderSide(color: AppColors.primary, width: 3))
-            : null,
+    final hasBadge = badge != null;
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s8,
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: lab.avatarColor,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.science_rounded,
-                  color: Colors.white, size: 24),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // ── Card body ──────────────────────────────────────────────────
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.s12,
+              hasBadge ? 32.0 : 14.0,
+              AppSpacing.s12,
+              AppSpacing.s12,
             ),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                          child: Text(lab.name,
-                              style: AppTextStyles.labelLarge)),
-                      if (badge != null) ...[
-                        const SizedBox(width: 6),
-                        _Badge(label: badge!),
-                      ],
-                    ],
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppColors.primary.withValues(alpha: 0.04)
+                  : AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.r16),
+              border: Border.all(
+                color: isSelected
+                    ? AppColors.primary.withValues(alpha: 0.28)
+                    : AppColors.border,
+              ),
+              boxShadow: AppShadows.md,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Avatar
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.primary, AppColors.primaryDark],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(height: 2),
-                  Text(lab.address,
-                      style: AppTextStyles.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.star_rounded,
-                          size: 13, color: Color(0xFFF59E0B)),
-                      const SizedBox(width: 3),
-                      Text(
-                        '${lab.rating} (${lab.reviewCount})',
-                        style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textPrimary, fontSize: 11),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.near_me_rounded,
-                          size: 11, color: AppColors.textSecondary),
-                      const SizedBox(width: 2),
-                      Text(
-                        '${lab.distanceKm} km',
-                        style: AppTextStyles.bodySmall
-                            .copyWith(fontSize: 11),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Starts Rs ${lab.startingPriceRs}',
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w700,
+                  child: const Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Icon(
+                      Icons.biotech_rounded,
+                      color: Colors.white,
+                      size: 20,
                     ),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: AppSpacing.s12),
+
+                // Info block
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        lab.name,
+                        style: AppTextStyles.labelLarge.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        lab.address,
+                        style: AppTextStyles.bodySmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 12,
+                            color: AppColors.ratingGold,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            '${lab.rating} (${lab.reviewCount})',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textPrimary,
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.near_me_rounded,
+                            size: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${lab.distanceKm} km',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      // Price pill tag
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.successBackground,
+                          borderRadius: BorderRadius.circular(AppRadius.r24),
+                        ),
+                        child: Text(
+                          'Rs ${lab.startingPriceRs}+',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: AppColors.successForeground,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: AppSpacing.s8),
+
+                // Book CTA — distinct Electric Blue
+                GestureDetector(
+                  onTap: () {
+                    ref.read(recentlyViewedLabsProvider.notifier).add(lab.id);
+                    context.push(AppRoutes.labDetail, extra: lab);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent,
+                      borderRadius: BorderRadius.circular(AppRadius.r12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.accent.withValues(alpha: 0.28),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      'Book',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.s8),
-            CuroButton(
-              label: 'Book',
-              width: 72,
-              onPressed: () {
-                ref.read(recentlyViewedLabsProvider.notifier).add(lab.id);
-                context.push(AppRoutes.labDetail, extra: lab);
-              },
-            ),
-          ],
-        ),
+          ),
+
+          // ── Sticker ribbon — upper-left corner ────────────────────────
+          if (hasBadge)
+            Positioned(top: 0, left: 0, child: _StickerRibbon(label: badge!)),
+        ],
       ),
     );
   }
 }
 
-// ── Pharmacy card ─────────────────────────────────────────────────────────────
+// ── Pharmacy card (high-fidelity block) ───────────────────────────────────────
 
 class _PharmacyCard extends StatelessWidget {
   const _PharmacyCard({
@@ -1020,187 +1135,261 @@ class _PharmacyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? const Color(0xFF22C55E).withValues(alpha: 0.05)
-            : Colors.transparent,
-        border: isSelected
-            ? const Border(
-                left: BorderSide(color: Color(0xFF22C55E), width: 3))
-            : null,
+    final hasBadge = badge != null;
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s8,
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: pharmacy.avatarColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.local_pharmacy_rounded,
-                      color: Colors.white, size: 24),
-                ),
-                if (pharmacy.is24Hours)
-                  Positioned(
-                    top: -2,
-                    right: -4,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 5, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text('24H',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 8,
-                              fontWeight: FontWeight.w800)),
-                    ),
-                  ),
-              ],
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // ── Card body ──────────────────────────────────────────────────
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.s12,
+              hasBadge ? 32.0 : 14.0,
+              AppSpacing.s12,
+              AppSpacing.s12,
             ),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                          child: Text(pharmacy.name,
-                              style: AppTextStyles.labelLarge)),
-                      if (badge != null) ...[
-                        const SizedBox(width: 6),
-                        _Badge(
-                            label: badge!,
-                            color: const Color(0xFF22C55E)),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(pharmacy.address,
-                      style: AppTextStyles.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.star_rounded,
-                          size: 13, color: Color(0xFFF59E0B)),
-                      const SizedBox(width: 3),
-                      Text(
-                        '${pharmacy.rating} (${pharmacy.reviewCount})',
-                        style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textPrimary, fontSize: 11),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppColors.successForeground.withValues(alpha: 0.04)
+                  : AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.r16),
+              border: Border.all(
+                color: isSelected
+                    ? AppColors.successForeground.withValues(alpha: 0.28)
+                    : AppColors.border,
+              ),
+              boxShadow: AppShadows.md,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Avatar + 24H badge
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [AppColors.primary, AppColors.primaryDark],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.near_me_rounded,
-                          size: 11, color: AppColors.textSecondary),
-                      const SizedBox(width: 2),
-                      Text(
-                        '${pharmacy.distanceKm} km',
-                        style: AppTextStyles.bodySmall
-                            .copyWith(fontSize: 11),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time_rounded,
-                          size: 11, color: AppColors.textSecondary),
-                      const SizedBox(width: 3),
-                      Flexible(
-                        child: Text(
-                          pharmacy.openingHours,
-                          style: AppTextStyles.bodySmall
-                              .copyWith(fontSize: 11),
-                          overflow: TextOverflow.ellipsis,
+                      child: const Padding(
+                        padding: EdgeInsets.all(11),
+                        child: Icon(
+                          Icons.local_pharmacy_rounded,
+                          color: Colors.white,
+                          size: 20,
                         ),
                       ),
+                    ),
+                    if (pharmacy.is24Hours)
+                      Positioned(
+                        top: -2,
+                        right: -4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.warningForeground,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            '24H',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: AppSpacing.s12),
+
+                // Info block
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        pharmacy.name,
+                        style: AppTextStyles.labelLarge.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        pharmacy.address,
+                        style: AppTextStyles.bodySmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 12,
+                            color: AppColors.ratingGold,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            '${pharmacy.rating} (${pharmacy.reviewCount})',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textPrimary,
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.near_me_rounded,
+                            size: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${pharmacy.distanceKm} km',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.access_time_rounded,
+                            size: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 3),
+                          Flexible(
+                            child: Text(
+                              pharmacy.openingHours,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                fontSize: 11,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            GestureDetector(
-              onTap: () async {
-                final uri = Uri(scheme: 'tel', path: pharmacy.phone);
-                if (await canLaunchUrl(uri)) {
-                  await launchUrl(uri);
-                } else {
-                  await Clipboard.setData(
-                      ClipboardData(text: pharmacy.phone));
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Copied: ${pharmacy.phone}')),
-                    );
-                  }
-                }
-              },
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8FDF2),
-                  borderRadius: BorderRadius.circular(AppRadius.r12),
-                  border: Border.all(color: const Color(0xFF22C55E)),
                 ),
-                child: const Icon(Icons.call_rounded,
-                    size: 18, color: Color(0xFF22C55E)),
-              ),
+
+                const SizedBox(width: AppSpacing.s8),
+
+                // Call CTA — success green treatment
+                GestureDetector(
+                  onTap: () async {
+                    final uri = Uri(scheme: 'tel', path: pharmacy.phone);
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri);
+                    } else {
+                      await Clipboard.setData(
+                        ClipboardData(text: pharmacy.phone),
+                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Copied: ${pharmacy.phone}')),
+                        );
+                      }
+                    }
+                  },
+                  child: Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: AppColors.successBackground,
+                      borderRadius: BorderRadius.circular(AppRadius.r12),
+                      border: Border.all(
+                        color: AppColors.successForeground.withValues(
+                          alpha: 0.35,
+                        ),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.call_rounded,
+                      size: 18,
+                      color: AppColors.successForeground,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          // ── Sticker ribbon — upper-left corner ────────────────────────
+          if (hasBadge)
+            Positioned(top: 0, left: 0, child: _StickerRibbon(label: badge!)),
+        ],
       ),
     );
   }
 }
 
-// ── Shared badge widget ────────────────────────────────────────────────────────
+// ── Sticker ribbon — overlapping corner badge ─────────────────────────────────
 
-class _Badge extends StatelessWidget {
-  const _Badge({required this.label, this.color});
+class _StickerRibbon extends StatelessWidget {
+  const _StickerRibbon({required this.label});
   final String label;
-  final Color? color;
+
+  Color get _color => switch (label) {
+    'CHEAPEST' => AppColors.successForeground,
+    'NEAREST' => AppColors.primaryDark,
+    'BEST RATED' => AppColors.ratingGold,
+    'OPEN 24H' => AppColors.accent,
+    _ => AppColors.primaryDark,
+  };
+
+  // Dark text on bright cyan/amber; white text on dark green
+  Color get _textColor => switch (label) {
+    'CHEAPEST' => Colors.white,
+    _ => AppColors.textPrimary,
+  };
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? AppColors.primary;
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.fromLTRB(10, 5, 12, 5),
       decoration: BoxDecoration(
-        color: c.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: c.withValues(alpha: 0.3)),
+        color: _color,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(AppRadius.r16),
+          bottomRight: Radius.circular(AppRadius.r8),
+        ),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: c,
+          color: _textColor,
           fontSize: 9,
           fontWeight: FontWeight.w800,
-          letterSpacing: 0.4,
+          letterSpacing: 0.6,
         ),
       ),
     );
   }
 }
 
-// ── OSM real-world marker (small, outlined) ────────────────────────────────────
+// ── OSM real-world marker (small, outlined) ───────────────────────────────────
 
 class _OsmMarker extends StatelessWidget {
   const _OsmMarker({required this.place, required this.onTap});
@@ -1208,20 +1397,20 @@ class _OsmMarker extends StatelessWidget {
   final VoidCallback onTap;
 
   static Color _color(OsmAmenity a) => switch (a) {
-        OsmAmenity.hospital => const Color(0xFFEF4444),
-        OsmAmenity.pharmacy => const Color(0xFF22C55E),
-        OsmAmenity.clinic || OsmAmenity.doctors => const Color(0xFF3B82F6),
-        OsmAmenity.laboratory => const Color(0xFF8B5CF6),
-        _ => const Color(0xFF6B7280),
-      };
+    OsmAmenity.hospital => AppColors.dangerForeground,
+    OsmAmenity.pharmacy => AppColors.successForeground,
+    OsmAmenity.clinic || OsmAmenity.doctors => const Color(0xFF3B82F6),
+    OsmAmenity.laboratory => const Color(0xFF8B5CF6),
+    _ => AppColors.textSecondary,
+  };
 
   static IconData _icon(OsmAmenity a) => switch (a) {
-        OsmAmenity.hospital => Icons.local_hospital_rounded,
-        OsmAmenity.pharmacy => Icons.local_pharmacy_rounded,
-        OsmAmenity.clinic || OsmAmenity.doctors => Icons.medical_services_rounded,
-        OsmAmenity.laboratory => Icons.science_rounded,
-        _ => Icons.health_and_safety_rounded,
-      };
+    OsmAmenity.hospital => Icons.local_hospital_rounded,
+    OsmAmenity.pharmacy => Icons.local_pharmacy_rounded,
+    OsmAmenity.clinic || OsmAmenity.doctors => Icons.medical_services_rounded,
+    OsmAmenity.laboratory => Icons.science_rounded,
+    _ => Icons.health_and_safety_rounded,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -1237,9 +1426,10 @@ class _OsmMarker extends StatelessWidget {
           border: Border.all(color: color, width: 2),
           boxShadow: [
             BoxShadow(
-                color: color.withValues(alpha: 0.25),
-                blurRadius: 4,
-                offset: const Offset(0, 1)),
+              color: color.withValues(alpha: 0.25),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
           ],
         ),
         child: Icon(_icon(place.amenity), size: 15, color: color),
@@ -1262,12 +1452,12 @@ class _OsmPlaceSheet extends StatelessWidget {
   final PharmacyLocation? matchedPharmacy;
 
   static Color _typeColor(OsmAmenity a) => switch (a) {
-        OsmAmenity.hospital => const Color(0xFFEF4444),
-        OsmAmenity.pharmacy => const Color(0xFF22C55E),
-        OsmAmenity.clinic || OsmAmenity.doctors => const Color(0xFF3B82F6),
-        OsmAmenity.laboratory => const Color(0xFF8B5CF6),
-        _ => AppColors.primary,
-      };
+    OsmAmenity.hospital => AppColors.dangerForeground,
+    OsmAmenity.pharmacy => AppColors.successForeground,
+    OsmAmenity.clinic || OsmAmenity.doctors => const Color(0xFF3B82F6),
+    OsmAmenity.laboratory => const Color(0xFF8B5CF6),
+    _ => AppColors.primary,
+  };
 
   Future<void> _call(BuildContext context, String phone) async {
     final uri = Uri(scheme: 'tel', path: phone);
@@ -1276,9 +1466,9 @@ class _OsmPlaceSheet extends StatelessWidget {
     } else {
       await Clipboard.setData(ClipboardData(text: phone));
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Copied: $phone')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Copied: $phone')));
       }
     }
   }
@@ -1297,27 +1487,32 @@ class _OsmPlaceSheet extends StatelessWidget {
     final inCuro = matchedLab != null || matchedPharmacy != null;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.s12,
+        0,
+        AppSpacing.s12,
+        AppSpacing.s12,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.r24),
         boxShadow: AppShadows.lg,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           Center(
             child: Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
                 color: AppColors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
 
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20),
@@ -1326,10 +1521,13 @@ class _OsmPlaceSheet extends StatelessWidget {
               children: [
                 // Type badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
+                    color: color.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(AppRadius.r24),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1338,46 +1536,60 @@ class _OsmPlaceSheet extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         'OpenStreetMap · ${place.amenityLabel}',
-                        style: AppTextStyles.labelSmall
-                            .copyWith(color: color, fontSize: 11),
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: color,
+                          fontSize: 11,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.s8),
 
-                // Name
-                Text(place.name,
-                    style: AppTextStyles.h3,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis),
+                Text(
+                  place.name,
+                  style: AppTextStyles.h3,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
 
                 if (hasHours) ...[
-                  const SizedBox(height: 6),
-                  Row(children: [
-                    const Icon(Icons.access_time_rounded,
-                        size: 13, color: AppColors.textSecondary),
-                    const SizedBox(width: 5),
-                    Flexible(
-                      child: Text(place.openingHours,
-                          style: AppTextStyles.bodySmall),
-                    ),
-                  ]),
+                  const SizedBox(height: AppSpacing.s8),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time_rounded,
+                        size: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          place.openingHours,
+                          style: AppTextStyles.bodySmall,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
 
                 if (hasPhone) ...[
-                  const SizedBox(height: 6),
-                  Row(children: [
-                    const Icon(Icons.phone_rounded,
-                        size: 13, color: AppColors.textSecondary),
-                    const SizedBox(width: 5),
-                    Text(place.phone, style: AppTextStyles.bodySmall),
-                  ]),
+                  const SizedBox(height: AppSpacing.s8),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.phone_rounded,
+                        size: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(place.phone, style: AppTextStyles.bodySmall),
+                    ],
+                  ),
                 ],
 
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.s20),
 
-                // CURO booking match
                 if (inCuro) ...[
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.s12),
@@ -1385,25 +1597,30 @@ class _OsmPlaceSheet extends StatelessWidget {
                       color: AppColors.primary.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(AppRadius.r12),
                       border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.2)),
+                        color: AppColors.primary.withValues(alpha: 0.20),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.verified_rounded,
-                            size: 18, color: AppColors.primary),
+                        const Icon(
+                          Icons.verified_rounded,
+                          size: 18,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'This location is bookable via CURO',
                             style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w600),
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.s12),
                   SizedBox(
                     width: double.infinity,
                     child: CuroButton(
@@ -1411,11 +1628,7 @@ class _OsmPlaceSheet extends StatelessWidget {
                       onPressed: () {
                         Navigator.pop(context);
                         if (matchedLab != null) {
-                          context.push(AppRoutes.labDetail,
-                              extra: matchedLab);
-                        } else if (matchedPharmacy != null) {
-                          // Navigate to lab detail with nearest lab as fallback
-                          // (pharmacy booking not yet implemented separately)
+                          context.push(AppRoutes.labDetail, extra: matchedLab);
                         }
                       },
                     ),
@@ -1424,20 +1637,28 @@ class _OsmPlaceSheet extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.s12),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.08),
+                      color: AppColors.warningBackground,
                       borderRadius: BorderRadius.circular(AppRadius.r12),
                       border: Border.all(
-                          color: Colors.amber.withValues(alpha: 0.3)),
+                        color: AppColors.warningForeground.withValues(
+                          alpha: 0.28,
+                        ),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline_rounded,
-                            size: 18, color: Colors.amber),
+                        const Icon(
+                          Icons.info_outline_rounded,
+                          size: 18,
+                          color: AppColors.warningForeground,
+                        ),
                         const SizedBox(width: 8),
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             'Not yet in CURO. Call them directly or search nearby.',
-                            style: TextStyle(fontSize: 12, color: Colors.black87),
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.warningForeground,
+                            ),
                           ),
                         ),
                       ],
@@ -1445,7 +1666,7 @@ class _OsmPlaceSheet extends StatelessWidget {
                   ),
                 ],
 
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
 
                 // Action row
                 Row(
@@ -1457,15 +1678,22 @@ class _OsmPlaceSheet extends StatelessWidget {
                           icon: const Icon(Icons.call_rounded, size: 16),
                           label: const Text('Call'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF22C55E),
-                            side: const BorderSide(color: Color(0xFF22C55E)),
+                            foregroundColor: AppColors.successForeground,
+                            side: BorderSide(
+                              color: AppColors.successForeground.withValues(
+                                alpha: 0.50,
+                              ),
+                            ),
                             shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.r12)),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.r12,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    if (hasPhone && hasWeb) const SizedBox(width: 10),
+                    if (hasPhone && hasWeb)
+                      const SizedBox(width: AppSpacing.s8),
                     if (hasWeb)
                       Expanded(
                         child: OutlinedButton.icon(
@@ -1474,33 +1702,37 @@ class _OsmPlaceSheet extends StatelessWidget {
                           label: const Text('Website'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.primary,
-                            side: const BorderSide(color: AppColors.primary),
+                            side: BorderSide(
+                              color: AppColors.primary.withValues(alpha: 0.50),
+                            ),
                             shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.r12)),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.r12,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     if (!hasPhone && !hasWeb)
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
+                          onPressed: () => Navigator.pop(context),
                           icon: const Icon(Icons.close_rounded, size: 16),
                           label: const Text('Dismiss'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.textSecondary,
                             side: const BorderSide(color: AppColors.border),
                             shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.r12)),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.r12,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.s20),
               ],
             ),
           ),

@@ -36,8 +36,9 @@ void main() async {
     return true;
   };
 
-  await FirebaseCrashlytics.instance
-      .setCrashlyticsCollectionEnabled(!kDebugMode);
+  await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+    !kDebugMode,
+  );
   await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
 
   final prefs = await SharedPreferences.getInstance();

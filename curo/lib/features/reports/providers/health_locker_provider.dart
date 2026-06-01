@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/constants/app_colors.dart';
 import 'package:intl/intl.dart';
 import '../../../core/widgets/status_chip.dart';
 import '../../../data/models/report_model.dart';
@@ -57,10 +58,10 @@ LockerReport _toLockerReport(ReportModel r) {
   switch (cat) {
     case ReportCategory.blood:
       icon = Icons.bloodtype_outlined;
-      iconColor = const Color(0xFF36BDF2);
+      iconColor = AppColors.primary;
     case ReportCategory.urine:
       icon = Icons.science_outlined;
-      iconColor = const Color(0xFFF59E0B);
+      iconColor = AppColors.ratingGold;
     case ReportCategory.xray:
       icon = Icons.image_search_outlined;
       iconColor = const Color(0xFF8B5CF6);
@@ -69,7 +70,7 @@ LockerReport _toLockerReport(ReportModel r) {
       iconColor = const Color(0xFF22C55E);
     default:
       icon = Icons.assignment_outlined;
-      iconColor = const Color(0xFF36BDF2);
+      iconColor = AppColors.primary;
   }
 
   return LockerReport(

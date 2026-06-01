@@ -32,25 +32,45 @@ final _mockLabs = [
     name: 'Olatech Labs',
     area: 'North Karachi',
     distanceKm: '1.2 km',
-    testPrices: {'CBC': 250, 'LFT': 500, 'Blood Sugar Fasting': 150, 'Urine DR': 140},
+    testPrices: {
+      'CBC': 250,
+      'LFT': 500,
+      'Blood Sugar Fasting': 150,
+      'Urine DR': 140,
+    },
   ),
   _MockLab(
     name: 'Essa Lab',
     area: 'Nazimabad, Karachi',
     distanceKm: '2.8 km',
-    testPrices: {'CBC': 280, 'LFT': 550, 'Blood Sugar Fasting': 180, 'Urine DR': 160},
+    testPrices: {
+      'CBC': 280,
+      'LFT': 550,
+      'Blood Sugar Fasting': 180,
+      'Urine DR': 160,
+    },
   ),
   _MockLab(
     name: 'Excel Lab',
     area: 'DHA Phase 6, Karachi',
     distanceKm: '4.3 km',
-    testPrices: {'CBC': 300, 'LFT': 600, 'Blood Sugar Fasting': 200, 'Urine DR': 180},
+    testPrices: {
+      'CBC': 300,
+      'LFT': 600,
+      'Blood Sugar Fasting': 200,
+      'Urine DR': 180,
+    },
   ),
   _MockLab(
     name: 'Chughtai Lab',
     area: 'Gulshan-e-Iqbal, Karachi',
     distanceKm: '5.1 km',
-    testPrices: {'CBC': 350, 'LFT': 650, 'Blood Sugar Fasting': 250, 'Urine DR': 200},
+    testPrices: {
+      'CBC': 350,
+      'LFT': 650,
+      'Blood Sugar Fasting': 250,
+      'Urine DR': 200,
+    },
   ),
 ];
 
@@ -81,8 +101,11 @@ class LabTestScanResultScreen extends ConsumerWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              size: 18, color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 18,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => context.pop(),
         ),
         title: Text('Lab Tests Found', style: AppTextStyles.h3),
@@ -109,22 +132,29 @@ class LabTestScanResultScreen extends ConsumerWidget {
         // Success banner
         Container(
           padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+            horizontal: AppSpacing.s16,
+            vertical: AppSpacing.s12,
+          ),
           decoration: BoxDecoration(
             color: const Color(0xFFF0FDF4),
             borderRadius: BorderRadius.circular(AppRadius.r12),
-            border:
-                Border.all(color: AppColors.success.withValues(alpha: 0.30)),
+            border: Border.all(
+              color: AppColors.success.withValues(alpha: 0.30),
+            ),
           ),
           child: Row(
             children: [
-              const Icon(Icons.check_circle_rounded,
-                  color: AppColors.success, size: 20),
+              const Icon(
+                Icons.check_circle_rounded,
+                color: AppColors.success,
+                size: 20,
+              ),
               const SizedBox(width: AppSpacing.s8),
               Text(
                 '${tests.length} lab test${tests.length == 1 ? '' : 's'} detected',
-                style: AppTextStyles.labelMedium
-                    .copyWith(color: AppColors.success),
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.success,
+                ),
               ),
             ],
           ),
@@ -142,8 +172,7 @@ class LabTestScanResultScreen extends ConsumerWidget {
           child: Column(
             children: [
               for (int i = 0; i < tests.length; i++) ...[
-                if (i > 0)
-                  const Divider(height: 1, color: AppColors.border),
+                if (i > 0) const Divider(height: 1, color: AppColors.border),
                 _TestRow(
                   name: tests[i],
                   onRemove: () =>
@@ -169,8 +198,10 @@ class LabTestScanResultScreen extends ConsumerWidget {
               ),
               child: Text(
                 'Lowest first',
-                style: AppTextStyles.bodySmall
-                    .copyWith(color: AppColors.success, fontSize: 10),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.success,
+                  fontSize: 10,
+                ),
               ),
             ),
           ],
@@ -202,8 +233,11 @@ class LabTestScanResultScreen extends ConsumerWidget {
       child: Column(
         children: [
           const SizedBox(height: AppSpacing.s48),
-          const Icon(Icons.search_off_rounded,
-              size: 56, color: AppColors.border),
+          const Icon(
+            Icons.search_off_rounded,
+            size: 56,
+            color: AppColors.border,
+          ),
           const SizedBox(height: AppSpacing.s16),
           Text('No lab tests detected', style: AppTextStyles.h3),
           const SizedBox(height: AppSpacing.s8),
@@ -266,8 +300,11 @@ class _LabCostCard extends StatelessWidget {
                     color: AppColors.primary.withValues(alpha: 0.10),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.science_rounded,
-                      size: 18, color: AppColors.primary),
+                  child: const Icon(
+                    Icons.science_rounded,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.s12),
                 Expanded(
@@ -278,17 +315,26 @@ class _LabCostCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Row(
                         children: [
-                          const Icon(Icons.location_on_rounded,
-                              size: 12, color: AppColors.textSecondary),
+                          const Icon(
+                            Icons.location_on_rounded,
+                            size: 12,
+                            color: AppColors.textSecondary,
+                          ),
                           const SizedBox(width: 2),
-                          Text(lab.area,
-                              style: AppTextStyles.bodySmall
-                                  .copyWith(fontSize: 11)),
+                          Text(
+                            lab.area,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              fontSize: 11,
+                            ),
+                          ),
                           const SizedBox(width: AppSpacing.s8),
-                          Text('· ${lab.distanceKm}',
-                              style: AppTextStyles.bodySmall.copyWith(
-                                  fontSize: 11,
-                                  color: AppColors.textSecondary)),
+                          Text(
+                            '· ${lab.distanceKm}',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -299,12 +345,14 @@ class _LabCostCard extends StatelessWidget {
                   children: [
                     Text(
                       'Rs $total',
-                      style: AppTextStyles.h3
-                          .copyWith(color: AppColors.success),
+                      style: AppTextStyles.h3.copyWith(
+                        color: AppColors.success,
+                      ),
                     ),
-                    Text('total',
-                        style: AppTextStyles.bodySmall
-                            .copyWith(fontSize: 10)),
+                    Text(
+                      'total',
+                      style: AppTextStyles.bodySmall.copyWith(fontSize: 10),
+                    ),
                   ],
                 ),
               ],
@@ -320,7 +368,9 @@ class _LabCostCard extends StatelessWidget {
                 children: relevantPrices.entries.map((e) {
                   return Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.s8, vertical: 4),
+                      horizontal: AppSpacing.s8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.background,
                       borderRadius: BorderRadius.circular(AppRadius.r4),
@@ -329,7 +379,9 @@ class _LabCostCard extends StatelessWidget {
                     child: Text(
                       '${e.key}  Rs ${e.value}',
                       style: AppTextStyles.bodySmall.copyWith(
-                          fontSize: 11, color: AppColors.textPrimary),
+                        fontSize: 11,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   );
                 }).toList(),
@@ -353,7 +405,9 @@ class _TestRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s12,
+      ),
       child: Row(
         children: [
           Container(
@@ -363,8 +417,11 @@ class _TestRow extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.biotech_outlined,
-                size: 16, color: AppColors.primary),
+            child: const Icon(
+              Icons.biotech_outlined,
+              size: 16,
+              color: AppColors.primary,
+            ),
           ),
           const SizedBox(width: AppSpacing.s12),
           Expanded(child: Text(name, style: AppTextStyles.labelLarge)),
@@ -372,8 +429,11 @@ class _TestRow extends StatelessWidget {
             onTap: onRemove,
             child: const Padding(
               padding: EdgeInsets.only(left: AppSpacing.s8),
-              child: Icon(Icons.close_rounded,
-                  size: 18, color: AppColors.textSecondary),
+              child: Icon(
+                Icons.close_rounded,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
         ],

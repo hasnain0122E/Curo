@@ -32,7 +32,8 @@ class AppointmentModel {
   bool get isUpcoming => status == 'upcoming';
 
   factory AppointmentModel.fromFirestore(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final data = doc.data()!;
     return AppointmentModel(
       id: doc.id,
@@ -46,25 +47,24 @@ class AppointmentModel {
       timeSlot: data['timeSlot'] as String? ?? '',
       feeRs: data['feeRs'] as int? ?? 0,
       status: data['status'] as String? ?? 'upcoming',
-      createdAt:
-          (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       notes: data['notes'] as String?,
     );
   }
 
   Map<String, dynamic> toFirestore() => {
-        'userId': userId,
-        'labId': labId,
-        'labName': labName,
-        'doctorName': doctorName,
-        'specialty': specialty,
-        'appointmentDate': Timestamp.fromDate(appointmentDate),
-        'timeSlot': timeSlot,
-        'feeRs': feeRs,
-        'status': status,
-        'createdAt': Timestamp.fromDate(createdAt),
-        if (notes != null) 'notes': notes,
-      };
+    'userId': userId,
+    'labId': labId,
+    'labName': labName,
+    'doctorName': doctorName,
+    'specialty': specialty,
+    'appointmentDate': Timestamp.fromDate(appointmentDate),
+    'timeSlot': timeSlot,
+    'feeRs': feeRs,
+    'status': status,
+    'createdAt': Timestamp.fromDate(createdAt),
+    if (notes != null) 'notes': notes,
+  };
 
   AppointmentModel copyWith({String? status, String? notes}) =>
       AppointmentModel(

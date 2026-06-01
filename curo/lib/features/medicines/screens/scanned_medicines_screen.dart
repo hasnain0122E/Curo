@@ -239,21 +239,25 @@ class _DetectedBanner extends StatelessWidget {
         vertical: AppSpacing.s12,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        color: AppColors.successBackground,
         borderRadius: BorderRadius.circular(AppRadius.r12),
-        border: Border.all(color: AppColors.success.withValues(alpha: 0.30)),
+        border: Border.all(
+          color: AppColors.successForeground.withValues(alpha: 0.28),
+        ),
       ),
       child: Row(
         children: [
           const Icon(
             Icons.check_circle_rounded,
-            color: AppColors.success,
+            color: AppColors.successForeground,
             size: 20,
           ),
           const SizedBox(width: AppSpacing.s8),
           Text(
             '$count medicine${count == 1 ? '' : 's'} detected from prescription',
-            style: AppTextStyles.labelMedium.copyWith(color: AppColors.success),
+            style: AppTextStyles.labelMedium.copyWith(
+              color: AppColors.successForeground,
+            ),
           ),
         ],
       ),
@@ -312,16 +316,16 @@ class _PrescriptionCard extends StatelessWidget {
     final isIncluded = medicine.isIncluded;
 
     final statusColor = isUnclear
-        ? const Color(0xFFF59E0B)
+        ? AppColors.warningForeground
         : isIncluded
         ? AppColors.primary
-        : AppColors.danger;
+        : AppColors.dangerForeground;
 
     final statusBg = isUnclear
-        ? const Color(0xFFFFFBEB)
+        ? AppColors.warningBackground
         : isIncluded
-        ? const Color(0xFFEBF8FE)
-        : const Color(0xFFFEF2F2);
+        ? AppColors.primary.withValues(alpha: 0.08)
+        : AppColors.dangerBackground;
 
     final statusIcon = isUnclear
         ? Icons.warning_amber_rounded
@@ -484,17 +488,48 @@ class _AlternativeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasSaving = alt.savingNote.isNotEmpty;
     return Container(
-      width: 136,
+      width: 140,
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: hasSaving ? AppColors.successBackground : AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.r12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: hasSaving
+              ? AppColors.successForeground.withValues(alpha: 0.22)
+              : AppColors.border,
+        ),
+        boxShadow: AppShadows.sm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Saving pill at top when applicable
+          if (hasSaving) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.successForeground.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppRadius.r24),
+                border: Border.all(
+                  color: AppColors.successForeground.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Text(
+                alt.savingNote,
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: AppColors.successForeground,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 9,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s8),
+          ],
+
           // Brand name
           Text(
             alt.brandName,
@@ -502,7 +537,6 @@ class _AlternativeCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-
           const SizedBox(height: 2),
 
           // Manufacturer
@@ -521,20 +555,12 @@ class _AlternativeCard extends StatelessWidget {
           // Price
           Text(
             'Rs ${alt.priceRs}',
-            style: AppTextStyles.h3.copyWith(color: AppColors.primary),
-          ),
-
-          // Saving note — shown only when present
-          if (alt.savingNote.isNotEmpty)
-            Text(
-              alt.savingNote,
-              style: AppTextStyles.bodySmall.copyWith(
-                fontSize: 10,
-                color: AppColors.success,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.h3.copyWith(
+              color: hasSaving
+                  ? AppColors.successForeground
+                  : AppColors.primary,
             ),
+          ),
         ],
       ),
     );

@@ -8,9 +8,9 @@ class AuthRepository {
     required FirebaseAuth auth,
     required FirebaseFirestore firestore,
     required GoogleSignIn googleSignIn,
-  })  : _auth = auth,
-        _firestore = firestore,
-        _googleSignIn = googleSignIn;
+  }) : _auth = auth,
+       _firestore = firestore,
+       _googleSignIn = googleSignIn;
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
@@ -22,8 +22,9 @@ class AuthRepository {
   // ── Email / Password ──────────────────────────────────────────────────────
 
   Future<UserCredential> signInWithEmailPassword(
-      String email, String password) =>
-      _auth.signInWithEmailAndPassword(email: email, password: password);
+    String email,
+    String password,
+  ) => _auth.signInWithEmailAndPassword(email: email, password: password);
 
   Future<UserCredential> createAccountWithEmail({
     required String email,
@@ -91,17 +92,16 @@ class AuthRepository {
   }
 
   Future<UserCredential> verifyOtp(
-      String verificationId, String smsCode) async {
+    String verificationId,
+    String smsCode,
+  ) async {
     final credential = PhoneAuthProvider.credential(
       verificationId: verificationId,
       smsCode: smsCode,
     );
     final result = await _auth.signInWithCredential(credential);
     if (result.additionalUserInfo?.isNewUser == true) {
-      await _upsertUserDocument(
-        result.user!,
-        phone: result.user?.phoneNumber,
-      );
+      await _upsertUserDocument(result.user!, phone: result.user?.phoneNumber);
     }
     return result;
   }
@@ -119,10 +119,18 @@ class AuthRepository {
       'uid': user.uid,
       'createdAt': FieldValue.serverTimestamp(),
     };
-    if (firstName != null && firstName.isNotEmpty) data['firstName'] = firstName;
-    if (lastName != null && lastName.isNotEmpty) data['lastName'] = lastName;
-    if (email != null && email.isNotEmpty) data['email'] = email;
-    if (phone != null && phone.isNotEmpty) data['phone'] = phone;
+    if (firstName != null && firstName.isNotEmpty) {
+      data['firstName'] = firstName;
+    }
+    if (lastName != null && lastName.isNotEmpty) {
+      data['lastName'] = lastName;
+    }
+    if (email != null && email.isNotEmpty) {
+      data['email'] = email;
+    }
+    if (phone != null && phone.isNotEmpty) {
+      data['phone'] = phone;
+    }
 
     await _firestore
         .collection('users')
@@ -143,11 +151,16 @@ class AuthRepository {
   }
 
   Future<void> updateUserProfile(
-      String uid, {String? name, String? email}) async {
-    await _firestore.collection('users').doc(uid).update({
-      'name': name,
-      'email': email,
-    }..removeWhere((_, v) => v == null));
+    String uid, {
+    String? name,
+    String? email,
+  }) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .update(
+          {'name': name, 'email': email}..removeWhere((_, v) => v == null),
+        );
   }
 
   Future<void> signOut() async {

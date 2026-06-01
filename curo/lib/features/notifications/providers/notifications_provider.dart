@@ -7,8 +7,8 @@ import '../models/notification_models.dart';
 
 final notificationsProvider =
     NotifierProvider<NotificationsNotifier, List<AppNotification>>(
-  NotificationsNotifier.new,
-);
+      NotificationsNotifier.new,
+    );
 
 final unreadCountProvider = Provider<int>((ref) {
   return ref.watch(notificationsProvider).where((n) => !n.isRead).length;
@@ -18,8 +18,7 @@ class NotificationsNotifier extends Notifier<List<AppNotification>> {
   @override
   List<AppNotification> build() => const [];
 
-  void add(AppNotification notification) =>
-      state = [notification, ...state];
+  void add(AppNotification notification) => state = [notification, ...state];
 
   void markRead(String id) {
     state = [

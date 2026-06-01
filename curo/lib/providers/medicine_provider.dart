@@ -28,8 +28,9 @@ class MedicineSearchNotifier extends Notifier<MedicineSearchState> {
     }
     state = MedicineSearchState(query: query, isLoading: true);
     try {
-      final results =
-          await ref.read(medicineRepositoryProvider).searchMedicines(query);
+      final results = await ref
+          .read(medicineRepositoryProvider)
+          .searchMedicines(query);
       state = MedicineSearchState(query: query, results: results);
     } catch (e) {
       state = MedicineSearchState(query: query, error: e.toString());
@@ -52,4 +53,5 @@ class MedicineSearchNotifier extends Notifier<MedicineSearchState> {
 
 final medicineSearchProvider =
     NotifierProvider<MedicineSearchNotifier, MedicineSearchState>(
-        MedicineSearchNotifier.new);
+      MedicineSearchNotifier.new,
+    );

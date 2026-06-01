@@ -3,7 +3,7 @@ import '../models/lab_model.dart';
 
 class LabRepository {
   LabRepository({required FirebaseFirestore firestore})
-      : _firestore = firestore;
+    : _firestore = firestore;
 
   final FirebaseFirestore _firestore;
 

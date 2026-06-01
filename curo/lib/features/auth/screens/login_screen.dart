@@ -30,15 +30,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
-    final ok = await ref.read(authProvider.notifier).signInWithEmail(
+    final ok = await ref
+        .read(authProvider.notifier)
+        .signInWithEmail(
           _emailController.text.trim(),
           _passwordController.text,
         );
-    if (ok && mounted) context.go(AppRoutes.home);
-  }
-
-  Future<void> _googleSignIn() async {
-    final ok = await ref.read(authProvider.notifier).signInWithGoogle();
     if (ok && mounted) context.go(AppRoutes.home);
   }
 
@@ -80,8 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
           SafeArea(
             child: SingleChildScrollView(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -124,7 +120,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         if (v == null || v.trim().isEmpty) {
                           return 'Email is required';
                         }
-                        if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v.trim())) {
+                        if (!RegExp(
+                          r'^[^@]+@[^@]+\.[^@]+',
+                        ).hasMatch(v.trim())) {
                           return 'Enter a valid email address';
                         }
                         return null;
@@ -142,21 +140,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.password],
                       validator: (v) {
-                        if (v == null || v.isEmpty) return 'Password is required';
+                        if (v == null || v.isEmpty) {
+                          return 'Password is required';
+                        }
                         return null;
                       },
                     ),
-                    const SizedBox(height: AppSpacing.s12),
+                    const SizedBox(height: AppSpacing.s8),
 
                     // Security note
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.lock_outline_rounded,
-                            size: 13, color: AppColors.textSecondary),
+                        const Icon(
+                          Icons.lock_outline_rounded,
+                          size: 13,
+                          color: AppColors.textSecondary,
+                        ),
                         const SizedBox(width: 5),
-                        Text('Your data is secure',
-                            style: AppTextStyles.caption),
+                        Text(
+                          'Your data is secure',
+                          style: AppTextStyles.caption,
+                        ),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.s24),
@@ -166,28 +170,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       label: 'Sign In',
                       isLoading: isLoading,
                       onPressed: isLoading ? null : _signIn,
-                    ),
-                    const SizedBox(height: AppSpacing.s24),
-
-                    // Divider
-                    Row(
-                      children: [
-                        const Expanded(child: Divider()),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.s12),
-                          child: Text('OR CONTINUE WITH',
-                              style: AppTextStyles.labelSmall),
-                        ),
-                        const Expanded(child: Divider()),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.s20),
-
-                    // Google button
-                    _GoogleButton(
-                      isLoading: isLoading,
-                      onTap: isLoading ? null : _googleSignIn,
                     ),
                     const SizedBox(height: AppSpacing.s32),
 
@@ -228,8 +210,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 // ── Shared auth widgets ────────────────────────────────────────────────────────
 
 class _AuthLogo extends StatelessWidget {
-  const _AuthLogo(
-      {required this.size, required this.radius, required this.fontSize});
+  const _AuthLogo({
+    required this.size,
+    required this.radius,
+    required this.fontSize,
+  });
   final double size;
   final double radius;
   final double fontSize;
@@ -271,17 +256,24 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s12,
+      ),
       decoration: BoxDecoration(
         color: AppColors.danger.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppRadius.r12),
         border: Border.all(
-            color: AppColors.danger.withValues(alpha: 0.3), width: 1),
+          color: AppColors.danger.withValues(alpha: 0.3),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded,
-              color: AppColors.danger, size: 18),
+          const Icon(
+            Icons.error_outline_rounded,
+            color: AppColors.danger,
+            size: 18,
+          ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: Text(
@@ -293,95 +285,4 @@ class _ErrorBanner extends StatelessWidget {
       ),
     );
   }
-}
-
-class _GoogleButton extends StatelessWidget {
-  const _GoogleButton({required this.onTap, required this.isLoading});
-  final VoidCallback? onTap;
-  final bool isLoading;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 52,
-      width: double.infinity,
-      child: OutlinedButton(
-        onPressed: onTap,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: AppColors.surface,
-          foregroundColor: AppColors.textPrimary,
-          side: const BorderSide(color: AppColors.border, width: 1.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.r12),
-          ),
-          elevation: 0,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const _GoogleG(),
-            const SizedBox(width: 10),
-            Text(
-              'Continue with Google',
-              style:
-                  AppTextStyles.button.copyWith(color: AppColors.textPrimary),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _GoogleG extends StatelessWidget {
-  const _GoogleG();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      width: 22,
-      height: 22,
-      child: CustomPaint(painter: _GoogleGPainter()),
-    );
-  }
-}
-
-class _GoogleGPainter extends CustomPainter {
-  const _GoogleGPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final r = size.width / 2;
-
-    void drawArc(Color color, double start, double sweep) {
-      canvas.drawArc(
-        Rect.fromCircle(center: Offset(cx, cy), radius: r),
-        start,
-        sweep,
-        false,
-        Paint()
-          ..color = color
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3.5
-          ..strokeCap = StrokeCap.butt,
-      );
-    }
-
-    const pi = 3.14159265;
-    drawArc(const Color(0xFF4285F4), -pi / 4, pi / 2);
-    drawArc(const Color(0xFF34A853), pi / 4, pi / 2);
-    drawArc(const Color(0xFFFBBC05), 3 * pi / 4, pi / 2);
-    drawArc(const Color(0xFFEA4335), 5 * pi / 4, pi / 2);
-
-    final barPaint = Paint()
-      ..color = const Color(0xFF4285F4)
-      ..strokeWidth = 3.5
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(cx, cy), Offset(size.width, cy), barPaint);
-  }
-
-  @override
-  bool shouldRepaint(_GoogleGPainter old) => false;
 }

@@ -3,8 +3,9 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 class MlKitOcrService {
   MlKitOcrService._();
 
-  static final _recognizer =
-      TextRecognizer(script: TextRecognitionScript.latin);
+  static final _recognizer = TextRecognizer(
+    script: TextRecognitionScript.latin,
+  );
 
   /// Extracts medicine names from a prescription image file.
   /// Returns a list of candidate medicine names (max 10).

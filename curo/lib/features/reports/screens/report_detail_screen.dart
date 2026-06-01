@@ -136,8 +136,8 @@ class _DetailBody extends StatelessWidget {
                     Container(
                       width: 52,
                       height: 52,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFEBF8FE),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -168,7 +168,7 @@ class _DetailBody extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEBF8FE),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(AppRadius.r24),
                       ),
                       child: Row(
@@ -191,24 +191,6 @@ class _DetailBody extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (report.storageUrl.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.s12),
-                  OutlinedButton.icon(
-                    onPressed: () =>
-                        _showImageViewer(context, report.storageUrl),
-                    icon: const Icon(Icons.visibility_outlined, size: 16),
-                    label: const Text('View Image'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: const BorderSide(color: AppColors.primary),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.s16,
-                        vertical: AppSpacing.s8,
-                      ),
-                      textStyle: AppTextStyles.labelMedium,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -218,73 +200,105 @@ class _DetailBody extends StatelessWidget {
           child: Divider(height: 1, color: AppColors.border),
         ),
 
-        // AI Summary card
+        // AI Summary card — amber when alerts, primary when clean
         SliverToBoxAdapter(
-          child: Container(
-            margin: const EdgeInsets.all(AppSpacing.s16),
-            padding: const EdgeInsets.all(AppSpacing.s20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0F4C6B), Color(0xFF1A6A94)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(AppRadius.r16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          child: Builder(
+            builder: (context) {
+              final hasAlerts = result.summary.criticalAlerts > 0;
+              final cardBg = hasAlerts
+                  ? AppColors.warningBackground
+                  : AppColors.primary;
+              final labelColor = hasAlerts
+                  ? AppColors.warningForeground.withValues(alpha: 0.70)
+                  : AppColors.textPrimary.withValues(alpha: 0.65);
+              final headlineColor = hasAlerts
+                  ? AppColors.warningForeground
+                  : AppColors.textPrimary;
+              final bodyColor = hasAlerts
+                  ? AppColors.warningForeground.withValues(alpha: 0.80)
+                  : AppColors.textPrimary.withValues(alpha: 0.75);
+              return Container(
+                margin: const EdgeInsets.all(AppSpacing.s16),
+                padding: const EdgeInsets.all(AppSpacing.s20),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(AppRadius.r16),
+                  border: hasAlerts
+                      ? Border.all(
+                          color: AppColors.warningForeground.withValues(
+                            alpha: 0.22,
+                          ),
+                        )
+                      : null,
+                  boxShadow: AppShadows.md,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      Icons.auto_awesome_rounded,
-                      color: Colors.white70,
-                      size: 16,
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome_rounded,
+                          color: labelColor,
+                          size: 16,
+                        ),
+                        const SizedBox(width: AppSpacing.s8),
+                        Text(
+                          'AI Summary',
+                          style: AppTextStyles.labelMedium.copyWith(
+                            color: labelColor,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: AppSpacing.s8),
+                    const SizedBox(height: AppSpacing.s12),
                     Text(
-                      'AI Summary',
-                      style: AppTextStyles.labelMedium.copyWith(
-                        color: Colors.white70,
+                      result.summary.headline,
+                      style: AppTextStyles.h2.copyWith(color: headlineColor),
+                    ),
+                    if (result.summary.body.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.s8),
+                      Text(
+                        result.summary.body,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: bodyColor,
+                        ),
                       ),
+                    ],
+                    const SizedBox(height: AppSpacing.s16),
+                    Row(
+                      children: [
+                        _SummaryChip(
+                          label: '${result.summary.testsAnalyzed} Tests',
+                          icon: Icons.science_rounded,
+                          bg: hasAlerts
+                              ? AppColors.primary.withValues(alpha: 0.12)
+                              : AppColors.textPrimary.withValues(alpha: 0.10),
+                          fg: hasAlerts
+                              ? AppColors.primary
+                              : AppColors.textPrimary.withValues(alpha: 0.65),
+                        ),
+                        const SizedBox(width: AppSpacing.s8),
+                        _SummaryChip(
+                          label: '${result.summary.criticalAlerts} Alerts',
+                          icon: Icons.warning_amber_rounded,
+                          bg: hasAlerts
+                              ? AppColors.dangerBackground
+                              : AppColors.textPrimary.withValues(alpha: 0.10),
+                          fg: hasAlerts
+                              ? AppColors.dangerForeground
+                              : AppColors.textPrimary.withValues(alpha: 0.65),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.s12),
-                Text(
-                  result.summary.headline,
-                  style: AppTextStyles.h2.copyWith(color: Colors.white),
-                ),
-                if (result.summary.body.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.s8),
-                  Text(
-                    result.summary.body,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: Colors.white.withValues(alpha: 0.85),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.s16),
-                Row(
-                  children: [
-                    _SummaryChip(
-                      label: '${result.summary.testsAnalyzed} Tests',
-                      icon: Icons.science_rounded,
-                    ),
-                    const SizedBox(width: AppSpacing.s8),
-                    _SummaryChip(
-                      label: '${result.summary.criticalAlerts} Alerts',
-                      icon: Icons.warning_amber_rounded,
-                      highlight: result.summary.criticalAlerts > 0,
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              );
+            },
           ),
         ),
 
-        // Section header
+        // Section header + View Image link
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
@@ -293,7 +307,34 @@ class _DetailBody extends StatelessWidget {
               AppSpacing.s16,
               AppSpacing.s8,
             ),
-            child: Text('Test Results', style: AppTextStyles.h3),
+            child: Row(
+              children: [
+                Text('Test Results', style: AppTextStyles.h3),
+                const Spacer(),
+                if (report.storageUrl.isNotEmpty)
+                  GestureDetector(
+                    onTap: () => _showImageViewer(context, report.storageUrl),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.image_search_outlined,
+                          size: 15,
+                          color: AppColors.accent,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'View Image',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: AppColors.accent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
 
@@ -384,18 +425,38 @@ class _NoDataBody extends StatelessWidget {
             ],
             if (report.storageUrl.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.s16),
-              OutlinedButton.icon(
-                onPressed: () => _showImageViewer(context, report.storageUrl),
-                icon: const Icon(Icons.visibility_outlined, size: 16),
-                label: const Text('View Image'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  side: const BorderSide(color: AppColors.primary),
+              GestureDetector(
+                onTap: () => _showImageViewer(context, report.storageUrl),
+                child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.s16,
                     vertical: AppSpacing.s8,
                   ),
-                  textStyle: AppTextStyles.labelMedium,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(AppRadius.r24),
+                    border: Border.all(
+                      color: AppColors.accent.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.image_search_outlined,
+                        size: 15,
+                        color: AppColors.accent,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'View Image',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: AppColors.accent,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -423,15 +484,19 @@ class _DetailResultCard extends StatelessWidget {
     final hasExplanation = result.aiExplanation?.isNotEmpty == true;
 
     final (statusColor, statusBg, statusLabel) = switch (result.status) {
-      LabStatus.high => (AppColors.danger, const Color(0xFFFEF2F2), 'HIGH'),
+      LabStatus.high => (
+        AppColors.dangerForeground,
+        AppColors.dangerBackground,
+        'HIGH',
+      ),
       LabStatus.low => (
-        const Color(0xFFF59E0B),
-        const Color(0xFFFFFBEB),
+        AppColors.warningForeground,
+        AppColors.warningBackground,
         'LOW',
       ),
       LabStatus.normal => (
-        AppColors.success,
-        const Color(0xFFF0FDF4),
+        AppColors.successForeground,
+        AppColors.successBackground,
         'NORMAL',
       ),
     };
@@ -496,12 +561,15 @@ class _DetailResultCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
+                        horizontal: 9,
+                        vertical: 3,
                       ),
                       decoration: BoxDecoration(
                         color: statusBg,
-                        borderRadius: BorderRadius.circular(AppRadius.r4),
+                        borderRadius: BorderRadius.circular(AppRadius.r24),
+                        border: Border.all(
+                          color: statusColor.withValues(alpha: 0.22),
+                        ),
                       ),
                       child: Text(
                         statusLabel,
@@ -622,38 +690,29 @@ class _SummaryChip extends StatelessWidget {
   const _SummaryChip({
     required this.label,
     required this.icon,
-    this.highlight = false,
+    required this.bg,
+    required this.fg,
   });
 
   final String label;
   final IconData icon;
-  final bool highlight;
+  final Color bg;
+  final Color fg;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: highlight
-            ? Colors.orange.withValues(alpha: 0.20)
-            : Colors.white.withValues(alpha: 0.15),
+        color: bg,
         borderRadius: BorderRadius.circular(AppRadius.r24),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 13,
-            color: highlight ? Colors.orange.shade300 : Colors.white70,
-          ),
+          Icon(icon, size: 13, color: fg),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: AppTextStyles.labelSmall.copyWith(
-              color: highlight ? Colors.orange.shade300 : Colors.white70,
-            ),
-          ),
+          Text(label, style: AppTextStyles.labelSmall.copyWith(color: fg)),
         ],
       ),
     );
@@ -670,19 +729,19 @@ class _DisclaimerBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
+        color: AppColors.warningBackground,
         borderRadius: BorderRadius.circular(AppRadius.r12),
         border: Border.all(
-          color: const Color(0xFFF59E0B).withValues(alpha: 0.40),
+          color: AppColors.warningForeground.withValues(alpha: 0.30),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.info_outline_rounded,
             size: 18,
-            color: Color(0xFFF59E0B),
+            color: AppColors.warningForeground,
           ),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
@@ -692,7 +751,7 @@ class _DisclaimerBanner extends StatelessWidget {
                 Text(
                   'Medical Disclaimer',
                   style: AppTextStyles.labelMedium.copyWith(
-                    color: Color(0xFF92400E),
+                    color: AppColors.warningForeground,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -702,7 +761,7 @@ class _DisclaimerBanner extends StatelessWidget {
                   'diagnosis, or treatment. Always consult a qualified healthcare '
                   'professional before making any health decisions.',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: Color(0xFF92400E),
+                    color: AppColors.warningForeground,
                     height: 1.5,
                   ),
                 ),

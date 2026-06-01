@@ -51,19 +51,18 @@ class ScannedMedicine {
     bool? isIncluded,
     bool? isUnclear,
     List<GenericAlternative>? alternatives,
-  }) =>
-      ScannedMedicine(
-        id: id,
-        name: name ?? this.name,
-        genericLabel: genericLabel ?? this.genericLabel,
-        frequency: frequency,
-        genericFormula: genericFormula,
-        dosage: dosage,
-        form: form,
-        alternatives: alternatives ?? this.alternatives,
-        isIncluded: isIncluded ?? this.isIncluded,
-        isUnclear: isUnclear ?? this.isUnclear,
-      );
+  }) => ScannedMedicine(
+    id: id,
+    name: name ?? this.name,
+    genericLabel: genericLabel ?? this.genericLabel,
+    frequency: frequency,
+    genericFormula: genericFormula,
+    dosage: dosage,
+    form: form,
+    alternatives: alternatives ?? this.alternatives,
+    isIncluded: isIncluded ?? this.isIncluded,
+    isUnclear: isUnclear ?? this.isUnclear,
+  );
 }
 
 // ── Medicine comparison (search finder) ───────────────────────────────────────
@@ -134,13 +133,12 @@ class MedicineState {
     String? searchQuery,
     bool? hasTorch,
     bool? isSearching,
-  }) =>
-      MedicineState(
-        scannedMedicines: scannedMedicines ?? this.scannedMedicines,
-        comparison: clearComparison ? null : (comparison ?? this.comparison),
-        recentSearches: recentSearches ?? this.recentSearches,
-        searchQuery: searchQuery ?? this.searchQuery,
-        hasTorch: hasTorch ?? this.hasTorch,
-        isSearching: isSearching ?? this.isSearching,
-      );
+  }) => MedicineState(
+    scannedMedicines: scannedMedicines ?? this.scannedMedicines,
+    comparison: clearComparison ? null : (comparison ?? this.comparison),
+    recentSearches: recentSearches ?? this.recentSearches,
+    searchQuery: searchQuery ?? this.searchQuery,
+    hasTorch: hasTorch ?? this.hasTorch,
+    isSearching: isSearching ?? this.isSearching,
+  );
 }
