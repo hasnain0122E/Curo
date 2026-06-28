@@ -1,7 +1,7 @@
 # 🩺 CURO – Low Cost Healthcare Near You
 
 <p align="center">
-  <img src="assets/icons/CURO_icon.png" width="140" alt="CURO Logo">
+  <img src="../assets/icons/CURO_icon.png" width="140" alt="CURO Logo">
 </p>
 
 <p align="center">
@@ -245,22 +245,6 @@ CURO utilizes **Google Gemini AI** to provide:
 - Healthcare recommendations
 - AI-assisted patient support
 - Intelligent medical insights
-
----
-
-# 📸 Screenshots
-
-Place screenshots inside:
-
-```
-assets/images/screens/
-```
-
-Example:
-
-| Home | AI Analysis | Prescription |
-|------|-------------|--------------|
-| ![](assets/images/screens/08_home.png) | ![](assets/images/screens/11_report_results.png) | ![](assets/images/screens/12_prescription_scanner.png) |
 
 ---
 
