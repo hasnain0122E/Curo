@@ -278,8 +278,6 @@ Final Year Project (FYP)
 # 🤝 Contributors
 
 - **Hasnain Ali**
-- Muhammad Talha
-- Muhammad Ibrahim
 
 ---
 
